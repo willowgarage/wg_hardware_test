@@ -1,0 +1,11 @@
+<package>
+  <description brief="Utilities for PR2 test systems and equipment. Internal WG use only">
+  </description>
+  <author>Kevin Watts</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/pr2_hw_test_utilities</url>
+
+</package>
+
+
