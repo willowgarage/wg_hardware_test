@@ -35,11 +35,11 @@
 ##\author Kevin Watts
 ##\brief Loads qualification GUI for component qualification
 
+PKG = 'qualification'
 import roslib
-roslib.load_manifest('qualification')
+roslib.load_manifest(PKG)
 
 from roslaunch_caller import roslaunch_caller 
-from roslaunch.core import RLException
 
 import wx
 import sys, os
@@ -50,14 +50,9 @@ class QualificationApp(wx.App):
     def OnInit(self):
         try:
             self._core_launcher = roslaunch_caller.launch_core()
-        except RLException, e:
-            sys.stderr.write('Failed to launch core. Another core may already be running.\n\n')
-            wx.MessageBox('A ROS core is still running and preventing the qualification system from starting. Shut down ROS processes by using the "Kill ROS" icon.','ROS Already Running', wx.OK|wx.ICON_ERROR, None)
-            sys.exit(1)
         except Exception, e:
-            wx.MessageBox('Error starting ROS. This is very unusual.','ROS Startup Error', wx.OK|wx.ICON_ERROR, None)
-            import traceback
-            traceback.print_exc()
+            print >> sys.stderr, 'Failed to launch core. Another core may already be running.\n\n'
+            wx.MessageBox('A ROS core is still running and preventing the qualification system from starting. Shut down ROS processes by using the "Kill ROS" icon.','ROS Already Running', wx.OK|wx.ICON_ERROR, None)
             sys.exit(1)
 
         from qualification.result_dir import check_qual_result_dir
@@ -69,7 +64,7 @@ class QualificationApp(wx.App):
         
         rospy.init_node("qualification")
         
-        img_path = os.path.join(roslib.packages.get_pkg_dir('qualification'), 'xrc', 'splash.jpg')
+        img_path = os.path.join(roslib.packages.get_pkg_dir(PKG), 'xrc', 'splash.jpg')
         
         bitmap = wx.Bitmap(img_path, type=wx.BITMAP_TYPE_JPEG)
         self._splash = wx.SplashScreen(bitmap, wx.SPLASH_CENTRE_ON_SCREEN, 30000, None, -1)
@@ -103,6 +98,6 @@ if __name__ == '__main__':
         app = QualificationApp()
         app.MainLoop()
     except Exception, e:
-        print "Caught exception in Qualification App Main Loop"
+        print >> sys.stderr, "Caught exception in Qualification App Main Loop"
         import traceback
         traceback.print_exc()

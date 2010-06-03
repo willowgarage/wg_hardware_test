@@ -543,23 +543,5 @@ class TestManagerFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_menu)
 
 
-class TestManagerApp(wx.App):
-    def OnInit(self, debug = False):
 
-        args = rospy.myargv()
-        debug = len(args) > 1 and args[1] == '--debug'
-
-        self._core_launcher = roslaunch_caller.launch_core()
-
-        rospy.init_node("Test_Manager")
-        self._frame = TestManagerFrame(None, debug)
-        self._frame.SetSize(wx.Size(1600, 1100))
-        self._frame.Layout()
-        self._frame.Centre()
-        self._frame.Show(True)
-
-        return True
-
-    def OnExit(self):
-        self._core_launcher.stop()
 
