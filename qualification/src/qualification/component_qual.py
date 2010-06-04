@@ -82,7 +82,8 @@ class SerialPanel(wx.Panel):
 
     self._tests = {}
     self._test_descripts_by_file = {}
-    load_tests_from_map(self._tests, self._test_descripts_by_file)
+    self._debug_tests = []
+    load_tests_from_map(self._tests, self._test_descripts_by_file, self._debug_tests)
 
     self._configs = {}
     self._config_descripts_by_file = {}
@@ -116,9 +117,15 @@ class SerialPanel(wx.Panel):
     self._serial_text.SetFocus()
     #self._serial_text.Bind(wx.EVT_COMMAND_TEXT_ENTER, self.on_test)
 
+  def _is_debug_test(self, serial):
+    return self._debug_tests.count(serial[0:7]) > 0
+
   ##\brief Checks that serial number is valid using invent_client
   def _check_serial_input(self, serial):
     if self._manager.options.debug:
+      return True
+
+    if self._is_debug_test(serial):
       return True
 
     iv = self._manager.get_inventory_object()
