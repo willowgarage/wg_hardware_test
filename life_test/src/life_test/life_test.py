@@ -658,6 +658,7 @@ class TestMonitorPanel(wx.Panel):
         launch = '<launch>\n'
         launch += '<group ns="%s" >' % bay.name
 
+        launch += '<param name="tf_prefix" type="string" value="%s" />' % bay.name
         # Remap
         launch += '<remap from="/diagnostics" to="%s" />' % local_diag_topic
         
