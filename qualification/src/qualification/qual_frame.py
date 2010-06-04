@@ -33,7 +33,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 ##\author Kevin Watts
-##\brief Contains main functionality for qualification system. 
+##\brief Contains main functionality for PR2 production qualification system. 
 
 PKG = 'qualification'
 import roslib
@@ -62,15 +62,15 @@ from qualification.result import *
 
 import traceback
 
-import invent_client.invent_client
+#import invent_client.invent_client
 from invent_client.invent_client import Invent
 
-import runtime_monitor
+#import runtime_monitor
 from runtime_monitor.monitor_panel import MonitorPanel
 
 from roslaunch_caller import roslaunch_caller 
 
-import rxtools
+#import rxtools
 import rxtools.cppwidgets
 
 ##\brief Passed to qualification manager

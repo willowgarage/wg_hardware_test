@@ -34,15 +34,17 @@
 
 ##\author Kevin Watts
 
-import roslib; roslib.load_manifest('qualification')
+PKG = 'qualification'
+import roslib; roslib.load_manifest(PKG)
 
 import os, sys
 from xml.dom import minidom
 
-TESTS_DIR = os.path.join(roslib.packages.get_pkg_dir('qualification'), 'tests')
-CONFIG_DIR = os.path.join(roslib.packages.get_pkg_dir('qualification'), 'config')
+TESTS_DIR = os.path.join(roslib.packages.get_pkg_dir(PKG), 'tests')
+CONFIG_DIR = os.path.join(roslib.packages.get_pkg_dir(PKG), 'config')
 
-def load_tests_from_map(tests, test_descripts_by_file):
+##\todo This is clunky. Should this load the test.xml file for everything?
+def load_tests_from_map(tests, test_descripts_by_file, debugs):
   # Load test directory
   tests_xml_path = os.path.join(TESTS_DIR, 'tests.xml')
   try:
@@ -59,6 +61,12 @@ def load_tests_from_map(tests, test_descripts_by_file):
     serial = test.attributes['serial'].value
     test_file = test.attributes['file'].value
     descrip = test.attributes['descrip'].value
+
+    # Mark as debug test, which allows us to run outside debug mode
+    debug_test = test.attributes.has_key('debug') and test.attributes['debug'].value == "true"
+    if debug_test:
+      debugs.append(serial)
+
     if tests.has_key(serial):
       tests[serial].append(test_file)
     else:
