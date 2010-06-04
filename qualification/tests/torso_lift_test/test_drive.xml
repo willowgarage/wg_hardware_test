@@ -5,5 +5,6 @@
   <startup>torso_drive.launch</startup>
   <subtest name="Torso Checkout">torso_checkout.launch</subtest>
   <subtest name="Torso Hysteresis" timeout="180">hysteresis_torso_lift_drive.launch</subtest>
+  <subtest name="Drive Torso Up" timeout="300">drive_torso_up.launch</subtest>
   <shutdown name="Power Off" timeout="30">../../scripts/power_board_disable.launch</shutdown>
 </test>

@@ -212,6 +212,8 @@ if __name__ == "__main__":
     app.MainLoop()
 
     rospy.spin()
-  except:
+  except KeyboardInterrupt:
+    pass
+  except Exception, e:
     call_done_service(ScriptDoneRequest.RESULT_ERROR, 'Visual check recorded error: %s' % traceback.format_exc())
     rospy.logerr(traceback.format_exc())
