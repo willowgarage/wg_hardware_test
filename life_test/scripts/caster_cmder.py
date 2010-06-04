@@ -93,7 +93,6 @@ def main():
         
         cmder.update()
         my_rate.sleep()
-        #time.sleep(random.uniform(0.9 * my_interval, 1.1 * my_interval))
         
 
 if __name__ == '__main__':
