@@ -40,6 +40,8 @@
   <depend package="robot_state_publisher" />
   <depend package="ectools" />
   <depend package="pr2_self_test_msgs" />
+  <depend package="actionlib" />
+  <depend package="single_joint_position_action" />
   <depend package="pr2_counterbalance_check" />
   <url>http://www.ros.org/wiki/qualification</url>
   <export>

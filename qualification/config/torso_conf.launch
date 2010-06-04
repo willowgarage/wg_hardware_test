@@ -4,7 +4,7 @@
   <!-- configure_mcbs -->
   <node machine="realtime" pkg="qualification"
         type="mcb_prog_conf.py" name="torso_conf"
-        args="-a -c -n 1 --motor=torso_lift_motor,0" />
+        args="-c -n 1 --motor=torso_lift_motor,0" />
 
   <!-- Confirm configuation -->
   <node pkg="qualification" type="confirm_conf.py"
