@@ -39,6 +39,7 @@
   <depend package="joy" />
   <depend package="pr2_hardware_test_monitor" />
   <depend package="pr2_self_test_msgs" />
+  <depend package="pr2_mechanism_diagnostics" />
   
   <!-- Unit test -->
   <depend package="rostopic" />
