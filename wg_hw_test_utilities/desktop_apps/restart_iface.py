@@ -35,7 +35,6 @@
 ##\author Kevin Watts
 ##\brief Restarts given interface using ifdown/ifup/ifconfig
 
-PKG = 'pr2_hw_test_utilities'
 
 import wx
 import sys, subprocess, os
