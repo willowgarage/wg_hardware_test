@@ -35,7 +35,6 @@
 ##\author Kevin Watts
 ##\brief Kills ROS processes using kkill
 
-PKG = 'pr2_hw_test_utilities'
 
 import wx
 import sys, subprocess, os
