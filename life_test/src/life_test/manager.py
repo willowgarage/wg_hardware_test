@@ -45,7 +45,6 @@ import socket
 import os
 import sys
 import datetime
-import glob
 import wx
 import time
 import traceback
@@ -63,7 +62,7 @@ from test_param import *
 from test_bay import *
 from config_loader import * 
 
-from msg import TestInfoArray
+from pr2_self_test_msgs.msg import TestInfoArray
 
 from pr2_power_board.srv import PowerBoardCommand
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
