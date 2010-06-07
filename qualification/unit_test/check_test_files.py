@@ -49,7 +49,7 @@ class QualificationTestParser(unittest.TestCase):
     def setUp(self):
         self.test_files = {}
         descs = {}
-        self.tests_ok = load_tests_from_map(self.test_files, descs)
+        self.tests_ok = load_tests_from_map(self.test_files, descs, [])
 
         self.config_files = {}
         self.configs_ok = load_configs_from_map(self.config_files, descs)
