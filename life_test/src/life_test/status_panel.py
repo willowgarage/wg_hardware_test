@@ -46,7 +46,7 @@ import threading
 import math
 import os
 
-from msg import TestInfoArray, TestInfo
+from pr2_self_test_msgs.msg import TestInfoArray, TestInfo
 
 def get_duration_str(duration):
     hrs = max(math.floor(duration / 3600), 0)
