@@ -66,9 +66,9 @@ class TestManagerApp(wx.App):
 
         rospy.init_node("Test_Manager")
 
-        import life_test.ui
+        import life_test.manager
 
-        self._frame = life_test.ui.TestManagerFrame(None, debug)
+        self._frame = life_test.manager.TestManagerFrame(None, debug)
         self._frame.SetSize(wx.Size(1600, 1100))
         self._frame.Layout()
         self._frame.Centre()
