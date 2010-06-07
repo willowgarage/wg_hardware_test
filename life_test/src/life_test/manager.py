@@ -32,15 +32,14 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-## Author: Kevin Watts
+##\author Kevin Watts
+##\brief Test Manager main GUI/starting point
 
 PKG = 'life_test'
 import roslib
 roslib.load_manifest(PKG)
 
 import rospy
-#import roslaunch
-#import roslaunch.pmon
 
 import socket
 import os
@@ -58,7 +57,8 @@ import threading
 
 from invent_client.invent_client import Invent
 
-from life_test import *
+from test_monitor_panel import TestMonitorPanel
+
 from test_param import *
 from test_bay import *
 from config_loader import * 
@@ -471,7 +471,7 @@ class TestManagerFrame(wx.Frame):
         return tests_by_name[choice]
 
     def log(self, msg):
-        time_str = strftime("%m/%d/%Y %H:%M:%S: ", localtime(rospy.get_time()))
+        time_str = time.strftime("%m/%d/%Y %H:%M:%S: ", time.localtime(rospy.get_time()))
 
         self._current_log.append(time_str + msg)
         self.update_log_display()
@@ -480,7 +480,7 @@ class TestManagerFrame(wx.Frame):
         if not machine:
             machine = 'NONE'
 
-        time_str = strftime("%m/%d/%Y %H:%M:%S: ", localtime(rospy.get_time()))
+        time_str = time.strftime("%m/%d/%Y %H:%M:%S: ", time.localtime(rospy.get_time()))
 
         log_msg = time_str + 'Machine %s, Test %s. Message: %s' % (machine, test_name, message)
 

@@ -35,8 +35,10 @@
 ##\author Kevin Watts
 ##\brief Panel for starting, stopping and logging life tests 
 
+PKG = 'life_test'
+
 import roslib
-roslib.load_manifest('life_test')
+roslib.load_manifest(PKG)
 
 import sys, os, math, string
 import csv
@@ -55,10 +57,10 @@ from std_srvs.srv import * # Empty
 # Stuff from life_test package
 from pr2_self_test_msgs.msg import TestStatus
 from msg import TestInfo
+
 from test_param import TestParam, LifeTest
 from test_record import TestRecord
 
-import runtime_monitor
 from runtime_monitor.monitor_panel import MonitorPanel
 
 import smtplib
@@ -67,7 +69,6 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import Encoders
 
-import roslaunch
 from roslaunch_caller import roslaunch_caller 
         
 
