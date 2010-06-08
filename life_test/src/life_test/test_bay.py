@@ -32,10 +32,12 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# Author: Kevin Watts
+##\author Kevin Watts
 
-import roslib
-roslib.load_manifest('life_test')
+PKG = 'life_test'
+
+#import roslib
+#roslib.load_manifest(PKG)
 
 
 class FailedLoadError(Exception): pass
@@ -49,7 +51,8 @@ class TestRoom:
 
     def add_bay(self, bay):
         if self._bays.has_key(bay.name):
-            raise BayNameExistsError
+            raise BayNameExistsError("Bay %s already exists in room %s." % 
+                                     (bay.name, self.hostname))
         self._bays[bay.name] = bay
 
     def get_bay_names(self, need_power):
@@ -79,7 +82,7 @@ class TestBay:
             self.board = int(xml_doc.attributes['board'].value)
             self.breaker = int(xml_doc.attributes['breaker'].value)
             if self.breaker not in [0, 1, 2]:
-                raise FailedLoadError
+                raise FailedLoadError("Invalid power breaker. Must be [0, 1, 2]")
         else:
             self.board = None
             self.breaker = None
