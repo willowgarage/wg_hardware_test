@@ -35,6 +35,7 @@
 ##\author Kevin Watts
 ##\brief Panel for starting, stopping and logging life tests 
 
+from __future__ import with_statement
 PKG = 'life_test'
 
 import roslib
@@ -59,6 +60,7 @@ from pr2_self_test_msgs.msg import TestStatus, TestInfo
 
 from test_param import TestParam, LifeTest
 from test_record import TestRecord
+from writing_core import *
 
 from runtime_monitor.monitor_panel import MonitorPanel
 
@@ -152,7 +154,10 @@ class TestMonitorPanel(wx.Panel):
 
         self._log_ctrl = xrc.XRCCTRL(self._panel, 'test_log')
 
+
         self._test_log_window = xrc.XRCCTRL(self._panel, 'test_log_window')
+
+        ##\todo Remove this useless button
         self._send_log_button = xrc.XRCCTRL(self._panel, 'send_test_log_button')
         self._send_log_button.Bind(wx.EVT_BUTTON, self.on_send_test_log)
 
@@ -283,6 +288,7 @@ class TestMonitorPanel(wx.Panel):
         self._user_log.Clear()
         self._user_log.SetFocus()
 
+    ##\todo Remove features
     def on_send_test_log(self, event):
         names = wx.GetTextFromUser('Enter recipient names, separated by commas: NAME1,NAME2 (without "@willowgarage.com").', 'Enter recipient', '', self)
 
@@ -320,11 +326,31 @@ class TestMonitorPanel(wx.Panel):
                 self._manager.log_test_entry(self._test._name, self._bay.name, message)
             else:
                 self._manager.log_test_entry(self._test._name, 'None', message)
-            self.display_logs()
+            self._display_logs()
 
         if alert > 0:
             self.notify_operator(alert, msg)
 
+    ##\brief Displays logs on screen. Only update_test_record should be called
+    def _display_logs(self):
+        kys = dict.keys(self._current_log)
+        kys.sort()
+
+        log_str = ''
+        for ky in kys:
+            log_str += strftime("%m/%d/%Y %H:%M:%S: ", 
+                                localtime(ky)) + self._current_log[ky] + '\n'
+
+        self._log_ctrl.AppendText(log_str)
+
+        # Test log control in second panel
+        self._test_log_window.Freeze()
+        (x, y) = self._test_log_window.GetViewStart()
+        self._test_log_window.SetPage(self._record.write_log())
+        self._test_log_window.Scroll(x, y)
+        self._test_log_window.Thaw()
+
+        self._current_log = {}
 
     def calc_run_time(self):
         end_condition = self._end_cond_type.GetStringSelection()
@@ -373,28 +399,7 @@ class TestMonitorPanel(wx.Panel):
 
         self._invent_note_id = self._manager._invent_client.setNote(self._serial, note + stats, self._invent_note_id)
 
-    # Should also be in notifier classs
-    ##\todo Should tar this up and put both attachment together
-    def record_test_log(self):
-        try:
-            # Adds log csv to invent
-            if self._record.get_cum_time() == 0:
-                return # Don't log test that hasn't run
-                        
-            hrs_str = self._record.get_active_str()
-            note = "%s finished. Total active time: %s." % (self._test.get_name(), hrs_str)
 
-            f = open(self._record.csv_filename(), 'rb')
-            csv_file = f.read()
-            self._manager._invent_client.add_attachment(self._serial, 
-                                                        os.path.basename(self._record.csv_filename()), 
-                                                        'text/csv', csv_file, note)
-            f.close()
-            
-            summary_name = strftime("%Y%m%d_%H%M%S", localtime(self._record._start_time)) + '_summary.html'
-            self._manager._invent_client.add_attachment(self._serial, summary_name, 'text/html', self.make_html_test_summary(), note)
-        except Exception, e:
-            rospy.logerr('Unable to submit to invent. %s' % traceback.format_exc())
                                                 
         
     def start_timer(self):
@@ -570,7 +575,7 @@ class TestMonitorPanel(wx.Panel):
         remaining = self.calc_remaining()
         remain_str = "N/A" 
         if remaining < 10**6:
-            remain_str = self._record.get_duration_str(remaining)
+            remain_str = get_duration_str(remaining)
         self._done_time_ctrl.SetValue(remain_str)
 
         self._active_time_ctrl.SetValue(self._record.get_active_str())
@@ -590,25 +595,7 @@ class TestMonitorPanel(wx.Panel):
         self._power_disable_button.Enable(self.is_launched() and self._bay.board is not None)        
         
     
-    def display_logs(self):
-        kys = dict.keys(self._current_log)
-        kys.sort()
 
-        log_str = ''
-        for ky in kys:
-            log_str += strftime("%m/%d/%Y %H:%M:%S: ", 
-                                localtime(ky)) + self._current_log[ky] + '\n'
-
-        self._log_ctrl.AppendText(log_str)
-
-        # Test log control in second panel
-        self._test_log_window.Freeze()
-        (x, y) = self._test_log_window.GetViewStart()
-        self._test_log_window.SetPage(self.make_html_cycle_log_table())
-        self._test_log_window.Scroll(x, y)
-        self._test_log_window.Thaw()
-
-        self._current_log = {}
 
     def stop_if_done(self):
         remain = self.calc_remaining()
@@ -626,20 +613,18 @@ class TestMonitorPanel(wx.Panel):
             self._enable_controls()
         
     def status_callback(self, msg):
-        self._mutex.acquire()
-        self._status_msg = msg
-        self._mutex.release()
+        with self._mutex:
+            self._status_msg = msg
+
         wx.CallAfter(self.new_msg)
 
     def new_msg(self):
-        self._mutex.acquire()
+        with self._mutex:
+            level_dict = { 0: 'OK', 1: 'Warn', 2: 'Error', 3: 'Stale' }
 
-        level_dict = { 0: 'OK', 1: 'Warn', 2: 'Error', 3: 'Stale' }
-
-        test_level = self._status_msg.test_ok
-        test_msg = self._status_msg.message
-
-        self._mutex.release()
+            test_level = self._status_msg.test_ok
+            test_msg = self._status_msg.message
+            
 
         self._is_running = (self._status_msg.test_ok == 0)
         self._is_stale = False
@@ -851,6 +836,31 @@ class TestMonitorPanel(wx.Panel):
          except:
             rospy.logerr('Exception on reset test.\n%s' % traceback.format_exc())
       
+
+    # Should also be in notifier classs
+    ##\todo Should tar this up and put both attachment together
+    def record_test_log(self):
+        try:
+            # Adds log csv to invent
+            if self._record.get_cum_time() == 0:
+                return # Don't log test that hasn't run
+                        
+            hrs_str = self._record.get_active_str()
+            note = "%s finished. Total active time: %s." % (self._test.get_name(), hrs_str)
+
+            f = open(self._record.csv_filename(), 'rb')
+            csv_file = f.read()
+            self._manager._invent_client.add_attachment(self._serial, 
+                                                        os.path.basename(self._record.csv_filename()), 
+                                                        'text/csv', csv_file, note)
+            f.close()
+            
+            summary_name = strftime("%Y%m%d_%H%M%S", localtime(self._record._start_time)) + '_summary.html'
+            self._manager._invent_client.add_attachment(self._serial, summary_name, 'text/html', self.make_html_test_summary(), note)
+        except Exception, e:
+            rospy.logerr('Unable to submit to invent. %s' % traceback.format_exc())
+
+
     # 
     # Loggers and data processing -> Move to notifier class or elsewhere
     # Notifier class needs test record, that's it
@@ -914,30 +924,6 @@ class TestMonitorPanel(wx.Panel):
             return False
 
 
-    def make_html_cycle_log_table(self):
-        log_csv = csv.reader(open(self._record.csv_filename(), 'rb'))
-        
-        is_first = True
-
-        html = '<html>\n<table border="1" cellpadding="2" cellspacing="0">\n'
-        for row in log_csv:
-            html += '<tr>'
-            for val in row:  
-                if unicode(val).isnumeric():
-                    val = "%.2f" % float(val)
-                
-                if is_first:
-                    html += '<td><b>%s</b></td>' % val
-                else:
-                    html += '<td>%s</td>' % val
-
-            is_first = False
-            html += '</tr>\n'
-
-        html += '</table>\n</html>'
-
-        return html
-
     # Dump these into test_result class of some sort
     def make_html_test_summary(self, alert_msg = ''):
         html = '<html><head><title>Test Log: %s of %s</title>' % (self._test.get_name(), self._serial)
@@ -987,7 +973,7 @@ em { font-style:normal; font-weight: bold; }\
         # Make log table
         html += '<hr size="3">\n'
         html += '<H4>Test Log</H4>\n'
-        html += self._record.write_log()
+        html += self._record.write_summary_log()
 
         html += '<hr size="3">\n'
         html += '</body></html>'
@@ -996,31 +982,21 @@ em { font-style:normal; font-weight: bold; }\
 
     def make_test_info_table(self):
         html = '<table border="1" cellpadding="2" cellspacing="0">\n'
-        html += self.make_table_row(['Test Name', self._test.get_name()])
+        html += write_table_row(['Test Name', self._test.get_name()])
         if self._bay:
-            html += self.make_table_row(['Test Bay', self._bay])
-            html += self.make_table_row(['Machine', self._bay.machine])
-            html += self.make_table_row(['Powerboard', self._bay.board])
-            html += self.make_table_row(['Breaker', self._bay.breaker])
+            html += write_table_row(['Test Bay', self._bay])
+            html += write_table_row(['Machine', self._bay.machine])
+            html += write_table_row(['Powerboard', self._bay.board])
+            html += write_table_row(['Breaker', self._bay.breaker])
 
         
-        html += self.make_table_row(['Serial', self._serial])
-        html += self.make_table_row(['Test Type', self._test.get_type()])
-        html += self.make_table_row(['Launch File', self._test.get_launch_file()])
+        html += write_table_row(['Serial', self._serial])
+        html += write_table_row(['Test Type', self._test.get_type()])
+        html += write_table_row(['Launch File', self._test.get_launch_file()])
         html += '</table>\n'
 
         return html
 
 
-    ##\todo Move out of class
-    def make_table_row(self, lst, bold = False):
-        html = '<tr>'
-        for val in lst:
-            if bold:
-                html += '<td><b>%s</b></td>' % val
-            else:
-                html += '<td>%s</td>' % val
-        html += '</tr>\n'
-        return html
 
 

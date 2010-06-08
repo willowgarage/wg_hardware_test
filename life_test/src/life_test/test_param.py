@@ -32,6 +32,7 @@
 #
 
 ##\author Kevin Watts
+##\brief Test variables and parameters container classes
 
 PKG = 'life_test'
 import roslib
@@ -39,20 +40,11 @@ roslib.load_manifest(PKG)
 
 import rospy
 
-##\todo Move to common "notifier" or "writer" file
-def _write_table_row(lst, bold = False):
-    html = '<tr>'
-    for val in lst:
-        if bold:
-            html += '<td><b>%s</b></td>' % val
-        else:
-            html += '<td>%s</td>' % val
-        html += '</tr>\n'
-    return html
+from writing_core import *
 
 ##\brief Holds parameters, info for each life test
-##\todo Make some of these parameters optional
-class LifeTest:
+##\todo Make some of these parameters optional, initXml
+class LifeTest(object):
     def __init__(self, short_serial, test_name, short_name, 
                  duration, desc, test_type, launch_file, need_power, params):
         self._short_serial = short_serial
@@ -67,6 +59,11 @@ class LifeTest:
 
         self.need_power = need_power
 
+    @property
+    def params(self): 
+        """Get the parameters list. Read-only"""
+        return self._params
+
     def set_params(self, namespace):
         for param in self._params:
             param.set_namespace(namespace)
@@ -76,9 +73,10 @@ class LifeTest:
             return "%s %s" % (self._short, 
                                  serial[len(serial) - 3: 
                                         len(serial)])
-        # Or just return the short name and the trac ticket
+        # Or just return the short name
         return self._short
 
+    ##\todo Make properties
     def get_duration(self):
         return int(self._duration)
 
@@ -114,9 +112,9 @@ class LifeTest:
             return '<p>No test parameters defined.</p>\n'
 
         html = '<table border="1" cellpadding="2" cellspacing="0">\n'
-        html += _write_table_row(['Name', 'Value', 'Key', 'Description'], True)
+        html += write_table_row(['Name', 'Value', 'Key', 'Description'], True)
         for param in self._params:
-            html += _write_table_row([param._name, param._value, param._param_name, param._desc])
+            html += write_table_row([param._name, param._value, param._param_name, param._desc])
         html += '</table>\n'
 
         return html
@@ -126,7 +124,7 @@ class LifeTest:
 ## Parameters are ROS parameters, and are updated in test log
 ## Examples: cycle rate, joint torque, roll on/off
 ## Allows changes in test setup or implementation to be logged automatically
-class TestParam():
+class TestParam(object):
     def __init__(self, name, param_name, desc, val, rate):
         self._value = val
         self._desc = desc

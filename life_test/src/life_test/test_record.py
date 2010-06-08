@@ -45,22 +45,71 @@ import csv
 import os, sys, math
 
 import rospy
-from time import strftime, localtime
 
 from socket import gethostname
-#from test_param import TestParam, LifeTest
+
+from writing_core import *
+
+LOG_UPDATE = 7200 # Update log if no entries before this time
+
+class TestState(object):
+    """
+    Tracks state of running/stopped tests
+    """
+    def __init__(self, launched, running, stale, monitor_msg, note = ''):
+        self.launched = launched
+        self.running = running
+        self.stale = stale
+        self.monitor_msg = monitor_msg
+        self.note = note
 
 
+def _get_csv_header_lst(params):
+    hdr = [ 'Time', 'Status', 'Message', 'Elapsed', 'Cum. Time',
+            'Num. Halts', 'Num. Events' ]
 
-def _write_table_row(lst, bold = False):
-    html = '<tr>'
-    for val in lst:
-        if bold:
-            html += '<td><b>%s</b></td>' % val
-        else:
-            html += '<td>%s</td>' % val
-        html += '</tr>\n'
-    return html
+    for p in params:
+        if p.is_rate():
+            hdr.append('Cum. %s' % p.get_name())
+
+    hdr.append('Note')
+
+    return hdr
+
+
+class LogEntry(object):
+    """
+    Entry in test log. Gets written to CSV output file.
+    """
+    def __init__(self, stamp, elapsed, cum_time, status, message, params, halts, events, note):
+        self.stamp = stamp
+
+        self.status = status
+        self.message = message
+        self.params = params
+        self.note = note
+
+        # Time in seconds
+        self.elapsed = elapsed
+        self.cum_time = cum_time
+
+        self.halts = halts
+        self.events = events
+
+    def write_to_lst(self):
+        lst = [ format_localtime(self.stamp), self.status, self.message, 
+                get_duration_str(self.elapsed), 
+                get_duration_str(self.cum_time), self.halts, self.events ]
+ 
+        for p in self.params:
+            if p.is_rate():
+                lst.append(p.get_value() * self.cum_time)
+
+        lst.append(self.note)
+
+        return lst
+
+        
 
 ##\brief Updates CSV record with state changes for a test
 ##
@@ -78,20 +127,20 @@ class TestRecord:
         self._num_halts = 0
 
         self._serial = serial
-        self._test_name = test._name
+        self._test_name = test.get_name()
 
         self._test = test
 
-        self._log = {}
+        self._log_entries = []
+
         self._last_log_time = self._last_update_time
 
-
         self._cum_data = {}
-        for param in test._params:
+        for param in test.params:
             if param.is_rate():
                 self._cum_data[param.get_name()] = 0
 
-        csv_name = strftime("%Y%m%d_%H%M%S", localtime(self._start_time)) + '_' + \
+        csv_name = format_localtime(self._start_time) + '_' + \
             str(self._serial) + '_' + self._test_name + '.csv'
         csv_name = csv_name.replace(' ', '_').replace('/', '__')
 
@@ -102,7 +151,7 @@ class TestRecord:
         
         with open(self.log_file, 'ab') as f:
             log_csv = csv.writer(f)
-            log_csv.writerow(self._csv_header())
+            log_csv.writerow(_get_csv_header_lst(self._test.params))
 
     def get_elapsed(self):
         elapsed = rospy.get_time() - self._start_time
@@ -112,17 +161,10 @@ class TestRecord:
         return self._cum_seconds
 
     def get_active_str(self):
-        return self.get_duration_str(self._cum_seconds)
+        return get_duration_str(self._cum_seconds)
 
     def get_elapsed_str(self):
-         return self.get_duration_str(self.get_elapsed())
-
-    @staticmethod
-    def get_duration_str(duration):
-        hrs = max(math.floor(duration / 3600), 0)
-        min = max(math.floor(duration / 6), 0) / 10 - hrs * 60
-        
-        return "%dhr, %.1fm" % (hrs, min)
+         return get_duration_str(self.get_elapsed())
 
     # TODO
     def get_cycles(self, name = None):
@@ -134,6 +176,9 @@ class TestRecord:
 
     def get_cum_data(self):
         return self._cum_data
+
+    def update_state(self, st):
+        self.update(st.launched, st.running, st.stale, st.note, st.monitor_msg)
             
     ##\brief Updates test record with current state
     ##
@@ -145,14 +190,6 @@ class TestRecord:
     ##\param monitor_msg str : Message from Test Monitor
     ##\return (int, str) : int [0:OK, 1:Notify, 2:Alert]
     def update(self, launched, running, stale, note, monitor_msg):
-        if running and not launched:
-            rospy.logerr('Reported impossible state of running and not launched')
-            return 0, ''
-
-        if stale and running:
-            rospy.logerr('Reported impossible state of running and stale')
-            return 0, ''
-        
         # Something wrong here, cum seconds not updating
         d_seconds = 0
         if self._was_running and running:
@@ -193,7 +230,7 @@ class TestRecord:
             self._num_events += 1
 
         # Update cumulative parameters
-        for param in self._test._params:
+        for param in self._test.params:
             if param.is_rate():
                 self._cum_data[param.get_name()] += d_seconds * param.get_value()
 
@@ -201,45 +238,27 @@ class TestRecord:
         self._was_launched = launched
         self._last_update_time = rospy.get_time()
 
-        if alert or note != '' or  (running and self._last_log_time - rospy.get_time() > 7200):
-            self._write_csv_row(self._last_update_time, state, msg, note, monitor_msg)
-            self._log[rospy.get_time()] = msg + ' ' + note
+        # Update with alert, note or every two hours of run time
+        if alert > 0 or note != '' or  (running and self._last_log_time - rospy.get_time() > LOG_UPDATE):
+            entry = LogEntry(rospy.get_time(), self.get_elapsed(), self.get_cum_time(), 
+                             state, msg, self._test.params, self._num_halts, 
+                             self._num_events, note)
+
+            self._log_entries.append(entry)
+            self._write_csv_entry(entry)
             self._last_log_time = self._last_update_time
 
-        return alert, msg
 
-    def _csv_header(self):
-        header = [ 'Time', 'Status', 'Elapsed (s)', 'Cum. Time (s)']
-        
-        for param in self._test._params:
-            header.append(param.get_name())
-            if param.is_rate():
-                header.append('Cum. %s' % param.get_name())
-                self._cum_data[param.get_name()] = 0
-        
-        header.extend(['Num. Halts', 'Num Events', 'Monitor', 'Message'])
-        return header
+        return (alert, msg)
 
-    def _write_csv_row(self, update_time, state, msg, note, monitor_msg):
-        log_msg = msg + ' ' + note
-        log_msg = log_msg.replace(',', ';')
 
-        # Keep time machine readable?
-        time_str = strftime("%m/%d/%Y %H:%M:%S", localtime(update_time))
 
-        # Need to close this file?
+    ##\brief Writes data to CSV, and to log entries
+    def _write_csv_entry(self, entry):
         with open(self.log_file, 'ab') as f:
             log_csv = csv.writer(f)
-            
-            csv_row = [ time_str, state, self.get_elapsed(), self.get_cum_time() ]
-
-            for param in self._test._params:
-                csv_row.append(param.get_value())
-                if param.is_rate():
-                    csv_row.append(self._cum_data[param.get_name()])
-
-            csv_row.extend( [self._num_halts, self._num_events, monitor_msg, log_msg ])
-            log_csv.writerow(csv_row)
+             
+            log_csv.writerow(entry.write_to_lst())
 
       
     def csv_filename(self):
@@ -250,16 +269,16 @@ class TestRecord:
     ##\return str : HTML table 
     def write_table(self):
         html = '<table border="1" cellpadding="2" cellspacing="0">\n'
-        time_str = strftime("%m/%d/%Y %H:%M:%S", localtime(self._start_time))
-        html += _write_table_row(['Start Time', time_str])
-        html += _write_table_row(['Elapsed Time', self.get_elapsed_str()])
-        html += _write_table_row(['Active Time', self.get_active_str()])
+        time_str = format_localtime(self._start_time)
+        html += write_table_row(['Start Time', time_str])
+        html += write_table_row(['Elapsed Time', self.get_elapsed_str()])
+        html += write_table_row(['Active Time', self.get_active_str()])
         for ky in self.get_cum_data().keys():
             cum_name = "Cum. %s" % ky
-            html += _write_table_row([cum_name, self.get_cum_data()[ky]])        
+            html += write_table_row([cum_name, self.get_cum_data()[ky]])        
 
-        html += _write_table_row(['Num Halts', self._num_halts])
-        html += _write_table_row(['Num Alerts', self._num_events])
+        html += write_table_row(['Num Halts', self._num_halts])
+        html += write_table_row(['Num Alerts', self._num_events])
         html += '</table>\n'
 
         return html
@@ -267,21 +286,38 @@ class TestRecord:
     ##\brief Writes HTML table of test events and messages
     ##
     ##\return str : HTML table
-    def write_log(self):
-        if self._log is None or len(dict.keys(self._log)) == 0:
-            return '<p>No test log!</p>\n'
+    def write_summary_log(self):
+        if len(self._log_entries) == 0:
+            return '<p>No test log.</p>\n'
 
-        html = '<p>CSV location: %s on machine %s.</p>\n' % (self.csv_filename(), gethostname())
+        html = []
 
-        html += '<table border="1" cellpadding="2" cellspacing="0">\n'
-        html += '<tr><td><b>Time</b></td><td><b>Entry</b></td></tr>\n'
+        html.append('<table border="1" cellpadding="2" cellspacing="0">')
+        html.append(write_table_row(['Time', 'Entry'], True))
         
-        kys = dict.keys(self._log)
-        kys.sort()
-        for ky in kys:
-            time_str = strftime("%m/%d/%Y %H:%M:%S", localtime(ky))
-            html += _write_table_row([time_str, self._log[ky]])
-            
-        html += '</table>\n'
+        for entry in self._log_entries:
+            time_str = format_localtime(entry.stamp)
+            summary = entry.message + ' ' + entry.note
 
-        return html
+            html.append(write_table_row([time_str, summary]))
+            
+        html.append('</table>')
+
+        return '\n'.join(html)
+
+    ##\brief Writes full log to HTML table form
+    def write_log(self):
+        html = [ '<html>' ]
+
+        html.append('<table border="1" cellpadding="2" cellspacing="0">')
+        html.append(write_table_row(_get_csv_header_lst(self._test.params), True))
+
+        for entry in self._log_entries:
+            html.append(write_table_row(entry.write_to_lst()))
+
+        html.append('</table>')
+
+        html.append('</html>')
+
+        return '\n'.join(html)
+        
