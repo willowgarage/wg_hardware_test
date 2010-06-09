@@ -63,15 +63,7 @@ from test_record import TestRecord
 from writing_core import *
 
 from runtime_monitor.monitor_panel import MonitorPanel
-
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-from email import Encoders
-
 from roslaunch_caller import roslaunch_caller 
-        
 
 class TestMonitorPanel(wx.Panel):
     def __init__(self, parent, manager, test, serial):
@@ -82,26 +74,25 @@ class TestMonitorPanel(wx.Panel):
         self._mutex = threading.Lock()
 
         self._status_sub = None
-        self._diags = []
         
         # Set up test and loggers
         self._test = test
         self._serial = serial
         self._record = TestRecord(test, serial)
 
-        # Set up panel
+        # Test Data panel
         xrc_path = os.path.join(roslib.packages.get_pkg_dir('life_test'), 'xrc/gui.xrc')
 
         self._panel = xrc.XmlResource(xrc_path).LoadPanel(self, 'test_panel')
         self._test_desc = xrc.XRCCTRL(self._panel, 'test_desc')
-        self._test_desc.SetValue(self._test._desc)
+        self._test_desc.SetValue(self._test.desc)
 
         self._launch_button = xrc.XRCCTRL(self._panel, 'launch_test_button')
         self._launch_button.Bind(wx.EVT_BUTTON, self.start_stop_test)
         self._launch_button.SetToolTip(wx.ToolTip("Start and stop the test"))
 
         self._test_bay_ctrl = xrc.XRCCTRL(self._panel, 'test_bay_ctrl')
-        self._test_bay_ctrl.SetItems(self._manager.room.get_bay_names(self._test.needs_power()))
+        self._test_bay_ctrl.SetItems(self._manager.room.get_bay_names(self._test.needs_power))
         self._test_bay_ctrl.SetToolTip(wx.ToolTip("Select location of test"))
         
         # Set default start time based on test
@@ -109,18 +100,20 @@ class TestMonitorPanel(wx.Panel):
         self._end_cond_type_label = xrc.XRCCTRL(self._panel, 'duration_label')
         self._test_duration_ctrl = xrc.XRCCTRL(self._panel, 'test_duration_ctrl')
 
-        if self._test.get_duration() > 0:
+        if self._test.duration > 0:
             self._end_cond_type.SetStringSelection('Hours')
-            self._test_duration_ctrl.SetRange(0, max(168, self._test.get_duration())) # Week
-            self._test_duration_ctrl.SetValue(int(self._test.get_duration()))
+            self._test_duration_ctrl.SetRange(0, max(168, self._test.duration)) # Week
+            self._test_duration_ctrl.SetValue(int(self._test.duration))
         else:
             self._end_cond_type.SetStringSelection('Continuous')
             self._test_duration_ctrl.SetRange(0, 0) # Can't change limits
             self._test_duration_ctrl.SetValue(0)
 
+        # User sets Continuous, Hours, Minutes
         self._end_cond_type.Bind(wx.EVT_CHOICE, self.on_end_choice)
         self._end_cond_type.SetToolTip(wx.ToolTip("Select stop time"))
         
+        # Close panel down
         self._close_button = xrc.XRCCTRL(self._panel, 'close_button')
         self._close_button.Bind(wx.EVT_BUTTON, self.on_close)
         self._close_button.SetToolTip(wx.ToolTip("Close this test panel"))
@@ -128,13 +121,13 @@ class TestMonitorPanel(wx.Panel):
         self._status_bar = xrc.XRCCTRL(self._panel, 'test_status_bar')
         self._status_bar.SetToolTip(wx.ToolTip("Current status of this test"))
 
-        # Pause and reset
+        # Pause and reset buttons
         self._reset_button = xrc.XRCCTRL(self._panel, 'reset_motors_button')
-        self._reset_button.Bind(wx.EVT_BUTTON, self.on_reset_motors)
+        self._reset_button.Bind(wx.EVT_BUTTON, self.on_reset_test)
         self._reset_button.SetToolTip(wx.ToolTip("Resume test operation"))
 
         self._halt_button = xrc.XRCCTRL(self._panel, 'halt_motors_button')
-        self._halt_button.Bind(wx.EVT_BUTTON, self.on_halt_motors)
+        self._halt_button.Bind(wx.EVT_BUTTON, self.on_halt_test)
         self._reset_button.SetToolTip(wx.ToolTip("Pause test"))
 
         # Logs and operator input
@@ -153,15 +146,9 @@ class TestMonitorPanel(wx.Panel):
         self._active_time_ctrl.SetToolTip(wx.ToolTip("Total operating time of test"))
 
         self._log_ctrl = xrc.XRCCTRL(self._panel, 'test_log')
-
-
         self._test_log_window = xrc.XRCCTRL(self._panel, 'test_log_window')
 
-        ##\todo Remove this useless button
-        self._send_log_button = xrc.XRCCTRL(self._panel, 'send_test_log_button')
-        self._send_log_button.Bind(wx.EVT_BUTTON, self.on_send_test_log)
-
-        # Power control
+        # Power controls
         self._power_board_text = xrc.XRCCTRL(self._panel, 'power_board_text')
         self._power_board_text.SetBackgroundColour("White")
         self._power_board_text.SetValue("Test Not Running")
@@ -188,7 +175,7 @@ class TestMonitorPanel(wx.Panel):
 
         # Add runtime to the panel...
         self._notebook = xrc.XRCCTRL(self._panel, 'test_data_notebook')
-        wx.CallAfter(self.create_monitor)
+        wx.CallAfter(self._create_monitor)
 
         self._sizer = wx.BoxSizer(wx.HORIZONTAL)
         self._sizer.Add(self._panel, 1, wx.EXPAND)
@@ -215,8 +202,8 @@ class TestMonitorPanel(wx.Panel):
         # Timeout for etherCAT diagnostics, starts when test launched
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
-        self.last_message_time = rospy.get_time()
-        self.timeout_interval = 15.0
+        self._last_message_time = rospy.get_time()
+        self._timeout_interval = 30.0
         self._is_stale = True
 
         # Timeout for powerboard status, starts if power comes up
@@ -228,31 +215,24 @@ class TestMonitorPanel(wx.Panel):
         # Timer for invent logging
         self.invent_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_invent_timer, self.invent_timer)
-        self._last_invent_time = rospy.get_time()
         self.invent_timeout = 600
         self.invent_timer.Start(self.invent_timeout * 500)
         self._is_invent_stale = True
-        self._invent_note_id = None
- 
+
         self.update_controls()
        
 
-    def create_monitor(self):
+    def _create_monitor(self):
+        """
+        Loads runtime_monitor panel. Called after to make display work
+        """
         self._monitor_panel = MonitorPanel(self._notebook, 'empty_topic')
         self._monitor_panel.SetSize(wx.Size(400, 500))
         self._notebook.AddPage(self._monitor_panel, "Diagnostics")
+        self._notebook.ChangeSelection(0)
 
-    def __del__(self):
-        self.shutdown()
-
-    def shutdown(self):
-        if self.is_launched():
-            self.stop_test()
-
-        if self._status_sub is not None:
-            self._status_sub.unregister()
-        
-    def is_launched(self):
+    @property
+    def launched(self):
         return self._test_launcher is not None
 
     def on_end_choice(self, event = None):
@@ -268,7 +248,6 @@ class TestMonitorPanel(wx.Panel):
         self._test_duration_ctrl.SetValue(0)
         active_time = self._record.get_cum_time()
 
-        # Should probably add cycles back in somehow
         if choice == 'Hours':
             hrs = math.ceil((active_time / 3600))
             self._test_duration_ctrl.SetRange(hrs, 168) # Week
@@ -281,6 +260,25 @@ class TestMonitorPanel(wx.Panel):
             self._test_duration_ctrl.SetRange(0, 0) # Can't change limits
             self._test_duration_ctrl.SetValue(0)
 
+    def on_close(self, event):
+        try:
+            self.update_test_record('Closing down test.')
+            self.record_test_log()
+
+            if self._bay is not None:
+                self._manager.test_stop(self._bay)
+        except:
+            rospy.logerr('Exception on close: %s' % traceback.format_exc())
+
+        if self.launched:
+            self.stop_test()
+
+        if self._status_sub is not None:
+            self._status_sub.unregister()
+            self._status_sub = None
+
+        self._manager.close_tab(self._serial)
+
     def on_user_entry(self, event):
         entry = self._user_log.GetValue()
         msg = 'OPERATOR: ' + entry
@@ -288,48 +286,16 @@ class TestMonitorPanel(wx.Panel):
         self._user_log.Clear()
         self._user_log.SetFocus()
 
-    ##\todo Remove features
-    def on_send_test_log(self, event):
-        names = wx.GetTextFromUser('Enter recipient names, separated by commas: NAME1,NAME2 (without "@willowgarage.com").', 'Enter recipient', '', self)
-
-        names = names.split(',')
-        for name in names:
-            if name.find('@') < 0:
-                name = name + '@willowgarage.com'
-
-        self.notify_operator(3, 'Log Requested.', string.join(names, ','))
-
-    def on_close(self, event):
-        try:
-            self.update_test_record('Closing down test.')
-            self.update_invent()
-            self.record_test_log()
-            self.notify_operator(1, 'Closing.')
-            if self._bay is not None:
-                self._manager.test_stop(self._bay)
-        except:
-            rospy.logerr('Exception on close: %s' % traceback.format_exc())
-
-        self._manager.close_tab(self._serial)
-
     ##\brief Updates record, notifies operator if necessary
     def update_test_record(self, note = ''):
-        alert, msg = self._record.update(self.is_launched(), self._is_running, self._is_stale, 
+        alert, msg = self._record.update(self.launched, self._is_running, self._is_stale, 
                                          note, self._test_msg)
-
-        lst = [msg, note]
-        message = string.join(lst, ' ')
+        message = msg + ' ' + note
 
         if alert > 0 or note != '':
             self._current_log[rospy.get_time()] = message
-            if self._bay is not None:
-                self._manager.log_test_entry(self._test._name, self._bay.name, message)
-            else:
-                self._manager.log_test_entry(self._test._name, 'None', message)
             self._display_logs()
 
-        if alert > 0:
-            self.notify_operator(alert, msg)
 
     ##\brief Displays logs on screen. Only update_test_record should be called
     def _display_logs(self):
@@ -369,60 +335,31 @@ class TestMonitorPanel(wx.Panel):
     def calc_remaining(self):
         total_sec = self.calc_run_time()
         cum_sec = self._record.get_cum_time()
-    
+
         return total_sec - cum_sec
         
-
-    def on_invent_timer(self, event):
-        if rospy.get_time() - self._last_invent_time > self.invent_timeout and self.is_launched():
-            self.update_invent()
-        
-    def update_invent(self):
-        self.invent_timer.Start()
-
-        self._last_invent_time = rospy.get_time()
-
-        # Don't log anything if we haven't launched
-        if not self.is_launched() and not self._invent_note_id:
-            return
-
-        hrs_str = self._record.get_active_str()
-
-        stats = "Stats: Total active time %s." % (hrs_str)
-        
-        if self.is_launched() and self._is_running:
-            note = "Test running: %s. " % (self._test._name)
-        elif self.is_launched() and not self._is_running:
-            note = "%s is halted. " % self._test._name
-        else:
-            note = "%s finished. CSV name: %s. " % (self._test._name, os.path.basename(self._record.csv_filename()))
-
-        self._invent_note_id = self._manager._invent_client.setNote(self._serial, note + stats, self._invent_note_id)
-
-
-                                                
         
     def start_timer(self):
-        self.timer.Start(1000 * self.timeout_interval, True)
+        self.timer.Start(1000 * self._timeout_interval, True)
         
     def on_timer(self, event):
-        if not self.is_launched():
+        if not self.launched:
             return
 
-        interval = rospy.get_time() - self.last_message_time
+        interval = rospy.get_time() - self._last_message_time
         
         was_stale = self._is_stale
 
-        if interval > 300:  # 300 second timeout
+        if interval > 300:  # 300 second timeout before we mark stale
             # Make EtherCAT status stale
             self._is_running = False
             self._is_stale = True
 
             # Halt test if it goes stale, #4007
             if not was_stale:
-                self.on_halt_motors()
+                self.on_halt_test()
                 rospy.logerr('Halting test on machine %s. Update is stale for %d seconds' % (self._bay.name, int(interval)))
-                self.update_test_record('Halted test after no data received.')
+                self.update_test_record('Halted test after no data received for %d seconds.' % int(interval))
 
             self.update_controls(4)
             self.update_test_record()
@@ -433,12 +370,12 @@ class TestMonitorPanel(wx.Panel):
     def on_status_check(self):
         msg = TestInfo()
         msg.serial = str(self._serial)
-        msg.test_name = str(self._test._short)
-        if self.is_launched():
+        msg.test_name = str(self._test.short)
+        if self.launched:
             msg.test_status = int(self._stat_level)
             msg.bay_name = str(self._bay.name)
             msg.machine = str(self._bay.machine)
-            if self._bay.board is not None and self._test.needs_power():
+            if self._bay.board is not None and self._test.needs_power:
                 msg.board = self._bay.board
                 msg.breaker = self._bay.breaker
                 msg.power_status = self._power_stat
@@ -463,7 +400,7 @@ class TestMonitorPanel(wx.Panel):
         return msg        
 
     def _test_power_cmd(self):
-        if not self.is_launched():
+        if not self.launched:
             wx.MessageBox('Test is not launched. Unable to command power board', 'Test is not launched', wx.OK|wx.ICON_ERROR, self)
             return False
 
@@ -509,7 +446,7 @@ class TestMonitorPanel(wx.Panel):
 
     ##\brief Updates power board control with status
     def update_board(self, value, estop):
-        if not self.is_launched():
+        if not self.launched:
             return
 
         self._power_stat = value
@@ -544,7 +481,7 @@ class TestMonitorPanel(wx.Panel):
 
     ##\brief Updates test status bar
     def _update_status_bar(self, level, msg):        
-        if not self.is_launched():
+        if not self.launched:
             self._status_bar.SetValue("Launch to display status")
             self._status_bar.SetBackgroundColour("White")
         elif level == 0:
@@ -571,7 +508,6 @@ class TestMonitorPanel(wx.Panel):
         self._stat_level = level
         self._test_msg = msg
 
-        ##\todo FIX
         remaining = self.calc_remaining()
         remain_str = "N/A" 
         if remaining < 10**6:
@@ -583,20 +519,17 @@ class TestMonitorPanel(wx.Panel):
         
     ##\brief Set pause/reset and power buttons on or off
     def _enable_controls(self):
-        self._reset_button.Enable(self.is_launched())
-        self._halt_button.Enable(self.is_launched())
+        self._reset_button.Enable(self.launched)
+        self._halt_button.Enable(self.launched)
 
-        self._test_bay_ctrl.Enable(not self.is_launched())
-        self._close_button.Enable(not self.is_launched())
+        self._test_bay_ctrl.Enable(not self.launched)
+        self._close_button.Enable(not self.launched)
 
         # Power buttons
-        self._power_run_button.Enable(self.is_launched() and self._bay.board is not None)
-        self._power_standby_button.Enable(self.is_launched() and self._bay.board is not None)
-        self._power_disable_button.Enable(self.is_launched() and self._bay.board is not None)        
+        self._power_run_button.Enable(self.launched and self._bay.board is not None)
+        self._power_standby_button.Enable(self.launched and self._bay.board is not None)
+        self._power_disable_button.Enable(self.launched and self._bay.board is not None)        
         
-    
-
-
     def stop_if_done(self):
         remain = self.calc_remaining()
         
@@ -607,14 +540,16 @@ class TestMonitorPanel(wx.Panel):
 
         # Make sure we've had five consecutive seconds of 
         # negative time before we shutdown
-        if self._stop_count > 5 and not self._test_complete:
-            self._test_complete = True
+        if self._stop_count > 5 and not self._record.test_complete:
+            
+            self._record.complete_test()
             self.stop_test()
             self._enable_controls()
         
     def status_callback(self, msg):
         with self._mutex:
             self._status_msg = msg
+
 
         wx.CallAfter(self.new_msg)
 
@@ -624,7 +559,8 @@ class TestMonitorPanel(wx.Panel):
 
             test_level = self._status_msg.test_ok
             test_msg = self._status_msg.message
-            
+
+        self._last_message_time = rospy.get_time()            
 
         self._is_running = (self._status_msg.test_ok == 0)
         self._is_stale = False
@@ -635,36 +571,36 @@ class TestMonitorPanel(wx.Panel):
         self.update_test_record()
         self.stop_if_done()
 
-    ##\todo Use file, and set machine as an argument
     def make_launch_script(self, bay, script, local_diag_topic):
         # Set ROS_NAMESPACE ...
         os.environ['ROS_NAMESPACE'] = bay.name
 
         launch = '<launch>\n'
-        launch += '<group ns="%s" >' % bay.name
+        launch += '<group ns="%s" >\n' % bay.name
 
-        launch += '<param name="tf_prefix" type="string" value="%s" />' % bay.name
+        launch += '<param name="tf_prefix" type="string" value="%s" />\n' % bay.name
         # Remap
-        launch += '<remap from="/diagnostics" to="%s" />' % local_diag_topic
+        launch += '<remap from="/diagnostics" to="%s" />\n' % local_diag_topic
         
         # Init machine
         # Root on remote 
         launch += '<machine name="test_host_root" user="root" address="%s" ' % bay.machine
-        launch += 'ros-root="$(env ROS_ROOT)" ros-package-path="$(env ROS_PACKAGE_PATH)" timeout="15" default="never"/>'
+        launch += 'ros-root="$(env ROS_ROOT)" ros-package-path="$(env ROS_PACKAGE_PATH)" timeout="15" default="never"/>\n'
 
         # Set default to remote machine
         launch += '<machine name="test_host" address="%s" default="true" ' % bay.machine
-        launch += 'ros-root="$(env ROS_ROOT)" ros-package-path="$(env ROS_PACKAGE_PATH)" timeout="15"  />'
+        launch += 'ros-root="$(env ROS_ROOT)" ros-package-path="$(env ROS_PACKAGE_PATH)" timeout="15"  />\n'
         
         # Local host
         launch += '<machine name="localhost" address="localhost" '
-        launch += 'ros-root="$(env ROS_ROOT)" ros-package-path="$(env ROS_PACKAGE_PATH)" timeout="20" default="false"/>'
+        launch += 'ros-root="$(env ROS_ROOT)" ros-package-path="$(env ROS_PACKAGE_PATH)" timeout="20" default="false"/>\n'
 
         # Include our launch file
-        launch += '<include file="$(find life_test)/%s" />' % script
+        launch += '<include file="$(find life_test)/%s" />\n' % script
 
         # Rosrecord launches and records local diagnostics
-        launch += ' <node machine="localhost" pkg="rosrecord" type="rosrecord" args="-f /hwlog/%s_life_test /diagnostics -S 1000" name="test_logger" />' % self._serial
+        launch += ' <node machine="localhost" pkg="rosbag" type="rosbag" '
+        launch += 'args="record -o /hwlog/%s_life_test /diagnostics --split 1000" name="test_logger" />\n' % self._serial
         
         launch += '</group>\n</launch>'
 
@@ -675,7 +611,7 @@ class TestMonitorPanel(wx.Panel):
     # Add subscriber to diagnostics
     # Launch file, subscribe diagnostics
     def start_stop_test(self, event):
-        if self.is_launched():
+        if self.launched:
             if not self.stop_test_user():
                 return
         else:
@@ -695,7 +631,7 @@ class TestMonitorPanel(wx.Panel):
         return True
 
     def stop_test(self):
-        if self.is_launched():
+        if self.launched:
             self._launch_button.Enable(False)
             if self._bay.board is not None:
                 if not self._manager.power_disable(self._bay):
@@ -711,7 +647,7 @@ class TestMonitorPanel(wx.Panel):
             self._machine_text.SetValue("Not running")
             self._power_sn_text.SetValue("Not running")
             self._power_breaker_text.SetValue("Not running")
-            self.on_halt_motors(None)
+            self.on_halt_test(None)
             self._test_launcher.shutdown()
             self._manager.test_stop(self._bay)
             self.update_test_record('Stopping test launch')
@@ -721,6 +657,7 @@ class TestMonitorPanel(wx.Panel):
             self._launch_button.SetLabel("Launch")
             self.update_controls()
             self._bay = None
+            self._record.set_bay(None)
 
         if self._status_sub:
             self._status_sub.unregister()
@@ -749,6 +686,7 @@ class TestMonitorPanel(wx.Panel):
             return False
         
         self._bay = bay
+        self._record.set_bay(self._bay)
 
         if self._bay.board is not None:
             if not self._manager.power_run(self._bay):
@@ -759,7 +697,7 @@ class TestMonitorPanel(wx.Panel):
 
         # Machine, board stats
         self._machine_text.SetValue(self._bay.machine)
-        if self._bay.board is not None and self._test.needs_power():
+        if self._bay.board is not None and self._test.needs_power:
             self._power_sn_text.SetValue(str(self._bay.board))
             self._power_breaker_text.SetValue(str(self._bay.breaker))
             self._power_board_text.SetValue("No data")
@@ -784,13 +722,14 @@ class TestMonitorPanel(wx.Panel):
         rospy.set_param(self._bay.name, {})
         self._test.set_params(self._bay.name)
         self._test_launcher = roslaunch_caller.ScriptRoslaunch(
-            self.make_launch_script(self._bay, self._test.get_launch_file(), local_diag))
+            self.make_launch_script(self._bay, self._test.launch_file, local_diag))
         try:
             self._test_launcher.start()
         except Exception, e:
             traceback.print_exc()
             self._manager.test_stop(self._bay)
             self._bay = None
+            self._record.set_bay(None)
             self.update_test_record('Failed to launch script, caught exception.')
             self.update_test_record(traceback.format_exc())
             self._test_launcher.shutdown()
@@ -808,7 +747,6 @@ class TestMonitorPanel(wx.Panel):
 
         local_status = '/' + str(self._bay.name) + '/test_status'
         self._is_running = True
-        self.update_invent()
         self._monitor_panel.change_diagnostic_topic(local_diag)
 
         self.update_controls()
@@ -818,7 +756,7 @@ class TestMonitorPanel(wx.Panel):
         self._launch_button.SetLabel("Stop")
         return True
         
-    def on_halt_motors(self, event = None):
+    def on_halt_test(self, event = None):
         try:
             self.update_test_record('Pausing test.')
             halt_srv = rospy.ServiceProxy(self._bay.name + '/halt_test', Empty)
@@ -827,7 +765,7 @@ class TestMonitorPanel(wx.Panel):
         except Exception, e:
             rospy.logerr('Exception on halt test.\n%s' % traceback.format_exc())
 
-    def on_reset_motors(self, event = None):
+    def on_reset_test(self, event = None):
          try:
              self.update_test_record('Resetting test.')
              reset = rospy.ServiceProxy(self._bay.name + '/reset_test', Empty)
@@ -836,167 +774,12 @@ class TestMonitorPanel(wx.Panel):
          except:
             rospy.logerr('Exception on reset test.\n%s' % traceback.format_exc())
       
-
-    # Should also be in notifier classs
-    ##\todo Should tar this up and put both attachment together
+    # Called when test is closing down
     def record_test_log(self):
-        try:
-            # Adds log csv to invent
-            if self._record.get_cum_time() == 0:
-                return # Don't log test that hasn't run
-                        
-            hrs_str = self._record.get_active_str()
-            note = "%s finished. Total active time: %s." % (self._test.get_name(), hrs_str)
+        self._record.load_attachments(self._manager.invent_client)
 
-            f = open(self._record.csv_filename(), 'rb')
-            csv_file = f.read()
-            self._manager._invent_client.add_attachment(self._serial, 
-                                                        os.path.basename(self._record.csv_filename()), 
-                                                        'text/csv', csv_file, note)
-            f.close()
-            
-            summary_name = strftime("%Y%m%d_%H%M%S", localtime(self._record._start_time)) + '_summary.html'
-            self._manager._invent_client.add_attachment(self._serial, summary_name, 'text/html', self.make_html_test_summary(), note)
-        except Exception, e:
-            rospy.logerr('Unable to submit to invent. %s' % traceback.format_exc())
-
-
-    # 
-    # Loggers and data processing -> Move to notifier class or elsewhere
-    # Notifier class needs test record, that's it
-    # 
-    def get_test_team(self):
-        # HACK!!! Don't email everyone if it's debugging on NSF
-        if os.environ['USER'] == 'watts' and gethostname() == 'nsf':
-            return 'watts@willowgarage.com'
-
-        return 'test.team@lists.willowgarage.com'
-
-    def line_summary(self, msg):
-        if self._bay is not None:
-            machine_str = self._bay.name
-        else:
-            machine_str = 'NONE'
-        return "Test %s on bay %s. MSG: %s" % (self._test.get_title(self._serial), machine_str, msg)
-
-    def notify_operator(self, level, alert_msg, recipient = None):
-        # Don't notify if we haven't done anything
-        if self._record.get_cum_time() == 0 and not self.is_launched() and level == 1:
-            return
-
-        sender = 'test.notify@willowgarage.com'
-        if level == 2:
-            sender = 'test.alerts@willowgarage.com'
-        elif level == 3:
-            sender = 'test.reports@willowgarage.com'
-        
-        try:
-            if recipient is None:
-                recipient = self.get_test_team()
-
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = self.line_summary(alert_msg)
-            msg['From'] = sender
-            msg['To'] = recipient
-
-            msg.attach(MIMEText(self.make_html_test_summary(alert_msg), 'html'))
-            
-            log_csv = open(self._record.csv_filename(), 'rb')
-            log_data = log_csv.read()
-            log_csv.close()
-
-            part = MIMEBase('application', 'octet-stream')
-            part.set_payload(log_data)
-            Encoders.encode_base64(part)
-            part.add_header('Content-Disposition', 'attachment; filename="%s"' 
-                            % os.path.basename(self._record.csv_filename()))
-            
-            msg.attach(part)
-
-            s = smtplib.SMTP('localhost')
-            s.sendmail(sender, recipient, msg.as_string())
-            s.quit()
-
-            return True
-        except Exception, e:
-            rospy.logwarn('Unable to send mail! %s' % traceback.format_exc())
-            self.update_test_record('Warning: Unable to send mail!')
-            return False
-
-
-    # Dump these into test_result class of some sort
-    def make_html_test_summary(self, alert_msg = ''):
-        html = '<html><head><title>Test Log: %s of %s</title>' % (self._test.get_name(), self._serial)
-        html += '<style type=\"text/css\">\
-body { color: black; background: white; }\
-div.error { background: red; padding: 0.5em; border: none; }\
-div.warn { background: orange: padding: 0.5em; border: none; }\
-div.pass { background: green; padding: 0.5em; border: none; }\
-strong { font-weight: bold; color: red; }\
-em { font-style:normal; font-weight: bold; }\
-</style>\
-</head>\n<body>\n'
-
-        html += '<H2 align=center>Test Log: %s of %s</H2>\n' % (self._test.get_name(), self._serial)
-        
-        if alert_msg != '':
-            html += '<H3>Alert: %s</H3><br>\n' % alert_msg
-
-        if self._test_complete:
-            html += '<H3>Test Complete</H3>\n'
-        else:
-            if self.is_launched() and not self._is_running:
-                html += '<H3>Test Status: Launched, Halted</H3>\n'
-            elif self.is_launched() and self._is_running:
-                html += '<H3>Test Status: Launched, Running</H3>\n'
-            else:
-                html += '<H3>Test Status: Shutdown</H3>\n'
-
-        html += '<H4>Current Message: %s</H4>\n' % str(self._test_msg)
-
-        # Table of test bay, etc
-        html += '<hr size="3">\n'
-        html += '<H4>Test Info</H4>\n'
-        html += '<p>Description: %s</p>\n<br>' % self._test._desc
-        html += self.make_test_info_table()
-
-        # Parameter table
-        html += '<hr size="3">\n'
-        html += '<H4>Test Parameters</H4>\n'
-        html += self._test.make_param_table()
-
-        # Make final results table
-        html += '<hr size="3">\n'
-        html += '<H4>Test Results</H4>\n'
-        html += self._record.write_table()
-        
-        # Make log table
-        html += '<hr size="3">\n'
-        html += '<H4>Test Log</H4>\n'
-        html += self._record.write_summary_log()
-
-        html += '<hr size="3">\n'
-        html += '</body></html>'
-
-        return html
-
-    def make_test_info_table(self):
-        html = '<table border="1" cellpadding="2" cellspacing="0">\n'
-        html += write_table_row(['Test Name', self._test.get_name()])
-        if self._bay:
-            html += write_table_row(['Test Bay', self._bay])
-            html += write_table_row(['Machine', self._bay.machine])
-            html += write_table_row(['Powerboard', self._bay.board])
-            html += write_table_row(['Breaker', self._bay.breaker])
+    def on_invent_timer(self, event):
+        self._record.update_invent(self._manager.invent_client)
 
         
-        html += write_table_row(['Serial', self._serial])
-        html += write_table_row(['Test Type', self._test.get_type()])
-        html += write_table_row(['Launch File', self._test.get_launch_file()])
-        html += '</table>\n'
-
-        return html
-
-
-
-
+        

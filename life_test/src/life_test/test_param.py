@@ -60,15 +60,48 @@ class LifeTest(object):
         self.need_power = need_power
 
     @property
+    def short(self):
+        return self._short
+
+    @property
+    def desc(self):
+        """Get description of test"""
+        return self._desc
+
+    @property
     def params(self): 
         """Get the parameters list. Read-only"""
         return self._params
 
+    @property
+    def duration(self): return self._duration
+
+    @property
+    def name(self): return self._name
+
+    @property
+    def type(self): return self._test_type
+
+    @property
+    def needs_power(self):
+        return self.need_power
+    
+    @property
+    def launch_file(self):
+        return self._launch_script
+
     def set_params(self, namespace):
+        """
+        Sets parameters in given namespace
+        """
         for param in self._params:
             param.set_namespace(namespace)
 
+
     def get_title(self, serial):
+        """
+        Return a human readable title of the test/item. Used as tab name
+        """
         if len(serial) == 12: # Take last few digits of SN to ID part
             return "%s %s" % (self._short, 
                                  serial[len(serial) - 3: 
@@ -76,24 +109,12 @@ class LifeTest(object):
         # Or just return the short name
         return self._short
 
-    ##\todo Make properties
-    def get_duration(self):
-        return int(self._duration)
 
-    def get_name(self):
-        return self._name
-
-    def get_type(self):
-        return self._test_type
-    def get_launch_file(self):
-        return self._launch_script
-
-
-    def needs_power(self):
-        return self.need_power
-
-    ##\brief Called during unit testing only.
     def validate(self):
+        """
+        ##\brief Called during unit testing only. Checks all files exist, are valid
+
+        """
         import os, sys
 
         full_path = os.path.join(roslib.packages.get_pkg_dir(PKG), self._launch_script)
@@ -108,6 +129,9 @@ class LifeTest(object):
         return True
 
     def make_param_table(self):
+        """
+        Writes parameters to HTML table form for logging
+        """
         if len(self._params) == 0:
             return '<p>No test parameters defined.</p>\n'
 
@@ -139,20 +163,19 @@ class TestParam(object):
         self._namespace = ns
         rospy.set_param('/' + self._namespace + '/' + self._param_name, self._value)
 
-    def get_namespace(self):
-        return self._namespace
-
-    def get_value(self):
+    @property
+    def value(self):
         try:
             val = float(self._value)
             return val
         except:
             return str(self._value)
 
-    def get_name(self):
-        return self._name
+    @property
+    def name(self): return self._name
 
-    def is_rate(self):
+    @property
+    def rate(self):
         return self._cumulative
 
 

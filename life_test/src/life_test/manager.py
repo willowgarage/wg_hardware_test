@@ -56,8 +56,8 @@ import threading
 
 from invent_client.invent_client import Invent
 
+# Package imports
 from test_monitor_panel import TestMonitorPanel
-
 from test_param import *
 from test_bay import *
 from config_loader import * 
@@ -143,6 +143,9 @@ class TestManagerFrame(wx.Frame):
     def __del__(self):
         self.shutdown()
 
+    @property
+    def invent_client(self):
+        return self._invent_client
 
     def on_info_timer(self, event):
         array = TestInfoArray()
@@ -168,9 +171,6 @@ class TestManagerFrame(wx.Frame):
         
     ##\brief Look for known power boards in diagnostics, update panels
     ##
-    ##\todo This is causing deadlocks. Added timeout, see if it helps.
-    ## Josh suggested try/except block in case exception is causing problem. Will see
-    ## if that helps.
     def _new_diag(self):
         timeout = 0.5
         start = rospy.get_time()
@@ -241,27 +241,23 @@ class TestManagerFrame(wx.Frame):
         idx = self._active_serials.index(serial)
 
         if self._tab_ctrl.DeletePage(idx + 1):
-            #self._test_panels[serial].shutdown()
             del self._test_panels[serial]
             del self._active_serials[idx]
-        
-    ##\todo Needs to be fixed to only load boards for tests that need it.
+
     def test_start_check(self, bay, serial):
         if bay in self._active_bays:
             return False
-        else:
-            self._active_bays.append(bay)
 
-            if bay.board is not None:
-                if not self._active_boards.has_key(bay.board):
-                    self._active_boards[bay.board] = {}
-                self._active_boards[bay.board][bay.breaker] = serial
+        self._active_bays.append(bay)
 
-            if bay.board is not None and self._power_node is None:
-                self._power_node = roslaunch_caller.ScriptRoslaunch('<launch><node pkg="pr2_power_board" type="power_node" name="power_board" /></launch>')
-                self._power_node.start()
+        if bay.board is not None:
+            self._active_boards.setdefault(bay.board, {})[bay.breaker] = serial
 
-            return True
+        if bay.board is not None and self._power_node is None:
+            self._power_node = roslaunch_caller.ScriptRoslaunch('<launch><node pkg="pr2_power_board" type="power_node" name="power_board" /></launch>')
+            self._power_node.start()
+
+        return True
 
     def test_stop(self, bay):
         if bay in self._active_bays:

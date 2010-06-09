@@ -968,7 +968,7 @@
 											<flag>wxALL</flag>
 											<border>5</border>
 											<object class="wxStaticText" name="m_staticText161">
-												<label>Test Log as CSV</label>
+												<label>Test Event Log</label>
 											</object>
 										</object>
 										<object class="spacer">
@@ -976,15 +976,6 @@
 											<flag>wxEXPAND</flag>
 											<border>5</border>
 											<size>0,0</size>
-										</object>
-										<object class="sizeritem">
-											<option>0</option>
-											<flag>wxALL</flag>
-											<border>5</border>
-											<object class="wxButton" name="send_test_log_button">
-												<label>Email Test Log</label>
-												<default>0</default>
-											</object>
 										</object>
 									</object>
 								</object>
