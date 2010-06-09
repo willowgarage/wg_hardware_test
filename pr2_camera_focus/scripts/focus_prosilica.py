@@ -34,10 +34,10 @@
 
 ##\author Blaise Gassend
 ##\brief Displays prosilica focus on gnuplot window
-##\TODO Move to camera_focus
 
+PKG = 'pr2_camera_focus'
 import roslib
-roslib.load_manifest('camera_focus')
+roslib.load_manifest(PKG)
 import sys
 import rospy
 import cv

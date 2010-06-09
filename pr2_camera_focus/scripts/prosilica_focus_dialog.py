@@ -32,7 +32,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-PKG = 'camera_focus'
+PKG = 'pr2_camera_focus'
 import roslib
 roslib.load_manifest(PKG)
 import wx

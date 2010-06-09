@@ -6,7 +6,7 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <depend package="rospy" />
-  <depend package="camera_focus" />
+  <depend package="pr2_camera_focus" />
   <depend package="std_msgs" />
   <depend package="pr2_msgs" />
   <depend package="fingertip_pressure" />
@@ -28,7 +28,6 @@
   <depend package="cv_bridge" />
   <depend package="rxtools" />
   <depend package="image_view" />
-  <depend package="camera_focus" />
   <depend package="image_proc" />
   <depend package="prosilica_camera" />
   <depend package="pr2_component_descriptions" />
