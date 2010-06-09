@@ -488,17 +488,17 @@ class TestMonitorPanel(wx.Panel):
             self._status_bar.SetValue("Test Running: OK")
             self._status_bar.SetBackgroundColour("Light Green")
         elif level == 1:
-            self._status_bar.SetValue("Test Warning: %s" % msg)
+            self._status_bar.SetValue("Warning: %s" % msg)
             self._status_bar.SetBackgroundColour("Orange")
         elif level == 2:
-            self._status_bar.SetValue("Error in Test Monitor: %s" % msg)
+            self._status_bar.SetValue("Error: %s" % msg)
             self._status_bar.SetBackgroundColour("Red")
         elif level == 3:
-            self._status_bar.SetValue("Test Monitor reports stale: %s" % msg)
+            self._status_bar.SetValue("Stale Reported: %s" % msg)
             self._status_bar.SetBackgroundColour("Light Blue")
         else:
             self._status_bar.SetBackgroundColour("Light Blue")
-            self._status_bar.SetValue("Test Monitor Stale")        
+            self._status_bar.SetValue("Test Monitor: No Updates/Stale")        
 
     ##\brief Called after status message or timer callback
     def update_controls(self, level = 4, msg = 'None'):
