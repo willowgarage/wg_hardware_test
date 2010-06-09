@@ -51,7 +51,7 @@ import threading
 
 from robot_monitor.robot_monitor_panel import State
 
-
+from pr2_hw_listener import PR2HWListenerBase
 
 class DiagAggState(State):
     def __init__(self, ignore_categories = []):
@@ -99,7 +99,7 @@ class DiagAggState(State):
             
         return level, msgs
 
-class DiagAggListener:
+class DiagAggListener(PR2HWListenerBase):
     def __init__(self):
         self._mutex = threading.Lock()
 
@@ -118,9 +118,6 @@ class DiagAggListener:
         self._diag_agg_sub = rospy.Subscriber('/diagnostics_agg', DiagnosticArray, self._diag_callback)
 
         return True
-
-    def halt(self):
-        pass
 
     def reset(self):
         # Clears state of messages that were in error or warning

@@ -36,8 +36,9 @@
 ##\author Kevin Watts
 ##\brief Loads listeners, monitors status of PR2 hardware tests
 
-PKG = 'pr2_hardware_test_monitor'
+from __future__ import with_statement
 
+PKG = 'pr2_hardware_test_monitor'
 import roslib
 roslib.load_manifest(PKG)
 
@@ -50,36 +51,27 @@ from std_srvs.srv import *
 import std_msgs.msg
 
 import traceback
+import threading
 import sys
 
-TIMEOUT = 60 # If no heartbeat, shut down
-IGNORE_TIME = 30 # Ignore status for first few seconds
+HEARTBEAT_TIMEOUT = 60 # If no heartbeat, shut down
+IGNORE_TIME = 30 # Allow errors for the first few seconds (grace period)
 
-##\brief Base class for PR2 hardware listeners
-class PR2HWListener(object):
-    def __init__(self):
-        pass
-    def create(self, params):
-        return True
-    def halt(self):
-        pass
-    def reset(self):
-        pass
-    def check_ok(self):
-        return 0, '', None
-
-##\brief Loads listener from parameters
-##
-##\param params dict : Must have "type", "file". "pkg" is optional
-##\param listeners [] : Newly created listener is appended
-##\return bool : True if listener created successfully
 def create_listener(params, listeners):
+    """
+    @brief Loads listener from parameters
+    
+    @param params {} : Must have "type", "file". "pkg" is optional
+    @param listeners [] : Newly created listener is appended 
+    @return bool : True if listener created successfully
+    """
     if not (params.has_key('type') and params.has_key('file')):
         rospy.logerr('Params "type" and "file" weren\'t found!')
         return False
     
     file = params['file']
     type = params['type']
+    ##\todo Fix this
     #pkg = params['pkg'] if params.has_key('pkg') else PKG
     pkg = PKG
 
@@ -89,7 +81,7 @@ def create_listener(params, listeners):
         pypkg = sys.modules[import_str]
         listener_type = getattr(pypkg, type)
     except:
-        rospy.logerr('Couldn\'t load listener MYPKG.%s.%s from %s.\n\nException: %s' % (pkg, type, file, traceback.format_exc()))
+        rospy.logerr('Couldn\'t load listener %s from %s.%s.\n\nException: %s' % (type, pkg, file, traceback.format_exc()))
         return False
     
     try:
@@ -104,16 +96,29 @@ def create_listener(params, listeners):
     listeners.append(listener)
     return True
 
-class StatusData:
-    __slots__ = ['level', 'messages', 'array']
-    def __init__(self):
-        self.level = TestStatus.RUNNING
-        self.messages = []
-        self.array = DiagnosticArray()
+def _make_message(level, warnings, errors):
+    """
+    Write status message with warnings and errors
+    """
+    if level == 0:
+        return 'OK'
+    if level == TestStatus.WARNING:
+        return ', '.join(warnings)
+    if level > TestStatus.WARNING:
+        if len(errors + warnings) > 0:
+            return ', '.join(errors + warnings)
+        else:
+            return 'Error'
 
 class TestMonitor:
+    """
+    TestMonitor class loads listeners, and polls them to check for status updates on the test
+
+    """
     def __init__(self):
         self._listeners = []
+
+        self._mutex = threading.Lock()
 
         my_params = rospy.get_param("~")
 
@@ -124,40 +129,56 @@ class TestMonitor:
                 rospy.logerr('Listener failed to initialize. Namespace: %s' % ns)
                 self._listeners_ok = False
 
+        # Clear initial state of test monitor
+        self._reset_state()
 
         self._status_pub = rospy.Publisher('test_status', TestStatus)
         self._diag_pub = rospy.Publisher('/diagnostics', DiagnosticArray)
 
-        self.reset_srv = rospy.Service('reset_test', Empty, self.reset_test)
-        self.halt_srv = rospy.Service('halt_test', Empty, self.halt_test)
+        self.reset_srv = rospy.Service('reset_test', Empty, self._reset_test)
+        self.halt_srv = rospy.Service('halt_test', Empty, self._halt_test)
 
         self._heartbeat_time = rospy.get_time()
-        self._heartbeat_sub = rospy.Subscriber('/heartbeat', std_msgs.msg.Empty, self.on_heartbeat)
-        self._heartbeat_halted = False
+        self._heartbeat_sub = rospy.Subscriber('/heartbeat', std_msgs.msg.Empty, self._on_heartbeat)
 
-        self._was_ok = True
-        self._start_time = rospy.get_time() # Ignore failures for a bit after start
 
+    @property
     def init_ok(self):
+        """
+        Returns whether the monitor initialized correctly. Used in unit tests.
+        """
         return len(self._listeners) > 0 and self._listeners_ok
 
-    def on_heartbeat(self, msg):
+    def _on_heartbeat(self, msg):
         self._heartbeat_time = rospy.get_time()
 
-    def reset_test(self, srv):
+    def _reset_state(self):
+        """
+        Reset state of monitor for startup or on reset
+        """
         self._heartbeat_halted = False
         self._was_ok = True
         self._start_time = rospy.get_time()
 
-        for listener in self._listeners:
-            try:
-                listener.reset()
-            except:
-                rospy.logerr('Listener failed to reset!')
+        # Clear error/warning conditions
+        self._errors = []
+        self._latched_lvl = TestStatus.RUNNING
+
+    def _reset_test(self, srv):
+        with self._mutex:
+            self._reset_state()
+
+            for listener in self._listeners:
+                try:
+                    listener.reset()
+                except:
+                    rospy.logerr('Listener failed to reset!')
+
         return EmptyResponse()
 
-    def halt_test(self, srv):
-        self._halt_listeners()
+    def _halt_test(self, srv):
+        with self._mutex:
+            self._halt_listeners()
 
         return EmptyResponse()
 
@@ -169,8 +190,11 @@ class TestMonitor:
                 rospy.logerr('Listener failed to halt!')
 
     def _check_status(self):
-        stat_data = StatusData()
-        
+        level = TestStatus.RUNNING
+        array = DiagnosticArray()
+        warnings = []
+        errors = []
+
         for listener in self._listeners:
             try:
                 lvl, msg, diags = listener.check_ok()
@@ -178,50 +202,77 @@ class TestMonitor:
                 rospy.logerr('Listener failed to check status. %s' % traceback.format_exc())
                 stat, msg, diags = (TestStatus.ERROR, 'Error', None)
 
-            stat_data.level = max(stat_data.level, lvl)
+            level = max(level, lvl)
             if msg is not None and msg != '':
-                stat_data.messages.append(msg)
+                if lvl == TestStatus.WARNING:
+                    warnings.append(msg)
+                if lvl > TestStatus.WARNING:
+                    errors.append(msg)
             if diags is not None:
-                stat_data.array.status.extend(diags)
+                array.status.extend(diags)
         
         if len(self._listeners) == 0:
-            stat_data.level = TestStatus.STALE
-            stat_data.messages = [ 'No listeners' ]
-            return stat_data
+            level = TestStatus.STALE
+            errors = [ 'No listeners' ]
+            return level, array
 
         if not self._listeners_ok:
-            stat_data.level = TestStatus.ERROR
-            stat_data.messages = [ 'Listener Startup Error' ]
+            level = TestStatus.ERROR
+            errors = [ 'Listener Startup Error' ]
 
-        if rospy.get_time() - self._start_time > IGNORE_TIME and (self._was_ok and stat_data.level > 1):
+        # Check if grace period
+        grace_period = rospy.get_time() - self._start_time < IGNORE_TIME
+
+        # Halt for any errors received
+        if not grace_period and \
+                (self._was_ok and level > TestStatus.WARNING):
             self._halt_listeners()
-            rospy.logerr('Halted test after failure. Failure message: %s' % ', '.join(stat_data.messages))
+            rospy.logerr('Halted test after failure. Failure message: %s' % ', '.join(errors))
             self._was_ok = False
             
-
-        if not self._heartbeat_halted and rospy.get_time() - self._heartbeat_time > TIMEOUT:
+        if not self._heartbeat_halted and rospy.get_time() - self._heartbeat_time > HEARTBEAT_TIMEOUT:
             rospy.logerr('No heartbeat from Test Manager received, halting test')
             self._halt_listeners()
             self._heartbeat_halted = True
 
-
         if self._heartbeat_halted:
-            stat_data.status = TestStatus.STALE
-            stat_data.messages = ['No heartbeat']
-            
-        return stat_data
+            level = TestStatus.STALE
+            errors = [ 'No heartbeat' ]
+
+        # Latch all error levels
+        if not grace_period and level > TestStatus.WARNING:
+            self._latched_lvl = max(self._latched_lvl, level)
+            level = self._latched_lvl
+
+        # Latch all error messages
+        if not grace_period and len(errors) > 0:
+            for err in errors:
+                if not err in self._errors:
+                    self._errors.append(err)
+
+        if not grace_period:
+            # Make message based on latched status
+            message = _make_message(self._latched_lvl, warnings, self._errors)
+            return self._latched_lvl, message, array
+
+        # Make message based on our current status
+        message = _make_message(level, warnings, errors)
+        return level, message, array
+
+
 
     def publish_status(self):
-        stat_data = self._check_status()
+        """
+        Called at 1Hz. Polls listeners, publishes diagnostics, test_status.
+        """
+        level, message, array = self._check_status()
 
-        if len(stat_data.array.status) > 0:
-            stat_data.array.header.stamp = rospy.get_rostime()
-            self._diag_pub.publish(stat_data.array)
+        if len(array.status) > 0:
+            array.header.stamp = rospy.get_rostime()
+            self._diag_pub.publish(array)
 
         test_stat = TestStatus()
-        test_stat.test_ok = int(stat_data.level)
-        test_stat.message = ', '.join(stat_data.messages)
-        if test_stat.test_ok == TestStatus.RUNNING:
-            test_stat.message = 'OK'
+        test_stat.test_ok = int(level)
+        test_stat.message = message
 
         self._status_pub.publish(test_stat)

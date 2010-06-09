@@ -48,31 +48,55 @@ import rospy
 
 import threading
 
-class EthercatListener:
+from pr2_hw_listener import PR2HWListenerBase
+
+class EthercatListener(PR2HWListenerBase):
     def __init__(self):
         self._mutex = threading.Lock()
 
         self._cal = False
         self._ok = True
         self._update_time = -1
+
+    def create(self, params):
+       # Give it 10 seconds to start up
+        try:
+            rospy.wait_for_service('pr2_etherCAT/halt_motors', 10)
+            self._srv_ok = True
+        except:
+            self._srv_ok = False
+            rospy.logerr('Unable to find halt motors service. Unable to initialize ethercat listener')
+            return False
+
         self._reset_motors = rospy.ServiceProxy('pr2_etherCAT/reset_motors', Empty)
 
+        self._halt_motors = rospy.ServiceProxy('pr2_etherCAT/halt_motors', Empty)
+
         # Make this persistent in case the master goes down
-        self._halt_motors = rospy.ServiceProxy('pr2_etherCAT/halt_motors', Empty, persistent = True)
+        self._halt_motors2 = rospy.ServiceProxy('pr2_etherCAT/halt_motors', Empty, persistent = True)
 
         self._diag_sub = rospy.Subscriber('pr2_etherCAT/motors_halted', Bool, self._motors_cb)
 
         self._cal_sub = rospy.Subscriber('calibrated', Bool, self._cal_cb)
 
-    # Doesn't do anything
-    def create(self, params):
         return True
 
+    # Try twice to halt motors, using persistant service for one try
     def halt(self):
         try:
             self._halt_motors()
-        except:
-            rospy.logerr('Unable to halt motors. pr2_etherCAT may have died')
+            self._halt_motors2()
+
+        except Exception, e:
+            try:
+                # Redo, with new persistent service
+                self._halt_motors2 = rospy.ServiceProxy('pr2_etherCAT/halt_motors', Empty, persistent = True)
+                self._halt_motors2()
+
+                return
+            except Exception, e:
+                rospy.logerr('Unable to halt motors. pr2_etherCAT may have died')
+                
 
     def reset(self):
         try:
