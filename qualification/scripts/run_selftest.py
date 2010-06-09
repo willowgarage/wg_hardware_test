@@ -57,7 +57,7 @@ class EmptyReferenceID(Exception): pass
 class SelfTestFailed(Exception): pass
 
 def add_reference(reference):
-    from invent_client.invent_client import Invent
+    from wg_invent_client import Invent
     username = rospy.get_param('/invent/username', '')
     password = rospy.get_param('/invent/password', '')
     serial = rospy.get_param('/qual_item/serial', None)

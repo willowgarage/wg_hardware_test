@@ -50,8 +50,7 @@ import traceback
 
 from pr2_self_test_msgs.srv import ConfirmConf, ConfirmConfRequest, ConfirmConfResponse, ScriptDone, ScriptDoneRequest
 
-import invent_client.invent_client
-from invent_client.invent_client import Invent
+from wg_invent_client import Invent
 
 prog_path = os.path.join(roslib.packages.get_pkg_dir(PKG), "fwprog")
 

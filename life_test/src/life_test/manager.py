@@ -54,21 +54,20 @@ from wx import html
 
 import threading
 
-from invent_client.invent_client import Invent
-
 # Package imports
 from test_monitor_panel import TestMonitorPanel
 from test_param import *
 from test_bay import *
 from config_loader import * 
 
+# Messages / Services
 from pr2_self_test_msgs.msg import TestInfoArray
-
 from pr2_power_board.srv import PowerBoardCommand
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from std_msgs.msg import Empty
 
 from roslaunch_caller import roslaunch_caller 
+from wg_invent_client import Invent
 
 class TestManagerFrame(wx.Frame):
     def __init__(self, parent, debug = False):

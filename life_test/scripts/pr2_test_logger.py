@@ -45,7 +45,7 @@ import rospy
 import threading
 import getpass
 from optparse import OptionParser
-from invent_client.invent_client import Invent
+from wg_invent_client import Invent
 
 class PR2TestLogger:
     def __init__(self, robot_serial, iv):

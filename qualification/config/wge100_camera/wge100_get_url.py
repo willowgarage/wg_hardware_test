@@ -39,7 +39,7 @@ import rospy
 import rospy.client
 import subprocess
 import traceback
-from invent_client.invent_client import Invent
+from wg_invent_client import Invent
 import sys
 
 rospy.init_node("wge100_get_url")

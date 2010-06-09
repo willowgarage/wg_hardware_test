@@ -46,7 +46,7 @@ import os
 import os.path
 import traceback
 import time
-from invent_client.invent_client import Invent
+from wg_invent_client import Invent
 from qualification.srv import ScriptDone, ScriptDoneRequest
 
 rospy.init_node("wge100_camera_set_name")

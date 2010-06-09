@@ -62,8 +62,7 @@ from qualification.result import *
 
 import traceback
 
-#import invent_client.invent_client
-from invent_client.invent_client import Invent
+from wg_invent_client import Invent
 
 #import runtime_monitor
 from runtime_monitor.monitor_panel import MonitorPanel

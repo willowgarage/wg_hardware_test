@@ -37,7 +37,7 @@
 import roslib; roslib.load_manifest('qualification')
 import rospy
 import rospy.client
-from invent_client.invent_client import Invent;
+from wg_invent_client import Invent;
 from wge100_camera.srv import BoardConfig
 import sys
 import os
