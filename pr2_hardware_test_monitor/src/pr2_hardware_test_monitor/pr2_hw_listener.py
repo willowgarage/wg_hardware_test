@@ -2,7 +2,7 @@
 #
 # Software License Agreement (BSD License)
 #
-# Copyright (c) 2008, Willow Garage, Inc.
+# Copyright (c) 2010, Willow Garage, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,70 +34,39 @@
 #
 
 ##\author Kevin Watts
-##\brief Listens to diagnostics from wge100 camera and reports OK/FAIL
-PKG = 'pr2_hardware_test_monitor'
 
-import roslib
-roslib.load_manifest(PKG)
 
-from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
-from std_srvs.srv import *
 
-import rospy
-
-import threading
-
-from pr2_hw_listener import PR2HWListenerBase
-
-class HokuyoListener(PR2HWListenerBase):
+class PR2HWListenerBase(object):
+    """
+    @brief Base class for PR2 hardware listeners
+    """
     def __init__(self):
-        self._diag_sub = rospy.Subscriber('/diagnostics', DiagnosticArray, self._diag_callback)
-        self._mutex = threading.Lock()
+        pass
 
-        self._ok = True
-        self._update_time = 0
-        self.name = 'tilt_hokuyo_node'
 
-    # Doesn't do anything
     def create(self, params):
-        if not params.has_key('name'):
-            rospy.logerr('Hokuyo Listener was not given param "name"')
-            return False
-        self.name = params['name']
-        
+        """
+        Listener is initialized from parameters. Returns True if OK
+        """
         return True
 
     def halt(self):
+        """
+        Halts the listener. Called in callback thread
+        """
         pass
 
     def reset(self):
+        """
+        Resets the listener. Called in callback thread
+        """
         pass
 
-    def _diag_callback(self, msg):
-        self._mutex.acquire()
-        for stat in msg.status:
-            if stat.name.find(self.name) >= 0:
-                self._ok = (stat.level == 0)
-                self._update_time = rospy.get_time()
-                if not self._ok:
-                    break
-
-        self._mutex.release()
-    
     def check_ok(self):
-        self._mutex.acquire()
-        msg = ''
-        stat = 0
-        if not self._ok:
-            stat = 2
-            msg = 'Hokuyo Error'
+        """
+        Called at 1Hz to check status
 
-        if rospy.get_time() - self._update_time > 3:
-            stat = 3
-            msg = 'Hokuyo Stale'
-            if self._update_time == 0:
-                msg = 'No Hokuyo Data'
-        
-        self._mutex.release()
-        return stat, msg, None
-    
+        @return (int, str, []) : Level, message, [ DiagnosticStatus ] for output
+        """
+        return 0, '', None

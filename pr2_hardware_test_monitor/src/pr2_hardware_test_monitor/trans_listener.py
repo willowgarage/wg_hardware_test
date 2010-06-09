@@ -51,6 +51,8 @@ import rospy
 
 import threading
 
+from pr2_hw_listener import PR2HWListenerBase
+
 GRACE_HITS = 5 # Max number of errors before halt motors called
 
 TURRET_NAME = 'fl_caster_rotation_joint'
@@ -493,7 +495,7 @@ class JointTransmissionListener():
         
 
 ##\brief Loads individual joint listeners, monitors all robot transmissions
-class TransmissionListener:
+class TransmissionListener(PR2HWListenerBase):
     def __init__(self):
         self._joint_monitors = []
         self._mech_sub = rospy.Subscriber('mechanism_statistics', MechanismStatistics, self._callback)
@@ -545,9 +547,6 @@ class TransmissionListener:
             self._ok = True
             for joint_mon in self._joint_monitors:
                 joint_mon.reset()
-    
-    def halt(self):
-        pass
             
     def check_ok(self):
         with self._mutex:

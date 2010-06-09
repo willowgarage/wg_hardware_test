@@ -49,8 +49,10 @@ import rospy
 
 import threading
 
+from pr2_hw_listener import PR2HWListenerBase
 
-class CameraListener:
+
+class CameraListener(PR2HWListenerBase):
     def __init__(self):
         self._diag_sub = rospy.Subscriber('/diagnostics', DiagnosticArray, self._diag_callback)
         self._mutex = threading.Lock()

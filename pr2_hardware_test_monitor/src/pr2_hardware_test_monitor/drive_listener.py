@@ -2,7 +2,7 @@
 #
 # Software License Agreement (BSD License)
 #
-# Copyright (c) 2009, Willow Garage, Inc.
+# Copyright (c) 2010, Willow Garage, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,9 @@ import rospy
 
 import threading
 
-class DriveListener:
+from pr2_hw_listener import PR2HWListenerBase
+
+class DriveListener(PR2HWListenerBase):
     def __init__(self):
         self._mutex = threading.Lock()
 
@@ -60,9 +62,6 @@ class DriveListener:
 
         self._is_driving = True
         self._drive_sub = rospy.Subscriber('base_driving', Bool, self._drive_cb)
-
-    def create(self, params):
-        return True
 
     def halt(self):
         self._halt_driving()

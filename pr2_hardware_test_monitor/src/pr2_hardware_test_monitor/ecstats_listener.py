@@ -50,7 +50,9 @@ import rospy
 
 import threading
 
-class ECStatsListener:
+from pr2_hw_listener import PR2HWListenerBase
+
+class ECStatsListener(PR2HWListenerBase):
     def __init__(self):
         self._ec_stats_sub = rospy.Subscriber('ecstats', ecstats, self._ecstats_cb)
         self._mutex = threading.Lock()
@@ -77,12 +79,6 @@ class ECStatsListener:
 
         self._lost_link_count_since_reset = 0
         self._lost_link_count = 0
-
-    def create(self, params):
-        return True
-
-    def halt(self):
-        pass
 
     def reset(self):
         with self._mutex:
