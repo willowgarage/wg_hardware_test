@@ -52,7 +52,7 @@ class TestManagerConfigCheck(unittest.TestCase):
         
         for lst in tests.values():
             for tst in lst:
-                self.assert_(tst.validate(), "Test %s failed to validated. Launch file may be invalid." % tst.get_name())
+                self.assert_(tst.validate(), "Test %s failed to validated. Launch file may be invalid." % tst.name)
 
 if __name__ == '__main__':
     rostest.unitrun(PKG, 'check_config_files', TestManagerConfigCheck)
