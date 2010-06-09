@@ -55,13 +55,13 @@ class PR2TestLogger:
 
         self._mutex = threading.Lock()
 
-        self._status_sub = rospy.Subscriber('test_status', TestStatus, self._status_cb)
-
         self._iv = iv
         self._serial = robot_serial
         self._closed = False
 
         self._record.update(False, False, False, 'Started Logging', '')
+
+        self._status_sub = rospy.Subscriber('test_status', TestStatus, self._status_cb)
 
     def _status_cb(self, msg):
         with self._mutex:
@@ -78,22 +78,12 @@ class PR2TestLogger:
 
         self._record.update(False, False, False, '', '')
 
-        f = open(self._record.csv_filename(), 'rb')
-        csv_file = f.read()
-        f.close()
+        if self._record.load_attachments(self._iv):
+            print 'Submitted log to inventory system'
+        else:
+            print >> sys.stderr, "Unable to submit log. Load attachments to invent manually"
 
-        my_note = 'PR2 Burn in test completed. Total active time: %s' % self._record.get_active_str()
-
-        try:
-            self._iv.add_attachment(self._serial, 
-                                    os.path.basename(self._record.csv_filename()),
-                                    'text/csv', csv_file, my_note)
-            print 'Submitted log to inventory system.'
-            self._closed = True
-        except:
-            print >> sys.stderr, "Unable to log data into inventory system. Upload file manually: %s" % (self._record.csv_filename())
-            import traceback
-            traceback.print_exc()
+        self._closed = True
     
 
 if __name__ == '__main__':
@@ -103,18 +93,19 @@ if __name__ == '__main__':
                       help="Username for WG inventory system")
     parser.add_option('-r', '--robot', action="store", dest="robot",
                       default=None, metavar="ROBOT",
-                      help="Robot SN to store data. Ex: 680296701000")
+                      help="Robot SN (10XX) to store data.")
     
     options,args = parser.parse_args()
     if not options.username:
         parser.error("Must provide username to WG inverntory system")
     if not options.robot:
         parser.error("Must provide valid robot SN to log")
+
+    robot = '68029670' + options.robot
     
-    if not len(options.robot) == 12:
+    if not len(robot) == 12:
         parser.error("%s is not a valid robot serial number" % options.robot)
-    if not options.robot.startswith('6802967'):
-        parser.error("%s is not a correct serial number. Must be WGPN 68-02967" % options.robot)
+
 
     print 'Enter your password to the Willow Garage Inventory system'
     my_pass = getpass.getpass()
@@ -122,12 +113,12 @@ if __name__ == '__main__':
     iv = Invent(options.username, my_pass)
     if not iv.login():
         parser.error("Must provide valid username and password to WG inventory system")
-    if not iv.check_serial_valid(options.robot):
+    if not iv.check_serial_valid(robot):
         parser.error("Robot serial number %s is invalid" % options.robot)
     
     rospy.init_node('pr2_test_logger', disable_signals = True)
 
-    pr2_logger = PR2TestLogger(options.robot, iv)
+    pr2_logger = PR2TestLogger(robot, iv)
     rospy.on_shutdown(pr2_logger.close)
     
     print "Logging PR2 burn in test status..."

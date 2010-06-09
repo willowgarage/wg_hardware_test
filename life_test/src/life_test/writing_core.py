@@ -74,3 +74,18 @@ def format_localtime(stamp):
     @param stamp float : From rospy.get_time()
     """
     return time.strftime("%m/%d/%Y %H:%M:%S", time.localtime(stamp))
+
+def format_localtime_file(stamp):
+    """
+    Formats a rospy.get_time() stamp in a filename-OK format
+    @param stamp float : From rospy.get_time()
+    """
+    return time.strftime("%m-%d-%Y_%H-%M-%S", time.localtime(stamp))
+
+def clean_filename(filename):
+    """
+    Formats a filename to remove any ' ' or '-'
+    @param filename str : Filename to clean
+    @return str : Cleaned up name
+    """
+    return filename.replace(' ', '_').replace('/', '-')
