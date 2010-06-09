@@ -2,7 +2,7 @@
 \mainpage
 \htmlinclude manifest.html
 
-\b invent_client is the an interface to the Willow Garage Inventory system ("invent"). It provides a library so python nodes can programmatically store access and update the inventory system. 
+\b wg_invent_client is the an interface to the Willow Garage Inventory system ("invent"). It provides a library so python nodes can programmatically store access and update the inventory system. 
 
 Users must log in with their invent username and password in order to use this system.
 
@@ -15,6 +15,6 @@ Most users use the inventory system through the web interface:
 invent.willowgarage.com
 \endverbatim
 
-Users that require programmatic use, in testing, qualification, or other operations, use the invent_client package in personal robots.
+Users that require programmatic use, in testing, qualification, or other operations, use the wg_invent_client package in personal robots.
 
 */

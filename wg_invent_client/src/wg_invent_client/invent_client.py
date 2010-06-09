@@ -35,7 +35,6 @@
 ##\author Scott Hassen
 ##\brief Client for WG inventory system
 
-PKG = 'invent_client'
 
 import os, sys, string, time, getopt, re
 
@@ -46,8 +45,6 @@ import mimetools
 
 import neo_cgi, neo_util
 import simple_hdfhelp as hdfhelp
-
-import roslib; roslib.load_manifest(PKG)
 
 ##\brief Checks if given serial number is a valid WG SN
 def _is_serial_valid(reference):

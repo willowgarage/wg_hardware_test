@@ -57,7 +57,7 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import Encoders
 
-from invent_client.wgtest_client import TestData
+from wg_invent_client.wgtest_client import TestData
 
 from datetime import datetime
 
@@ -68,7 +68,7 @@ RESULTS_DIR = os.path.join(roslib.packages.get_pkg_dir(PKG), 'results')
 
 import result_dir
 TEMP_DIR = result_dir.TEMP_DIR
-#TEMP_DIR = os.path.join(tempfile.gettempdir(), 'qualification')
+
 
 ##\todo Rename to '_' name
 def write_temp_tar_file(results_dir):
