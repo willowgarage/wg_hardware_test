@@ -46,7 +46,8 @@ import csv
 import traceback
 from time import sleep, strftime, localtime
 import threading
-from socket import gethostname
+import socket, subprocess
+
 
 import wx
 from wx import xrc
@@ -672,6 +673,23 @@ class TestMonitorPanel(wx.Panel):
         self._status_sub = None
 
         self._is_running = False
+
+    def _check_machine(self, bay):
+        try:
+            machine_addr = socket.gethostbyname(bay.machine)
+        except socket.gaierror:
+            wx.MessageBox('Hostname "%s" (bay "%s") is invalid. The machine may be offline or disconnected.' % (bay.machine, bay.name),
+                          'Test Bay Invalid', wx.OK)
+            return False
+
+        # Check that it is pingable
+        retcode = subprocess.call('ping -c1 -W1 %s > /dev/null' % bay.machine, shell=True)
+        if retcode != 0:
+            wx.MessageBox('Cannot contact machine "%s" for bay "%s". It may be offline or disconnected. Check the machine and retry.' % (bay.machine, bay.name),
+                          'Test Bay Unavailable', wx.OK)
+            return False
+
+        return True
         
     def launch_test(self):
         dialog = wx.MessageDialog(self, 'Are you sure you want to launch?', 'Confirm Launch', wx.OK|wx.CANCEL)
@@ -688,6 +706,12 @@ class TestMonitorPanel(wx.Panel):
             self._launch_button.Enable(True)
             return False
 
+        # Check that we can contact the machine
+        if not self._check_machine(bay):
+            self._launch_button.Enable(True)
+            return
+
+        # Load the bay and reserve it
         if not self._manager.test_start_check(bay, self._serial):
             wx.MessageBox('Test bay in use, select again!', 'Test bay in use', wx.OK|wx.ICON_ERROR, self)
             self._launch_button.Enable(True)
