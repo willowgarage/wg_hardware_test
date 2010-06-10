@@ -86,6 +86,9 @@ class TestManagerFrame(wx.Frame):
         xrc_path = os.path.join(roslib.packages.get_pkg_dir('life_test'), 'xrc/gui.xrc')
         self._xrc = xrc.XmlResource(xrc_path)
 
+        # Allow roslaunch to ssh into unknown machines
+        os.environ['ROSLAUNCH_SSH_UNKNOWN'] = '1'
+
         # Get real username/password for invent here...
         self._invent_client = None 
         
