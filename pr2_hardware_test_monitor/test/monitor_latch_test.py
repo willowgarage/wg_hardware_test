@@ -55,6 +55,7 @@ import sys
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
 from pr2_self_test_msgs.msg import TestStatus
 from std_msgs.msg import Bool
+import std_msgs.msg
 from std_srvs.srv import *
 import threading
 
@@ -92,6 +93,9 @@ class TestMonitorLatch(unittest.TestCase):
         self._cal_pub = rospy.Publisher('calibrated', Bool, latch=True)
         self._cal_pub.publish(True)
 
+        self._snapped = False
+        self._snapshot_sub = rospy.Subscriber('snapshot_trigger', std_msgs.msg.Empty, self._snap_cb)
+
         self._diag_pub = rospy.Publisher('/diagnostics', DiagnosticArray)
         self._pub = rospy.Publisher('pr2_etherCAT/motors_halted', Bool)
         self._hlt = rospy.Service('pr2_etherCAT/halt_motors', Empty, self._hlt_cb)
@@ -100,6 +104,9 @@ class TestMonitorLatch(unittest.TestCase):
         self._reset_test = rospy.ServiceProxy('reset_test', Empty)
 
         rospy.Subscriber('test_status', TestStatus, self._cb)
+
+    def _snap_cb(self, msg):
+        self._snapped = True
 
     def _hlt_cb(self, srv):
         self._halted = True
@@ -151,6 +158,9 @@ class TestMonitorLatch(unittest.TestCase):
 
             # Check that it called halt_motors correctly
             self.assert_(self._halted, "Halt motors wasn't called after failure")
+
+            # Check that snapshot trigger was called
+            self.assert_(self._snapped, "Snapshot trigger wasn't called after halt")
 
         # Reset the test and make sure we're OK
         self._reset_test()

@@ -56,6 +56,7 @@ import sys
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
 from pr2_self_test_msgs.msg import TestStatus
 from std_msgs.msg import Bool
+import std_msgs.msg
 from std_srvs.srv import *
 import threading
 
@@ -92,6 +93,10 @@ class TestMonitorHeartbeat(unittest.TestCase):
         self._cal_pub = rospy.Publisher('calibrated', Bool, latch=True)
         self._cal_pub.publish(True)
 
+        # Snapshot trigger 
+        self._snapped = False
+        self._snapshot_sub = rospy.Subscriber('snapshot_trigger', std_msgs.msg.Empty, self._snap_cb)
+
         # Publish camera/motors data
         self._diag_pub = rospy.Publisher('/diagnostics', DiagnosticArray)
         self._pub = rospy.Publisher('pr2_etherCAT/motors_halted', Bool)
@@ -103,6 +108,8 @@ class TestMonitorHeartbeat(unittest.TestCase):
 
         rospy.Subscriber('test_status', TestStatus, self._cb)
 
+    def _snap_cb(self, msg):
+        self._snapped = True
 
     def _hlt_cb(self, srv):
         self._halted = True
@@ -153,6 +160,7 @@ class TestMonitorHeartbeat(unittest.TestCase):
             # Check that it called halt_motors correctly
             self.assert_(self._halted, "Halt motors wasn't called after no heartbeat")
 
+            self.assert_(self._snapped, "Snapshot trigger wasn't called for halt")
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == '-v':

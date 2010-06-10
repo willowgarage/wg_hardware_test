@@ -132,6 +132,8 @@ class TestMonitor:
         # Clear initial state of test monitor
         self._reset_state()
 
+        self._snapshot_pub = rospy.Publisher('snapshot_trigger', std_msgs.msg.Empty)
+
         self._status_pub = rospy.Publisher('test_status', TestStatus)
         self._diag_pub = rospy.Publisher('/diagnostics', DiagnosticArray)
 
@@ -188,6 +190,8 @@ class TestMonitor:
                 listener.halt()
             except:
                 rospy.logerr('Listener failed to halt!')
+
+        self._snapshot_pub.publish()
 
     def _check_status(self):
         level = TestStatus.RUNNING
