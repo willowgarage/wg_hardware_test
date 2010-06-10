@@ -114,11 +114,7 @@ def load_configs_from_map(config_files, config_descripts_by_file):
       
     test_str = '\n'.join(test)
 
-    if config_files.has_key(serial):
-      config_files[serial].append(test_str)
-    else:
-      config_files[serial] = [ test_str ]
-      
+    config_files.setdefault(serial, []).append(test_str)
     config_descripts_by_file[ test_str ] = descrip
 
   return True
