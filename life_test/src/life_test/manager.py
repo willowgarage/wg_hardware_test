@@ -35,6 +35,7 @@
 ##\author Kevin Watts
 ##\brief Test Manager main GUI/starting point
 
+from __future__ import with_statement
 PKG = 'life_test'
 import roslib
 roslib.load_manifest(PKG)
@@ -160,30 +161,15 @@ class TestManagerFrame(wx.Frame):
         self._heartbeat_pub.publish(beat)
 
     def _diag_cb(self, msg):
-        self._mutex.acquire()
-        try:
+        with self._mutex:
             self._diags.append(msg)
-        except:
-            rospy.logerr(traceback.format_exc())
-            self._mutex.release()
 
-
-        self._mutex.release()
         wx.CallAfter(self._new_diag)
         
     ##\brief Look for known power boards in diagnostics, update panels
     ##
     def _new_diag(self):
-        timeout = 0.5
-        start = rospy.get_time()
-        while not self._mutex.acquire(False):
-            sleep(0.1)
-            rospy.logdebug('Waiting for mutex for /diagnostics')
-            if rospy.get_time() - start > timeout:
-                rospy.logwarn('Timeout for mutex for /diagnostics exceeded.')
-                return
-
-        try:
+        with self._mutex:
             # Search for power board messages. If we have them, update the status in the viewer
             for msg in self._diags:
                 for status in msg.status:
@@ -206,12 +192,10 @@ class TestManagerFrame(wx.Frame):
                                             panel = self._active_boards[board_sn][breaker]
                                             self._test_panels[panel].update_board(val.value, estop)
 
-            self._diags = []
-        except:
-            rospy.logerr(traceback.format_exc())
-            self._mutex.release()
 
-        self._mutex.release()
+        # Clear diagnostics data
+        self._diags = []
+
 
 
                 
