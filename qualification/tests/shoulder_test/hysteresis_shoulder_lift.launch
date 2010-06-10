@@ -9,7 +9,7 @@
     <param name="max_position" type="double" value="0.50" />
     <param name="timeout" type="double" value="30" />
     <param name="tolerance" type="double" value="0.25" />
-    <param name="sd_max" type="double" value="0.20" />
+    <param name="sd_max" type="double" value="0.30" />
 
     <group ns="velocity_controller" >
       <param name="type" type="string" value="JointVelocityController" />
