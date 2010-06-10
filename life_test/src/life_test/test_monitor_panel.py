@@ -319,6 +319,7 @@ class TestMonitorPanel(wx.Panel):
 
         self._current_log = {}
 
+    ##\todo Private
     def calc_run_time(self):
         end_condition = self._end_cond_type.GetStringSelection()
         
@@ -333,6 +334,7 @@ class TestMonitorPanel(wx.Panel):
         else: #if end_condition == 'Continuous':
             return 10**10 # Roughly 300 years
 
+    ##\todo Private
     def calc_remaining(self):
         total_sec = self.calc_run_time()
         cum_sec = self._record.get_cum_time()
@@ -553,13 +555,15 @@ class TestMonitorPanel(wx.Panel):
             self.stop_test()
             self._enable_controls()
         
+
+    ##\todo Private
     def status_callback(self, msg):
         with self._mutex:
             self._status_msg = msg
 
-
         wx.CallAfter(self.new_msg)
 
+    ##\todo Private
     def new_msg(self):
         with self._mutex:
             level_dict = { 0: 'OK', 1: 'Warn', 2: 'Error', 3: 'Stale' }
@@ -578,6 +582,7 @@ class TestMonitorPanel(wx.Panel):
         self.update_test_record()
         self.stop_if_done()
 
+    ##\todo Private, and move out of class
     def make_launch_script(self, bay, script, local_diag_topic):
         # Set ROS_NAMESPACE ...
         os.environ['ROS_NAMESPACE'] = bay.name
@@ -873,6 +878,9 @@ class TestMonitorPanel(wx.Panel):
         return True
         
     def on_halt_test(self, event = None):
+        """
+        Calls halt_test service to test monitor
+        """
         try:
             self.update_test_record('Pausing test.')
             halt_srv = rospy.ServiceProxy(self._bay.name + '/halt_test', Empty)
@@ -882,6 +890,9 @@ class TestMonitorPanel(wx.Panel):
             rospy.logerr('Exception on halt test.\n%s' % traceback.format_exc())
 
     def on_reset_test(self, event = None):
+        """
+        Calls reset_test service to test monitor
+        """
          try:
              self.update_test_record('Resetting test.')
              reset = rospy.ServiceProxy(self._bay.name + '/reset_test', Empty)
@@ -890,11 +901,17 @@ class TestMonitorPanel(wx.Panel):
          except:
             rospy.logerr('Exception on reset test.\n%s' % traceback.format_exc())
       
-    # Called when test is closing down
+
     def record_test_log(self):
+        """
+        Called when test is closing down
+        """
         self._record.load_attachments(self._manager.invent_client)
 
     def on_invent_timer(self, event):
+        """
+        Update inventory system with a note on progress every 10 minutes
+        """
         self._record.update_invent(self._manager.invent_client)
 
         

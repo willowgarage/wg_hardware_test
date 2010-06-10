@@ -62,17 +62,6 @@ import tempfile, tarfile
 LOG_UPDATE = 7200 # Update log if no entries before this time
 INVENT_TIMEOUT = 600
 
-class TestState(object):
-    """
-    @brief Tracks state of running/stopped tests
-    """
-    def __init__(self, launched, running, stale, monitor_msg, note = ''):
-        self.launched = launched
-        self.running = running
-        self.stale = stale
-        self.monitor_msg = monitor_msg
-        self.note = note
-
 
 def _get_csv_header_lst(params):
     """
@@ -151,7 +140,6 @@ class TestRecord:
         self._was_launched = False
         self._last_msg = ''
 
-
         self._num_events = 0
         self._num_halts = 0
         self._test_complete = False
@@ -166,7 +154,6 @@ class TestRecord:
         
         self._last_invent_time = 0
         self._invent_note_id = None
-
 
         self._cum_data = {}
         for param in test.params:
@@ -198,20 +185,19 @@ class TestRecord:
 
     def get_elapsed_str(self):
          return get_duration_str(self.get_elapsed())
-
-    def update_state(self, st):
-        self.update(st.launched, st.running, st.stale, st.note, st.monitor_msg)
             
-    ##\brief Updates test record with current state
-    ##
-    ## Looks at current, previous state to record data and send alerts
-    ##\param launched bool : Test launched
-    ##\param running bool : Running (status OK)
-    ##\param stale bool : Test is stale 
-    ##\param note str : Notes from operator
-    ##\param monitor_msg str : Message from Test Monitor
-    ##\return (int, str) : int [0:OK, 1:Notify, 2:Alert]
     def update(self, launched, running, stale, note, monitor_msg):
+        """
+        \brief Updates test record with current state
+        
+        Looks at current, previous state to record data and send alerts
+        \param launched bool : Test launched
+        \param running bool : Running (status OK)
+        \param stale bool : Test is stale 
+        \param note str : Notes from operator
+        \param monitor_msg str : Message from Test Monitor
+        \return (int, str) : int [0:OK, 1:Notify, 2:Alert]
+        """
         d_seconds = 0
         if self._was_running and running:
             d_seconds = rospy.get_time() - self._last_update_time
