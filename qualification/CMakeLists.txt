@@ -8,3 +8,59 @@ rosbuild_add_executable(tests/wge100_camera_test/led_flash_test tests/wge100_cam
 
 rosbuild_add_pyunit(unit_test/check_test_files.py)
 
+
+# Test launch files parse check
+rosbuild_add_roslaunch_check(tests/caster_test ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(tests/ctr350_test ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(tests/ectest ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(tests/ethernet_test ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(tests/full_arm_test ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(tests/gripper_test ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(tests/head_test ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(tests/hokuyo_test ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(tests/laser_tilt_test ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(tests/projector_test ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(tests/serial_test ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(tests/shoulder_test ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(tests/simple_example ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(tests/torso_lift_test ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(tests/upperarm_test ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(tests/wrist_test ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(tests/wrt610n_test ROS_TEST_HOST=localhost)
+
+# Component configuration scripts parse test
+# Casters
+rosbuild_add_roslaunch_check(config/bl_caster_conf.launch ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(config/br_caster_conf.launch ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(config/fl_caster_conf.launch ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(config/fr_caster_conf.launch ROS_TEST_HOST=localhost)
+
+# Devices, etc
+rosbuild_add_roslaunch_check(config/fake_config.launch ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(config/subtest_conf.launch ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(config/led_projector_conf.launch ROS_TEST_HOST=localhost)
+
+# Head/Laser tilt/Spine
+rosbuild_add_roslaunch_check(config/head_conf.launch ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(config/laser_tilt_conf.launch ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(config/torso_conf.launch ROS_TEST_HOST=localhost)
+
+# Left arm
+rosbuild_add_roslaunch_check(config/l_full_arm_conf.launch ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(config/l_gripper_conf.launch ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(config/l_shoulder_conf.launch ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(config/l_upperarm_conf.launch ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(config/l_wrist_conf.launch ROS_TEST_HOST=localhost)
+
+# Right arm
+rosbuild_add_roslaunch_check(config/r_full_arm_conf.launch ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(config/r_gripper_conf.launch ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(config/r_shoulder_conf.launch ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(config/r_upperarm_conf.launch ROS_TEST_HOST=localhost)
+rosbuild_add_roslaunch_check(config/r_wrist_conf.launch ROS_TEST_HOST=localhost)
+
+# Power board control
+rosbuild_add_roslaunch_check(scripts/power_board_disable.launch)
+rosbuild_add_roslaunch_check(scripts/power_board_standby.launch)
+rosbuild_add_roslaunch_check(scripts/power_cycle.launch)
+rosbuild_add_roslaunch_check(scripts/power_on.launch)
