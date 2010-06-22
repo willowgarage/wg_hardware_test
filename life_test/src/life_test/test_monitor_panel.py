@@ -893,12 +893,12 @@ class TestMonitorPanel(wx.Panel):
         """
         Calls reset_test service to test monitor
         """
-         try:
-             self.update_test_record('Resetting test.')
-             reset = rospy.ServiceProxy(self._bay.name + '/reset_test', Empty)
-             reset()
-
-         except:
+        try:
+            self.update_test_record('Resetting test.')
+            reset = rospy.ServiceProxy(self._bay.name + '/reset_test', Empty)
+            reset()
+            
+        except:
             rospy.logerr('Exception on reset test.\n%s' % traceback.format_exc())
       
 
