@@ -531,6 +531,10 @@ class QualificationFrame(wx.Frame):
         wx.MessageBox(s, 'Invalid roslaunch file. Press OK to cancel.', wx.OK|wx.ICON_ERROR, self)
         self.cancel(s)
         return
+      
+      rospy.sleep(2.0)
+      rospy.loginfo('Sleeping after startup script')
+
     else:
       self.log('No startup script, launching subtests')
       
