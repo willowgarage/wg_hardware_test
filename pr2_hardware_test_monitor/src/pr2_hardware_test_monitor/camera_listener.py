@@ -57,41 +57,35 @@ class CameraListener(PR2HWListenerBase):
         self._diag_sub = rospy.Subscriber('/diagnostics', DiagnosticArray, self._diag_callback)
         self._mutex = threading.Lock()
 
-        self._ok = True
+        self._lvl = 3 # No updates
         self._update_time = 0
-
-    # Doesn't do anything
-    def create(self, params):
-        return True
-
-    def halt(self):
-        pass
-
-    def reset(self):
-        pass
 
     def _diag_callback(self, msg):
         with self._mutex:
+            has_wge100 = False
+            this_lvl = 0
             for stat in msg.status:
                 if stat.name.find('wge100') >= 0:
-                    self._ok = (stat.level == 0)
+                    this_lvl = max(stat.level, this_lvl)
                     self._update_time = rospy.get_time()
-                    if not self._ok:
-                        break
+                    has_wge100 = True
+
+            if has_wge100:
+                self._lvl = this_lvl
     
     def check_ok(self):
         with self._mutex:
-            msg = ''
-            stat = 0
-            if not self._ok:
-                stat = 2
+            msg = 'OK'
+            if self._lvl == 1:
+                msg = 'Camera Warning'
+            if self._lvl > 1:
                 msg = 'Camera Error'
 
             if rospy.get_time() - self._update_time > 3:
-                stat = 3
+                self._lvl = 3
                 msg = 'Camera Stale'
                 if self._update_time == 0:
                     msg = 'No Camera Data'
         
-        return stat, msg, None
+        return self._lvl, msg, None
     
