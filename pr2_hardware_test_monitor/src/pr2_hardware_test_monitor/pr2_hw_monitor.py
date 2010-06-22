@@ -80,13 +80,13 @@ def create_listener(params, listeners):
         __import__(import_str)
         pypkg = sys.modules[import_str]
         listener_type = getattr(pypkg, type)
-    except:
+    except Exception, e:
         rospy.logerr('Couldn\'t load listener %s from %s.%s.\n\nException: %s' % (type, pkg, file, traceback.format_exc()))
         return False
     
     try:
         listener = listener_type()
-    except:
+    except Exception, e:
         rospy.logerr('Listener %s failed to construct.\nException: %s' % (type, traceback.format_exc()))
         return False
                      
@@ -173,7 +173,7 @@ class TestMonitor:
             for listener in self._listeners:
                 try:
                     listener.reset()
-                except:
+                except Exception, e:
                     rospy.logerr('Listener failed to reset!')
 
         return EmptyResponse()
@@ -188,7 +188,7 @@ class TestMonitor:
         for listener in self._listeners:
             try:
                 listener.halt()
-            except:
+            except Exception, e:
                 rospy.logerr('Listener failed to halt!')
 
         self._snapshot_pub.publish()
@@ -202,7 +202,7 @@ class TestMonitor:
         for listener in self._listeners:
             try:
                 lvl, msg, diags = listener.check_ok()
-            except:
+            except Exception, e:
                 rospy.logerr('Listener failed to check status. %s' % traceback.format_exc())
                 lvl, msg, diags = (TestStatus.ERROR, 'Listener Error', None)
 
