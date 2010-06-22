@@ -39,6 +39,7 @@ random.seed()
 
 from pr2_controllers_msgs.msg import *
 from trajectory_msgs.msg import JointTrajectoryPoint
+from actionlib_msgs.msg import GoalStatus
 
 FAILED_OUT = 5
 
@@ -49,21 +50,28 @@ ranges = {
     'l_elbow_flex_joint': (-2.0, -0.05) 
 }
 
+recovery = {
+    'l_shoulder_pan_joint': 0.8,
+    'l_shoulder_lift_joint': 0.3,
+    'l_upper_arm_roll_joint': 0.0,
+    'l_elbow_flex_joint': -0.2
+}
+
 ##\brief Moves arms to 0 position using unsafe trajectory
 def get_recovery_goal():
      point = JointTrajectoryPoint()
-    point.time_from_start = rospy.Duration.from_sec(5)    
-    
-    goal = JointTrajectoryGoal()
-    goal.trajectory.points.append(point)
-    goal.trajectory.header.stamp = rospy.get_rostime()
+     point.time_from_start = rospy.Duration.from_sec(5)    
+     
+     goal = JointTrajectoryGoal()
+     goal.trajectory.points.append(point)
+     goal.trajectory.header.stamp = rospy.get_rostime()
+     
+     for joint, pos in ranges.iteritems():
+          goal.trajectory.joint_names.append(joint)
+          goal.trajectory.points[0].positions.append(pos)
+          goal.trajectory.points[0].velocities.append(0)
 
-    for joint in ranges.keys():
-        goal.trajectory.joint_names.append(joint)
-        goal.trajectory.points[0].positions.append(0)
-        goal.trajectory.points[0].velocities.append(0)
-
-    return goal
+     return goal
 
 if __name__ == '__main__':
     rospy.init_node('arm_cmder_client')
@@ -86,12 +94,12 @@ if __name__ == '__main__':
 
         goal.trajectory.points.append(point)
 
-        for joint, range in ranges.iteritems():
+        for joint, rng in ranges.iteritems():
             goal.trajectory.joint_names.append(joint)
                         
-            goal.trajectory.points[0].positions.append(random.uniform(range[0], range[1]))
+            goal.trajectory.points[0].positions.append(random.uniform(rng[0], rng[1]))
             
-        rospy.logdebug('Sending goal to arm.')
+        rospy.logdebug('Sending goal to arm: %s' % str(point))
         client.send_goal(goal)
         client.wait_for_result(rospy.Duration.from_sec(5))
         my_result = client.get_state()
@@ -108,5 +116,6 @@ if __name__ == '__main__':
             recovery_goal = get_recovery_goal()
             recovery_client.send_goal(recovery_goal)
             recovery_client.wait_for_result(rospy.Duration.from_sec(10))
+            recovery_client.cancel_goal()
 
         my_rate.sleep()
