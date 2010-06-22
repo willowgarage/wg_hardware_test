@@ -67,8 +67,8 @@ def _get_csv_header_lst(params):
     """
     @brief Returns header to a CSV log file as a list
     """
-    hdr = [ 'Time', 'Status', 'Message', 'Elapsed', 'Cum. Time',
-            'Num. Halts', 'Num. Events' ]
+    hdr = [ 'Time', 'Status', 'Message', 'Monitor Status', 'Elapsed', 
+            'Cum. Time', 'Num. Halts', 'Num. Events' ]
 
     for p in params:
         if p.rate:
@@ -89,11 +89,12 @@ class LogEntry(object):
     """
     @brief Entry in test log. Gets written to CSV output file.
     """
-    def __init__(self, stamp, elapsed, cum_time, status, message, params, halts, events, note):
+    def __init__(self, stamp, elapsed, cum_time, status, message, monitor_msg, params, halts, events, note):
         self.stamp = stamp
 
         self.status = status
         self.message = message
+        self.monitor_msg = monitor_msg
         self.params = params
         self.note = note
 
@@ -105,7 +106,7 @@ class LogEntry(object):
         self.events = events
 
     def write_to_lst(self):
-        lst = [ format_localtime(self.stamp), self.status, self.message, 
+        lst = [ format_localtime(self.stamp), self.status, self.message, self.monitor_msg,
                 get_duration_str(self.elapsed), 
                 get_duration_str(self.cum_time), self.halts, self.events ]
  
@@ -249,7 +250,7 @@ class TestRecord:
         # Update with alert, note or every two hours of run time
         if alert > 0 or note != '' or  (running and self._last_log_time - rospy.get_time() > LOG_UPDATE):
             entry = LogEntry(rospy.get_time(), self.get_elapsed(), self.get_cum_time(), 
-                             state, msg, self._test.params, self._num_halts, 
+                             state, msg, monitor_msg, self._test.params, self._num_halts, 
                              self._num_events, note)
 
             self._log_entries.append(entry)
@@ -344,7 +345,7 @@ class TestRecord:
             return
         
         entry = LogEntry(rospy.get_time(), self.get_elapsed(), self.get_cum_time(), 
-                 'Stopped', '', self._test.params, 
+                 'Stopped', '', '', self._test.params, 
                  self._num_halts, self._num_events, 
                  'Test bay: %s. Power board, breaker: %s, %s' % 
                  (self._bay.name, self._bay.board, self._bay.breaker))
