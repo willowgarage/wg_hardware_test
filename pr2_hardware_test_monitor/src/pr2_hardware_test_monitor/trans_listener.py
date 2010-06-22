@@ -538,7 +538,7 @@ class TransmissionListener(PR2HWListenerBase):
             rospy.logerr('Halting motors, broken transmission.')
             try:
                 self._halt_motors()
-            except:
+            except Exception, e:
                 import traceback
                 rospy.logerr('Caught exception trying to halt motors: %s', traceback.format_exc())
 

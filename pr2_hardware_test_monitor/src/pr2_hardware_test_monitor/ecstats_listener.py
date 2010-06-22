@@ -112,7 +112,7 @@ class ECStatsListener(PR2HWListenerBase):
                 try:
                     # self._halt_motors()
                     rospy.logerr('Should\'ve halted motors, went down')
-                except:
+                except Exception, e:
                     rospy.logerr('Attempted to halt motors after dropped packets, failed')
                     
             self._update_time = rospy.get_time()
