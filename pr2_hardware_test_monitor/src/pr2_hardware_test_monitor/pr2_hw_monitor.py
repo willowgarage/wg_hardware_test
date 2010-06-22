@@ -204,7 +204,7 @@ class TestMonitor:
                 lvl, msg, diags = listener.check_ok()
             except:
                 rospy.logerr('Listener failed to check status. %s' % traceback.format_exc())
-                stat, msg, diags = (TestStatus.ERROR, 'Error', None)
+                lvl, msg, diags = (TestStatus.ERROR, 'Listener Error', None)
 
             level = max(level, lvl)
             if msg is not None and msg != '':
