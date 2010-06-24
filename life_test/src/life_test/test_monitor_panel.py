@@ -595,10 +595,6 @@ class TestMonitorPanel(wx.Panel):
         launch += '<remap from="/diagnostics" to="%s" />\n' % local_diag_topic
         
         # Init machine
-        # Root on remote 
-        launch += '<machine name="test_host_root" user="root" address="%s" ' % bay.machine
-        launch += 'ros-root="$(env ROS_ROOT)" ros-package-path="$(env ROS_PACKAGE_PATH)" timeout="15" default="never"/>\n'
-
         # Set default to remote machine
         launch += '<machine name="test_host" address="%s" default="true" ' % bay.machine
         launch += 'ros-root="$(env ROS_ROOT)" ros-package-path="$(env ROS_PACKAGE_PATH)" timeout="15"  />\n'
