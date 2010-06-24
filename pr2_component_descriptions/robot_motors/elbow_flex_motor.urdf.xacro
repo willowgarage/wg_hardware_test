@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <robot name="elbow_flex_motor">
+  <link name="world" />
   <joint name="elbow_flex_motor_joint" type="continuous">
     <axis xyz="0 0 1" />
     <limit effort="100" velocity="100"/>
@@ -22,7 +23,6 @@
   <transmission type="SimpleTransmission" name="elbow_flex_motor_trans">
     <actuator name="r_elbow_flex_motor" />
     <joint name="elbow_flex_motor_joint" />
-    <!-- This is clearly wrong. Need exact number -->
     <mechanicalReduction>${13/3}</mechanicalReduction>
   </transmission>
 </robot>
