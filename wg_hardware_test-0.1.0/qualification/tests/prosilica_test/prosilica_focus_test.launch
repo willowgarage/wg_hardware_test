@@ -1,0 +1,9 @@
+<launch>
+  <node name="prosilica_focus_graph" pkg="pr2_camera_focus"
+        type="focus_prosilica.py">
+        <remap from="prosilica/image" to="prosilica/image_color"/>
+  </node>
+
+  <node name="camera_focus_ok" pkg="pr2_camera_focus"
+        type="prosilica_focus_dialog.py" args="subtest" output="screen"/>
+</launch>

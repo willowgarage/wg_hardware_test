@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="qualification" name="human_test"
+        type="analyzer_node.py" args="human"/>
+</launch>

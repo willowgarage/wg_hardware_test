@@ -1,0 +1,12 @@
+<package>
+  <description brief="Utilities for PR2 test systems and equipment. Internal WG use only">
+    Utilities for WG production test systems. Internal WG use only.
+  </description>
+  <author>Kevin Watts</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/wg_hw_test_utilities</url>
+
+</package>
+
+

@@ -1,0 +1,17 @@
+<launch>
+  <node pkg="qualification" type="torso_lifter_test.py" name="torso_lifter" />
+
+  <!-- Torso -->
+  <rosparam command="load" file="$(find pr2_controller_configuration)/pr2_torso_controller.yaml" />
+  
+  <!-- Controllers that come up started -->
+  <node name="default_controllers_spawner"
+        pkg="pr2_controller_manager" type="spawner" output="screen"
+        args="--wait-for=calibrated torso_controller" />
+
+  <group ns="torso_controller">
+    <node name="position_joint_action_node" 
+          pkg="single_joint_position_action"
+          type="single_joint_position_action" />
+  </group>
+</launch>

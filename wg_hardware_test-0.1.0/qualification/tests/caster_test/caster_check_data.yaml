@@ -1,0 +1,4 @@
+motors: [
+  'fl_caster_l_wheel_motor',
+  'fl_caster_r_wheel_motor',
+  'fl_caster_rotation_motor']
