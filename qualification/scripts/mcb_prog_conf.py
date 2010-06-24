@@ -141,7 +141,7 @@ class MCBProgramConfig:
 
     ## Counts boards, returns true if passed
     def count_boards(self):
-        count_cmd = os.path.join(prog_path, "eccount") + " -i eth0"
+        count_cmd = "pr2_grant " + os.path.join(prog_path, "eccount") + " -i eth0"
 
         while not rospy.is_shutdown():
             p = subprocess.Popen(count_cmd, stdout =subprocess.PIPE,
@@ -182,7 +182,7 @@ class MCBProgramConfig:
                 return False
 
     def check_link(self):
-        emltest_cmd = os.path.join(prog_path, "emltest") + " -q -j8 -ieth0 -T10000,2"
+        emltest_cmd = "pr2_grant " + os.path.join(prog_path, "emltest") + " -q -j8 -ieth0 -T10000,2"
 
         p = subprocess.Popen(emltest_cmd, stdout = subprocess.PIPE, 
                              stderr = subprocess.PIPE, shell = True)
@@ -201,7 +201,7 @@ class MCBProgramConfig:
 
     def get_serials(self):
         for board in range(0, self.expected):
-            check_cmd = os.path.join(prog_path, 'device') + ' -i eth0 -K -p %d' % (board + 1)
+            check_cmd = "pr2_grant " + os.path.join(prog_path, 'device') + ' -i eth0 -K -p %d' % (board + 1)
             try:
                 p = subprocess.Popen(check_cmd, stdout = subprocess.PIPE,
                                      stderr = subprocess.PIPE, shell = True)
@@ -237,7 +237,7 @@ class MCBProgramConfig:
     ## Programs MCB's and calls result service when finished
     def program_boards(self):
         for board in range(0, self.expected):
-            program_cmd = os.path.join(prog_path, "fwprog") + " -i eth0 -p %s %s/*.bit" % ((board + 1), prog_path)
+            program_cmd = "pr2_grant " + os.path.join(prog_path, "fwprog") + " -i eth0 -p %s %s/*.bit" % ((board + 1), prog_path)
 
             while not rospy.is_shutdown():
                 p = subprocess.Popen(program_cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
@@ -270,7 +270,7 @@ class MCBProgramConfig:
         for mcb in mcbs:
             name, num = mcb.split(',')
 
-            cmd = os.path.join(path, "motorconf") + " -i eth0 -p -n %s -d %s -a %s" % (name, num, actuator_path)
+            cmd = "pr2_grant " + os.path.join(path, "motorconf") + " -i eth0 -p -n %s -d %s -a %s" % (name, num, actuator_path)
 
             while not rospy.is_shutdown():
                 p = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
