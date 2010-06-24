@@ -532,8 +532,8 @@ class QualificationFrame(wx.Frame):
         self.cancel(s)
         return
       
-      rospy.sleep(2.0)
-      rospy.loginfo('Sleeping after startup script')
+      #rospy.sleep(2.0)
+      #rospy.loginfo('Sleeping after startup script')
 
     else:
       self.log('No startup script, launching subtests')

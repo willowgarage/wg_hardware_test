@@ -2,7 +2,7 @@
  <include file="$(find qualification)/tests/init.machine" />
 
   <!-- configure_mcbs -->
-  <node machine="realtime" pkg="qualification"
+  <node machine="test_host" pkg="qualification"
         type="mcb_prog_conf.py" name="l_upperarm_conf"
         args="-a -c -n 2 --motor=l_elbow_flex_motor,0 --motor=l_forearm_roll_motor,1" />
 

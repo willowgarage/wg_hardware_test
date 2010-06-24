@@ -2,7 +2,7 @@
   <include file="$(find qualification)/tests/init.machine" />
  
   <!-- configure_mcbs -->
-  <node machine="realtime" pkg="qualification" type="mcb_prog_conf.py"
+  <node machine="test_host" pkg="qualification" type="mcb_prog_conf.py"
         name="mcb_conf" args="-c -n 1 --motor=head_pan_motor,0" />
 
   <!-- Confirm configuation -->
