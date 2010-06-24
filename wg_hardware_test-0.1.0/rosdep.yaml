@@ -1,6 +1,0 @@
-python-serial:
-  ubuntu: python-serial
-python-clearsilver:
-  ubuntu: python-clearsilver
-  debian: python-clearsilver
-  centos: python-clearsilver

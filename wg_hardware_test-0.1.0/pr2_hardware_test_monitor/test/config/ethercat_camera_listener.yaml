@@ -1,6 +1,0 @@
-ethercat:
-  type: EthercatListener
-  file: ethercat_listener
-camera:
-  type: CameraListener
-  file: camera_listener
