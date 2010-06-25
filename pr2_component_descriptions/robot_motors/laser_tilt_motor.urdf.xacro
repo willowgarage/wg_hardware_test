@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <robot name="tilting_laser">
-
+  <link name="world" />
   <joint name="laser_tilt_motor_joint" type="continuous">
     <axis xyz="0 0 1" />
     <limit effort="100" velocity="100"/>

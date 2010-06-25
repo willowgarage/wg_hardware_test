@@ -16,6 +16,7 @@
   
   
   <xacro:pr2_gripper_v0 side="r" parent="base_link"
+                        reflect="-1.0"
                         screw_reduction="${4.0/1000.0}"
                         gear_ratio="${(729.0/25.0)*(22.0/16.0)}"
                         theta0="${3.6029*M_PI/180.0}"
