@@ -1,4 +1,3 @@
-# Need to make everything FASTER!!!!!
 joint_limits:
   r_shoulder_pan_joint:
     has_position_limits: true
