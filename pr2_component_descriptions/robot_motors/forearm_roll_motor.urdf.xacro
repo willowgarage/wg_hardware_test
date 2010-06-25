@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <robot name="r_forearm_roll_motor">
+  <link name="world" />
   <joint name="r_forearm_roll_motor_joint" type="continuous">
     <axis xyz="0 0 1" />
     <limit effort="100" velocity="100"/>
