@@ -46,7 +46,7 @@ FAILED_OUT = 5
 ranges = {
     'l_shoulder_pan_joint': (-0.4, 2.0),
     'l_shoulder_lift_joint': (-0.4, 1.25),
-    'l_upper_arm_roll_joint': (-0.5, 3.7),
+    'l_upper_arm_roll_joint': (-0.3, 3.5),
     'l_elbow_flex_joint': (-2.0, -0.05) 
 }
 
