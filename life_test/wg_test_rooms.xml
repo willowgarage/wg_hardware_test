@@ -55,6 +55,10 @@
     <bay name="testn" machine="testn" board="1011" breaker="2" />
   </room>
 
+  <room hostname="axb" >
+    <bay name="axb" machine="axb" board="1012" breaker="2" />
+  </room>
+
   
 
   

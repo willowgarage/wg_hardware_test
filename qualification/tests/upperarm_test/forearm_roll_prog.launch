@@ -1,7 +1,7 @@
 <launch>
   <include file="$(find qualification)/tests/init.machine" />
 
-  <node machine="test_host_root" pkg="qualification"
+  <node machine="test_host" pkg="qualification"
         name="forearm_roll_prog"
         type="mcb_prog_conf.py" args="-p -n 1" />
 

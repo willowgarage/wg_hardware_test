@@ -63,7 +63,7 @@ class EthercatListener(PR2HWListenerBase):
         try:
             rospy.wait_for_service('pr2_etherCAT/halt_motors', 10)
             self._srv_ok = True
-        except:
+        except Exception, e:
             self._srv_ok = False
             rospy.logerr('Unable to find halt motors service. Unable to initialize ethercat listener')
             return False
@@ -101,7 +101,7 @@ class EthercatListener(PR2HWListenerBase):
     def reset(self):
         try:
             self._reset_motors()
-        except:
+        except Exception, e:
             rospy.logerr('Unable to reset motors. pr2_etherCAT may have died')
 
     def _cal_cb(self, msg):

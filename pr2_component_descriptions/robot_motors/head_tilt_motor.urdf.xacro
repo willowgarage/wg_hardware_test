@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <robot name="head_tilt_motor">
+  <link name="world" />
   <joint name="head_tilt_motor_joint" type="continuous">
     <axis xyz="0 1 0" />
     <limit effort="100" velocity="100"/>

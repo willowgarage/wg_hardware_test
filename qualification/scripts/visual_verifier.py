@@ -47,11 +47,10 @@ import roslib
 roslib.load_manifest(PKG)
 
 from optparse import OptionParser
-import shutil
-import glob
+#import shutil
+#import glob
 import traceback
 
-import roslib.packages
 import rospy
 
 import rviz
@@ -130,7 +129,14 @@ class VisualizerFrame(wx.Frame):
     self._pass_button.Bind(wx.EVT_BUTTON, self.on_pass)
     self._fail_button.Bind(wx.EVT_BUTTON, self.on_fail)
     
-          
+    self._shutdown_timer = wx.Timer()
+    self._shutdown_timer.Bind(wx.EVT_TIMER, self._on_shutdown_timer)
+    self._shutdown_timer.Start(100)
+    
+  def _on_shutdown_timer(self, event):
+    if (rospy.is_shutdown()):
+      self.Close(True)
+      
   def on_close(self, event):
     self.Destroy()
     
@@ -151,18 +157,12 @@ class VisualizerFrame(wx.Frame):
   def set_instructions(self, instructions):
     self._instructions_ctrl.SetValue(instructions)
       
-  def on_open(self, event):
-    dialog = wx.FileDialog(self, "Choose a file to open", self._save_location, wildcard="*."+self._CONFIG_EXTENSION, style=wx.FD_OPEN)
-    if dialog.ShowModal() == wx.ID_OK:
-      path = dialog.GetPath()
-      self.load_config_from_path(path)
-
 class VisualizerApp(wx.App):
   def __init__(self, file):
     self._filepath = file
     self._instructions = 'Move joints and verify robot is OK.'
     
-    wx.App.__init__(self)
+    wx.App.__init__(self, clearSigInt = False)
   
   def OnInit(self):
     try:

@@ -1,7 +1,7 @@
 <launch>
   <include file="$(find qualification)/tests/init.machine" />
 
-  <node machine="realtime" pkg="qualification"
+  <node machine="test_host" pkg="qualification"
         type="mcb_prog_conf.py" name="head_prog" args="-p -n 2" />
 
   <!-- Confirm configuation -->

@@ -39,14 +39,22 @@ random.seed()
 
 from pr2_controllers_msgs.msg import *
 from trajectory_msgs.msg import JointTrajectoryPoint
+from actionlib_msgs.msg import GoalStatus
 
 FAILED_OUT = 5
 
 ranges = {
     'r_shoulder_pan_joint': (-2.0, 0.4),
     'r_shoulder_lift_joint': (-0.4, 1.25),
-    'r_upper_arm_roll_joint': (-3.7, 0.5),
+    'r_upper_arm_roll_joint': (-3.5, 0.3),
     'r_elbow_flex_joint': (-2.0, -0.05) 
+}
+
+recovery = {
+    'r_shoulder_pan_joint': -0.8,
+    'r_shoulder_lift_joint': 0.3,
+    'r_upper_arm_roll_joint': 0.0,
+    'r_elbow_flex_joint': -0.2
 }
 
 ##\brief Moves arms to 0 position using unsafe trajectory
@@ -58,10 +66,10 @@ def get_recovery_goal():
     goal.trajectory.points.append(point)
     goal.trajectory.header.stamp = rospy.get_rostime()
 
-    for joint in ranges.keys():
+    for joint, pos in recovery.iteritems():
         goal.trajectory.joint_names.append(joint)
-        goal.trajectory.points[0].positions.append(0)
-        goal.trajectory.points[0].velocities.append(0)
+        goal.trajectory.points[0].positions.append(pos)
+        goal.trajectory.points[0].velocities.append(0.0)
 
     return goal
 
@@ -86,12 +94,12 @@ if __name__ == '__main__':
 
         goal.trajectory.points.append(point)
 
-        for joint, range in ranges.iteritems():
+        for joint, rng in ranges.iteritems():
             goal.trajectory.joint_names.append(joint)
                         
-            goal.trajectory.points[0].positions.append(random.uniform(range[0], range[1]))
+            goal.trajectory.points[0].positions.append(random.uniform(rng[0], rng[1]))
             
-        rospy.logdebug('Sending goal to arm.')
+        rospy.logdebug('Sending goal to arm: %s' % str(point))
         client.send_goal(goal)
         client.wait_for_result(rospy.Duration.from_sec(5))
         my_result = client.get_state()
@@ -108,5 +116,7 @@ if __name__ == '__main__':
             recovery_goal = get_recovery_goal()
             recovery_client.send_goal(recovery_goal)
             recovery_client.wait_for_result(rospy.Duration.from_sec(10))
+            recovery_client.cancel_goal()
 
+            
         my_rate.sleep()

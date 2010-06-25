@@ -22,5 +22,8 @@
 
     <station gui="testo" host="testo" powerboard="1012" breaker0="True"
              breaker1="True" breaker2="True" />
+
+        <station gui="axb" host="axb" powerboard="1012" breaker0="True"
+             breaker1="True" breaker2="True" />
     
 </map>

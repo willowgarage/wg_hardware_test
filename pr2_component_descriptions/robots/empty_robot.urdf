@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<robot name="robot_none">
+
+  <link name="there_are_no_links_for_this_test" />
+
+</robot>

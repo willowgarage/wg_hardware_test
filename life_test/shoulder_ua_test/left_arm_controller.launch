@@ -51,7 +51,7 @@
             file="$(find pr2_controller_configuration)/pr2_joint_effort_controllers.yaml" />
   <node pkg="pr2_controller_manager" type="spawner"
         args="--wait-for=calibrated l_forearm_roll_effort_controller"
-        name="fa_roll_spawner)" />
+        name="fa_roll_spawner" />
   <node pkg="life_test" name="upperarm_cmder" type="upperarm_cmder.py"
         args="--left" />
 </launch>
