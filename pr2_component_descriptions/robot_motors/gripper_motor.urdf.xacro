@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <robot name="gripper_motor">
+  <link name="world" />
   <joint name="gripper_motor_joint" type="prismatic" >
     <axis xyz="0 1 0" />
     <limit effort="100" velocity="0.1" lower="0.0" upper="0.04" />
