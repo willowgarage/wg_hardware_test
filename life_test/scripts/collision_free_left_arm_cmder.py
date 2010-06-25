@@ -66,10 +66,10 @@ def get_recovery_goal():
      goal.trajectory.points.append(point)
      goal.trajectory.header.stamp = rospy.get_rostime()
      
-     for joint, pos in ranges.iteritems():
+     for joint, pos in recovery.iteritems():
           goal.trajectory.joint_names.append(joint)
           goal.trajectory.points[0].positions.append(pos)
-          goal.trajectory.points[0].velocities.append(0)
+          goal.trajectory.points[0].velocities.append(0.0)
 
      return goal
 
