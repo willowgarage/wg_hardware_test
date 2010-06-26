@@ -2,7 +2,7 @@
   <description brief="Interfaces with WG inventory system" >
 Provides an interface for the Willow Garage Inventory system, used by the life_test and qualification systems to automatically log assembly data into invent.
   </description>
-  <author>Scott Hassen, Kevin Watts</author>
+  <author>Scott Hassan, Kevin Watts</author>
   <review status="na" notes=""/>
   <license>BSD</license>
   <url>http://ros.org/wiki/wg_invent_client</url>
