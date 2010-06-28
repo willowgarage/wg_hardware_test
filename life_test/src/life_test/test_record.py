@@ -277,7 +277,7 @@ class TestRecord:
 
     def _get_test_team(self):
         # HACK!!! Don't email everyone if it's debugging on NSF
-        if os.environ['USER'] == 'watts' and gethostname() == 'nsf':
+        if os.environ.has_key('USER') and os.environ['USER'] == 'watts' and gethostname() == 'nsf':
             return 'watts@willowgarage.com'
 
         return 'test.team@lists.willowgarage.com'
