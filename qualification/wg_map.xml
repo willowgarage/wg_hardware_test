@@ -1,5 +1,5 @@
 <map>
-  <station gui="testi" host="testi" powerboard="1001" breaker0="True"
+  <station gui="wgburn2" host="testi" powerboard="1001" breaker0="True"
 	   breaker1="True" breaker2="True" />
 
     <station gui="cmi" host="testp" powerboard="1011" breaker0="True"

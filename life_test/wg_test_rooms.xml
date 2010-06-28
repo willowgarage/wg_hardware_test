@@ -5,10 +5,6 @@
   </room>
 
   <room hostname="apn" >
-    <!-- On test cart to side -->
-    <bay name="testi" machine="testi" board="1001" breaker="2" />
-    <bay name="testk" machine="testk" board="1001" breaker="0" />
-
     <!-- Right side -->
     <!-- Top rack -->
     <bay name="testx" machine="testx" board="1002" breaker="2" />
@@ -43,7 +39,7 @@
     
   </room>
   
-  <room hostname="testi" >
+  <room hostname="wgburn2" >
     <bay name="testi" machine="testi" board="1001" breaker="2" />
     <bay name="testm" machine="testm" board="1001" breaker="1" />
     <bay name="testk" machine="testk" board="1001" breaker="0" />
