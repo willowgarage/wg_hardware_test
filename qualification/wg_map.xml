@@ -1,5 +1,5 @@
 <map>
-  <station gui="wgburn2" host="testi" powerboard="1001" breaker0="True"
+  <station gui="wgburn2.willowgarage.com" host="testi" powerboard="1001" breaker0="True"
 	   breaker1="True" breaker2="True" />
 
     <station gui="cmi" host="testp" powerboard="1011" breaker0="True"
@@ -22,8 +22,9 @@
 
     <station gui="testo" host="testo" powerboard="1012" breaker0="True"
              breaker1="True" breaker2="True" />
-
-        <station gui="axb" host="axb" powerboard="1012" breaker0="True"
-             breaker1="True" breaker2="True" />
+    
+    <station gui="qual3.willowgarage.com" host="qual3.willowgarage.com" 
+	     powerboard="1012" breaker0="True"
+	     breaker1="True" breaker2="True" />
     
 </map>
