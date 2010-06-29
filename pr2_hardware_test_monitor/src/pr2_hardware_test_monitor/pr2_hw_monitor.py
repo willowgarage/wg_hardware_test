@@ -246,7 +246,9 @@ class TestMonitor:
         # Latch all error levels
         if not grace_period and level > TestStatus.WARNING:
             self._latched_lvl = max(self._latched_lvl, level)
-            level = self._latched_lvl
+            
+        # Report the max of our current level and the latch
+        level = max(self._latched_lvl, level)
 
         # Latch all error messages
         if not grace_period and len(errors) > 0:
@@ -256,11 +258,11 @@ class TestMonitor:
 
         if not grace_period:
             # Make message based on latched status
-            message = _make_message(self._latched_lvl, warnings, self._errors)
-            return self._latched_lvl, message, array
+            message = _make_message(level, warnings, self._errors)
+        else:
+            # Make message based on our current status
+            message = _make_message(level, warnings, errors)
 
-        # Make message based on our current status
-        message = _make_message(level, warnings, errors)
         return level, message, array
 
 

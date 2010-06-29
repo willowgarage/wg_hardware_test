@@ -36,10 +36,8 @@
 ##\brief Tests that test monitor latches error state
 
 """
-This tests that a transient error status, such as a camera error, produces 
-the correct behavior. We expect that an error, after a "grace period",
-will cause the "halt" method of all listeners to be called, and that the error 
-state will "latch" until reset is called.
+This tests that a single error code from the wge100 camera is detected by the camera_listener
+and reported as a warning.
 """
 
 from __future__ import with_statement
@@ -60,6 +58,7 @@ from std_srvs.srv import *
 import threading
 
 GRACE_TIME = 35 # 30 + 5 seconds for HW monitor to be ready
+IGNORE_TIME = 5
 
 def _camera_diag(level = 0):
     array = DiagnosticArray()
@@ -73,33 +72,26 @@ def _camera_diag(level = 0):
     
     return array
 
-class TestMonitorLatch(unittest.TestCase):
+class TestCameraWarn(unittest.TestCase):
     def __init__(self, *args):
-        super(TestMonitorLatch, self).__init__(*args)
+        super(TestCameraWarn, self).__init__(*args)
 
         self._mutex = threading.Lock()
         rospy.init_node('test_monitor_latch_test')
-        self._ignore_time = 5
-        self._start_time = rospy.get_time()
         self._ok = True
         self._level = 0
 
         self._start = rospy.get_time()
         self._last_msg = None
+        self._max_lvl = -1
+        #self._max_lvl = -1
 
         self._halted = False
-
-        # Publish that we're calibrated
-        self._cal_pub = rospy.Publisher('calibrated', Bool, latch=True)
-        self._cal_pub.publish(True)
 
         self._snapped = False
         self._snapshot_sub = rospy.Subscriber('snapshot_trigger', std_msgs.msg.Empty, self._snap_cb)
 
         self._diag_pub = rospy.Publisher('/diagnostics', DiagnosticArray)
-        self._pub = rospy.Publisher('pr2_etherCAT/motors_halted', Bool)
-        self._hlt = rospy.Service('pr2_etherCAT/halt_motors', Empty, self._hlt_cb)
-        self._rst = rospy.Service('pr2_etherCAT/reset_motors', Empty, self._rst_cb)
 
         self._reset_test = rospy.ServiceProxy('reset_test', Empty)
 
@@ -108,14 +100,6 @@ class TestMonitorLatch(unittest.TestCase):
     def _snap_cb(self, msg):
         self._snapped = True
 
-    def _hlt_cb(self, srv):
-        self._halted = True
-        return EmptyResponse()
-
-    def _rst_cb(self, srv):
-        self._halted = False
-        return EmptyResponse()
-    
     def _cb(self, msg):
         with self._mutex:
             if not self._last_msg:
@@ -123,24 +107,22 @@ class TestMonitorLatch(unittest.TestCase):
 
             self._last_msg = msg
 
+            if rospy.get_time() - self._start > IGNORE_TIME:
+                self._max_lvl = max(msg.test_ok, self._max_lvl)
 
-    def test_monitor(self):
+    def test_cam_warn(self):
         while not rospy.is_shutdown():
-            self._pub.publish(False)
             self._diag_pub.publish(_camera_diag())
             sleep(1.0)
             if rospy.get_time() - self._start > GRACE_TIME:
                 break
 
-        # Publish camera error for 10 seconds
-        for i in range(0, 10):
-            self._pub.publish(False)
-            self._diag_pub.publish(_camera_diag(level = 2))
-            sleep(1.0)
+        # Publish single camera error 
+        self._diag_pub.publish(_camera_diag(level = 2))
+        sleep(1.0)
 
         # Publish cameras OK 5x
         for i in range(0, 5):
-            self._pub.publish(False)
             self._diag_pub.publish(_camera_diag())
             sleep(1.0)
 
@@ -150,38 +132,19 @@ class TestMonitorLatch(unittest.TestCase):
             self.assert_(self._last_msg is not None, "No data from test monitor")
             
             # Check that message level is error state
-            self.assert_(self._last_msg.test_ok == TestStatus.ERROR, "Didn't record error state from Test Monitor. Should have error state because motors halted. Level: %d" % self._last_msg.test_ok)
+            self.assert_(self._last_msg.test_ok == TestStatus.RUNNING, "Test monitor reports that we're not running. Level: %d" % self._last_msg.test_ok)
 
-            # Check that message message has motors data
-            self.assert_(self._last_msg.message != 'OK', "Got OK message from test monitor, even with error level")
-            self.assert_(self._last_msg.message.find("Camera Error") > -1, "Didn't get camera error message")
-
-            # Check that it called halt_motors correctly
-            self.assert_(self._halted, "Halt motors wasn't called after failure")
+            # Check that we went into warning state
+            self.assert_(self._max_lvl == TestStatus.WARNING, "We didn't get warning message from the camera listener. Max level: %d" % self._max_lvl)
 
             # Check that snapshot trigger was called
-            self.assert_(self._snapped, "Snapshot trigger wasn't called after halt")
-
-        # Reset the test and make sure we're OK
-        self._reset_test()
-
-        # Publish good data for 5s
-        for i in range(0, 5):
-            self._pub.publish(False)
-            self._diag_pub.publish(_camera_diag())
-            sleep(1.0)
-
-        with self._mutex:
-            self.assert_(not rospy.is_shutdown(), "Rospy shutdown")
-            self.assert_(self._last_msg.test_ok == TestStatus.RUNNING, "Test didn't reset properly after error condition")
-
-            self.assert_(not self._halted, "Reset motors wasn't called after reset")
+            self.assert_(not self._snapped, "Snapshot trigger was called, but we didn't halt")
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == '-v':
         suite = unittest.TestSuite()
-        suite.addTest(TestMonitorLatch('test_monitor'))
+        suite.addTest(TestCameraWarn('test_cam_warn'))
 
         unittest.TextTestRunner(verbosity=2).run(suite)
     else:
-        rostest.run(PKG, sys.argv[0], TestMonitorLatch, sys.argv)
+        rostest.run(PKG, sys.argv[0], TestCameraWarn, sys.argv)
