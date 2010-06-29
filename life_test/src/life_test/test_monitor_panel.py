@@ -48,6 +48,8 @@ from time import sleep, strftime, localtime
 import threading
 import socket, subprocess
 
+import paramiko
+import Crypto
 
 import wx
 from wx import xrc
@@ -722,6 +724,52 @@ class TestMonitorPanel(wx.Panel):
 
         return True
 
+    def _check_keys(self, bay):
+        """
+        Check that machine has valid keys for remote launching
+
+        Uses paramiko to make sure it can open a connection to the remote machine. Will open a message box with
+        error message if it is unable to log in. Returns False if failure, True if OK.
+        """
+        ssh = paramiko.SSHClient()
+
+        # Load system host keys, ignore if we don't have them
+        try:
+            if os.path.isfile('/etc/ssh/ssh_known_hosts'): #default ubuntu location
+                ssh.load_system_host_keys('/etc/ssh/ssh_known_hosts')         
+        except IOError:
+            pass
+        
+        try:
+            ssh.load_system_host_keys()
+        except IOError:
+            wx.MessageBox('Unable to load host keys from ~/.ssh/known_hosts. File may be corrupt. Run "rm ~/.ssh/known_hosts" to attempt to clear this problem', 
+                          'Launch error', wx.OK)
+
+        # Allow unknown hosts
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        try:
+            ssh.connect(bay.machine, 22, None, timeout=10)
+        except paramiko.BadHostKeyException:
+            wx.MessageBox('Unable to verify host key for machine %s. Check authetication with "ssh MACHINE"' % bay.machine)
+            return False
+        except paramiko.AuthenticationException:
+            wx.MessageBox('Unable to log in to remote machine %s. Authentication failed.' % bay.machine)
+            return False
+        except paramiko.SSHException:
+            wx.MessageBox('Unable to launch. Unknown server %s' % bay.machine)
+            return False
+        except Exception:
+            wx.MessageBox('Unable to launch on machine %s. Unknown exception' % bay.machine)
+            import traceback
+            update_test_record(traceback.format_exc())
+            return False
+
+        ssh.close()
+
+        return True
+
     def _load_bay(self):
         """
         @brief Checks that the bay is valid, reserves bay, runs power.
@@ -802,6 +850,10 @@ class TestMonitorPanel(wx.Panel):
 
         # Make sure the machine is OK
         if not self._check_machine(bay):
+            self._launch_button.Enable(True)
+            return False
+
+        if not self._check_keys(bay):
             self._launch_button.Enable(True)
             return False
 
