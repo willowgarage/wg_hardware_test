@@ -64,15 +64,9 @@ class FakeTestFrame(wx.Frame):
         self.mech_pub = rospy.Publisher('mechanism_statistics', MechanismStatistics)
         self.motors_pub = rospy.Publisher('pr2_etherCAT/motors_halted', Bool)
 
-        self._mech_timer = wx.Timer(self, 2)
-        self.Bind(wx.EVT_TIMER, self.on_mech_timer, self._mech_timer)
-        self._last_mech_pub = rospy.get_time()
-        self._mech_timer.Start(50, True)
+        self._start_time = rospy.get_time()
 
-        self._diag_timer = wx.Timer(self, 1)
-        self.Bind(wx.EVT_TIMER, self.on_timer, self._diag_timer)
-        self._last_publish = rospy.get_time()
-        self._diag_timer.Start(500, True)
+
         
         # Load XRC
         xrc_path = os.path.join(roslib.packages.get_pkg_dir('life_test'), 'xrc/gui.xrc')
@@ -92,7 +86,16 @@ class FakeTestFrame(wx.Frame):
         self.set_enum_ctrl()
         self.set_range_ctrl()
 
-        self._start_time = rospy.get_time()
+        self._mech_timer = wx.Timer(self, 2)
+        self.Bind(wx.EVT_TIMER, self.on_mech_timer, self._mech_timer)
+        self._last_mech_pub = rospy.get_time()
+        self._mech_timer.Start(50, True)
+
+        self._diag_timer = wx.Timer(self, 1)
+        self.Bind(wx.EVT_TIMER, self.on_timer, self._diag_timer)
+        self._last_publish = rospy.get_time()
+        self._diag_timer.Start(500, True)
+
 
     def on_mech_timer(self, event = None):
         if not rospy.is_shutdown():
