@@ -712,14 +712,14 @@ class TestMonitorPanel(wx.Panel):
             machine_addr = socket.gethostbyname(bay.machine)
         except socket.gaierror:
             wx.MessageBox('Hostname "%s" (bay "%s") is invalid. The machine may be offline or disconnected.' % (bay.machine, bay.name),
-                          'Test Bay Invalid', wx.OK)
+                          'Test Bay Invalid', wx.OK|wx.ICON_ERROR)
             return False
 
         # Check that it is pingable
         retcode = subprocess.call('ping -c1 -W1 %s > /dev/null' % bay.machine, shell=True)
         if retcode != 0:
             wx.MessageBox('Cannot contact machine "%s" for bay "%s". It may be offline or disconnected. Check the machine and retry.' % (bay.machine, bay.name),
-                          'Test Bay Unavailable', wx.OK)
+                          'Test Bay Unavailable', wx.OK|wx.ICON_ERROR)
             return False
 
         return True
@@ -744,7 +744,7 @@ class TestMonitorPanel(wx.Panel):
             ssh.load_system_host_keys()
         except IOError:
             wx.MessageBox('Unable to load host keys from ~/.ssh/known_hosts. File may be corrupt. Run "rm ~/.ssh/known_hosts" to attempt to clear this problem', 
-                          'Launch error', wx.OK)
+                          'Launch Error - Known Hosts', wx.OK)
 
         # Allow unknown hosts
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -752,16 +752,20 @@ class TestMonitorPanel(wx.Panel):
         try:
             ssh.connect(bay.machine, 22, None, timeout=10)
         except paramiko.BadHostKeyException:
-            wx.MessageBox('Unable to verify host key for machine %s. Check authetication with "ssh MACHINE"' % bay.machine)
+            wx.MessageBox('Unable to verify host key for machine %s. Check authetication with "ssh MACHINE"' % bay.machine,
+                          'Bad Host Key', wx.OK|wx.ICON_ERROR)
             return False
         except paramiko.AuthenticationException:
-            wx.MessageBox('Unable to log in to remote machine %s. Authentication failed.' % bay.machine)
+            wx.MessageBox('Unable to log in to remote machine %s. Authentication failed. Machine may not be configured.' % bay.machine,
+                          'Authentication Failed', wx.OK|wx.ICON_ERROR)
             return False
         except paramiko.SSHException:
-            wx.MessageBox('Unable to launch. Unknown server %s' % bay.machine)
+            wx.MessageBox('Unable to launch. Unknown server %s. Machine may be invalid.' % bay.machine,
+                          'Unknown Server', wx.OK|wx.ICON_ERROR)
             return False
         except Exception:
-            wx.MessageBox('Unable to launch on machine %s. Unknown exception' % bay.machine)
+            wx.MessageBox('Unable to launch on machine %s. Unknown exception' % bay.machine,
+                          'Unknown Launching Exception', wx.OK|wx.ICON_ERROR)
             import traceback
             update_test_record(traceback.format_exc())
             return False
