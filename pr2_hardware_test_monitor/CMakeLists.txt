@@ -34,3 +34,8 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 rosbuild_add_rostest(test/launch/fake_monitor.launch)
 rosbuild_add_rostest(test/launch/latch_test.launch)
 rosbuild_add_rostest(test/launch/no_heartbeat_test.launch)
+
+# Tests of camera listener
+rosbuild_add_rostest(test/launch/cam_stale_test.launch)
+rosbuild_add_rostest(test/launch/cam_many_warn_test.launch)
+rosbuild_add_rostest(test/launch/cam_warn_test.launch)

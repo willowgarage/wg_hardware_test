@@ -51,6 +51,9 @@ import threading
 
 from pr2_hw_listener import PR2HWListenerBase
 
+STALE_TIMEOUT = 5.0
+ERROR_TIMEOUT = 5.0
+ERROR_MAX = 3
 
 class CameraListener(PR2HWListenerBase):
     def __init__(self):
@@ -60,32 +63,73 @@ class CameraListener(PR2HWListenerBase):
         self._lvl = 3 # No updates
         self._update_time = 0
 
+        self._last_ok_time = 0
+        self._error_cnt = 0 # Increment on error, reset on OK. Leave value on warning
+        self._last_msg_ok = False # True if last value was OK
+
+        self._was_stale = True # Warn if we go stale
+        self._reported_vals = False # Log whether we've reported any errors
+
     def _diag_callback(self, msg):
         with self._mutex:
             has_wge100 = False
             this_lvl = 0
+            this_msg = ''
             for stat in msg.status:
                 if stat.name.find('wge100') >= 0:
                     this_lvl = max(stat.level, this_lvl)
                     self._update_time = rospy.get_time()
                     has_wge100 = True
+                    
+                    if stat.level == this_lvl:
+                        this_msg = stat.message
 
             if has_wge100:
-                self._lvl = this_lvl
+                if this_lvl == 0:
+                    self._last_ok_time = rospy.get_time()
+                    self._error_cnt = 0
+
+                    # Don't reset last_msg value until we're reported it
+                    if self._reported_vals:
+                        self._last_msg_ok = True
+                else:
+                    self._last_msg_ok = False
+
+                if this_lvl > 1: # Received error value
+                    rospy.logwarn('Camera error from wge100 camera. Message: %s' % this_msg)
+                    self._error_cnt += 1
+
+                self._was_stale = False
+                self._reported_vals = False
+
     
     def check_ok(self):
         with self._mutex:
             msg = 'OK'
-            if self._lvl == 1:
-                msg = 'Camera Warning'
-            if self._lvl > 1:
-                msg = 'Camera Error'
+            lvl = 0 
 
-            if rospy.get_time() - self._update_time > 3:
-                self._lvl = 3
+            # Report a warning if we saw a warning or error in last message
+            if not self._last_msg_ok:
+                lvl = 1
+                msg = 'Camera Warning'
+
+            # Report error if we've seen multiple errors, or gone too long without good message
+            if self._error_cnt > ERROR_MAX or rospy.get_time() - self._last_ok_time > ERROR_TIMEOUT:
+                lvl = 2
+                msg = 'Camera Error'
+            
+            if rospy.get_time() - self._update_time > STALE_TIMEOUT:
+                if not self._was_stale:
+                    rospy.logerr('wge100 camera is stale. No updates from camera')
+                self._was_stale = True
+
+                lvl = 3
                 msg = 'Camera Stale'
                 if self._update_time == 0:
                     msg = 'No Camera Data'
         
-        return self._lvl, msg, None
+            # We've reported everything, so we can reset ourselves
+            self._reported_vals = True
+
+        return lvl, msg, None
     

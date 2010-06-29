@@ -1,0 +1,15 @@
+<launch> 
+  <node pkg="pr2_hardware_test_monitor" type="pr2_hw_test_monitor" name="monitor" output="screen" >
+    <rosparam command="load" file="$(find pr2_hardware_test_monitor)/test/config/camera_listener.yaml" />
+  </node>
+
+  <!-- Need heartbeat in order to work -->
+  <node pkg="rostopic" type="rostopic" name="heartbeat_pub"
+        args="pub /heartbeat std_msgs/Empty -r 1" />
+
+  <!-- Asserts we latch error state -->
+  <test test-name="camera_warn_test" time-limit="90"  
+        pkg="pr2_hardware_test_monitor"
+        name="test_monitor"
+        type="camera_warn_test.py" />
+</launch>
