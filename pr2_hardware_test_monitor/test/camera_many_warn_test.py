@@ -119,7 +119,7 @@ class TestCameraWarn(unittest.TestCase):
                 break
 
         # Publish lots of camera warnings/errors
-        for i in range(0, 10):
+        for i in range(0, 15):
             self._diag_pub.publish(_camera_diag(level = random.randint(1, 2)))
             sleep(1.0)
 

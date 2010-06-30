@@ -51,8 +51,8 @@ import threading
 
 from pr2_hw_listener import PR2HWListenerBase
 
-STALE_TIMEOUT = 5.0
-ERROR_TIMEOUT = 5.0
+STALE_TIMEOUT = 8.0
+ERROR_TIMEOUT = 8.0
 ERROR_MAX = 3
 
 class CameraListener(PR2HWListenerBase):
@@ -63,7 +63,8 @@ class CameraListener(PR2HWListenerBase):
         self._lvl = 3 # No updates
         self._update_time = 0
 
-        self._last_ok_time = 0
+        # Record last good message and the time
+        self._last_ok_time = rospy.get_time()
         self._error_cnt = 0 # Increment on error, reset on OK. Leave value on warning
         self._last_msg_ok = False # True if last value was OK
 
@@ -117,7 +118,9 @@ class CameraListener(PR2HWListenerBase):
             if self._error_cnt > ERROR_MAX or rospy.get_time() - self._last_ok_time > ERROR_TIMEOUT:
                 lvl = 2
                 msg = 'Camera Error'
-            
+                if rospy.get_time() - self._last_ok_time > ERROR_TIMEOUT:
+                    rospy.logwarn('Too long since last OK message received. Camera error')
+
             if rospy.get_time() - self._update_time > STALE_TIMEOUT:
                 if not self._was_stale:
                     rospy.logerr('wge100 camera is stale. No updates from camera')

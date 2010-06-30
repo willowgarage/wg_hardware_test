@@ -36,8 +36,7 @@
 ##\brief Tests that test monitor latches error state
 
 """
-This tests that a single error code from the wge100 camera is detected by the camera_listener
-and reported as a warning.
+This tests that a CameraListener will report stale after 15 seconds of not receiving any data.
 """
 
 from __future__ import with_statement
