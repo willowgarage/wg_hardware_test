@@ -486,11 +486,13 @@ int main(int argc, char** argv) {
   }
 
   // Must run as root
-  if (geteuid() != 0)
+  int test_sock = socket(PF_PACKET, SOCK_RAW, htons(0x88A4));
+  if ((test_sock < 0) && (errno == EPERM))
   {
-    fprintf(stderr, "You must run as root!\n");
-    return 1;
+    ROS_FATAL("Insufficient priviledges to open raw socket. Try running as root");
+    ROS_BREAK();
   }
+  close(test_sock);
   
   if (!is_iface_up(interface)) {
     fprintf(stderr, "Interface %s is not UP, try 'ifconfig %s up'", interface, interface);
