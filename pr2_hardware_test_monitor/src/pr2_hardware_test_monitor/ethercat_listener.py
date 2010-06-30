@@ -84,8 +84,8 @@ class EthercatListener(PR2HWListenerBase):
     # Try twice to halt motors, using persistant service for one try
     def halt(self):
         try:
-            self._halt_motors()
             self._halt_motors2()
+            self._halt_motors()
 
         except Exception, e:
             try:
