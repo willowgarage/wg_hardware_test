@@ -9,5 +9,9 @@
   <node pkg="pr2_controller_manager" type="spawner"
         name="spawner" args="test_controller" />
   
-  <node pkg="qualification" type="robot_checkout.py" name="checkout" />
+  <node pkg="qualification" type="robot_checkout.py" name="checkout" >
+    <rosparam command="load" file="$(find qualification)/tests/head_test/head_check_data.yaml" />
+  </node>
+
+
 </launch>

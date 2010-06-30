@@ -1,0 +1,3 @@
+motors: [
+  'head_pan_motor',
+  'head_tilt_motor']
