@@ -141,8 +141,6 @@ class RobotCheckout:
         self.has_sent_result = False
 
         self._expected_actuators = rospy.get_param('~motors', None)
-        if self._expected_actuators is None:
-            rospy.logwarn('Not given list of expected actuators! Deprecation warning')
 
         self._motors_halted = True
         self._last_motors_time = 0
@@ -382,8 +380,6 @@ class RobotCheckout:
             found_acts = []
 
             html = ['<p><b>Actuator Data</b></p><br>\n']
-            if self._expected_actuators is None:
-                html.append('<p>WARNING: No list of expected actuators was given. In the future, this will cause a failure.</p>\n')
             html.append('<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">\n')
             html.append('<tr><td><b>Index</b></td><td><b>Name</b></td><td><b>ID</b></td><td><b>Expected</b></td></tr>\n')
             for act_data in act_datas:
@@ -394,12 +390,10 @@ class RobotCheckout:
                 expect = 'N/A'
                 found_acts.append(act_data.name)
                 # Compare found against expected
-                if self._expected_actuators is not None:
-                    expect = 'True'
-                    if not act_data.name in self._expected_actuators:
-                        expect = 'False'
-                        self._acts_ok = False
-                        
+                expect = 'True'
+                if not self._expected_actuators or not act_data.name in self._expected_actuators:
+                    expect = 'False'
+                    self._acts_ok = False
 
                 html.append('<tr><td>%d</td><td>%s</td><td>%d</td><td>%s</td></tr>\n' % (index, name, id, expect))
 
@@ -409,6 +403,9 @@ class RobotCheckout:
                     if not name in found_acts:
                         html.append('<tr><td>N/A</td><td>%s</td><td>Not Found</td><td>True</td></tr>\n' % (name))
                         self._acts_ok = False
+            else:
+                html.append('<tr><td>No Actuators Expected</td><td>Uh oh!</td><td>Not Found</td><td>True</td></tr>\n')
+                self._acts_ok = False
 
             html.append('</table>\n')
             
