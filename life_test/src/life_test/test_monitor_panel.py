@@ -592,9 +592,10 @@ class TestMonitorPanel(wx.Panel):
         launch = '<launch>\n'
         launch += '<group ns="%s" >\n' % bay.name
 
-        launch += '<param name="tf_prefix" type="string" value="%s" />\n' % bay.name
+        #launch += '<param name="tf_prefix" type="string" value="%s" />\n' % bay.name
         # Remap
         launch += '<remap from="/diagnostics" to="%s" />\n' % local_diag_topic
+        launch += '<remap from="/tf" to="/%s/tf" />\n' % bay.name
         
         # Init machine
         # Set default to remote machine
