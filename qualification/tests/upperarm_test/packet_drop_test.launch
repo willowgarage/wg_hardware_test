@@ -4,7 +4,7 @@
   <!-- Packet drop test node -->
   <node pkg="ectools" type="ecstats" name="ecstats"
         launch-prefix="pr2_grant"
-        machine="test_host" args="-j4 -ieth2" />
+        machine="test_host" args="-j4 -ilan0" />
 
   <node pkg="qualification" type="ecstats_test.py" name="ecstats_test" />
 </launch>

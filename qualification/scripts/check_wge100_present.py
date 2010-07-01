@@ -112,7 +112,7 @@ if __name__ == '__main__':
     if len(args) > 1:
         interface = args[1]
     else:
-        interface = 'eth2'
+        interface = 'lan0'
     
 
     val, msg = check_camera(interface)

@@ -53,7 +53,7 @@ from pr2_self_test_msgs.srv import ConfirmConf, ConfirmConfRequest, ConfirmConfR
 from wg_invent_client import Invent
 
 prog_path = os.path.join(roslib.packages.get_pkg_dir(PKG), "fwprog")
-ECAT_IFACE = "eth0" # EtherCAT interface
+ECAT_IFACE = "ecat0" # EtherCAT interface
 
 class MCBProgramConfig:
     def __init__(self, expected):

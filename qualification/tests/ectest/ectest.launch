@@ -10,7 +10,7 @@
   <!-- Start ecstats -->
   <node machine="test_host" pkg="ectools"
         launch-prefix="pr2_grant"
-        name="ecstats" type="ecstats" args="-i eth0" required="true"/>
+        name="ecstats" type="ecstats" args="-i ecat0" required="true"/>
   <!--<node pkg="qualification" type="done.py" name="$(anon done)" required="true"/>-->
 
 </launch>
