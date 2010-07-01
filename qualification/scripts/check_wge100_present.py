@@ -60,7 +60,7 @@ def _report_no_cameras(interface):
     return resp.retry == ConfirmConfResponse.RETRY
 
 
-def check_camera(interface = 'eth2'):
+def check_camera(interface):
     while not rospy.is_shutdown():
         p = subprocess.Popen('rosrun wge100_camera discover %s' % interface, 
                              stdout=subprocess.PIPE,
