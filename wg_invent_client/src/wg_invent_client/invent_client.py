@@ -32,7 +32,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-##\author Scott Hassen
+##\author Scott Hassan
 ##\brief Client for WG inventory system
 
 
