@@ -105,12 +105,14 @@ class Invent(object):
     self._logged_time = time.time()
     return True
 
-  ##\brief Debug mode only. Check invent DB for serial
+  ##\brief Check invent DB for serial, make sure it is valid
   ##
   ##\return bool : True if serial is valid, False if not
   def check_serial_valid(self, serial):
     if not _is_serial_valid(serial):
       return False
+
+    self.login()
 
     url = self.site + "invent/api.py?Action.isItemValid=1&reference=%s" % (serial,)
     fp = self.opener.open(url)
@@ -122,7 +124,32 @@ class Invent(object):
     
     return value.lower() == "true"
 
+  ##\brief Lookup item by a reference. Debug mode only.
+  ##
+  ## Item references are stored as key-values. Ex: { "wan0", "005a86000000" }
+  ## This returns all items associated with a given reference value.
+  ##\param str : Reference to lookup
+  ##\return [ str ] : All items serial numbers that matched reference
+  def lookup_by_reference(self, ref):
+    self.login()
 
+    url = self.site + "invent/api.py?Action.lookupByReference=1&reference=%s" % (ref,)
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    hdf.readString(body)
+
+    rv = []
+    for k,o in hdfhelp.hdf_ko_iterator(hdf.getObj("CGI.cur.items")):
+      rv.append(o.getValue("reference", ""))
+
+    return rv
+
+  ##\brief List all attachments for an item
+  ##
+  ##\return { str : str } : Attachment ID to filename
   def get_attachments(self, key):
     self.login()
 
