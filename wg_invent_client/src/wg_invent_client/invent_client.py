@@ -124,6 +124,28 @@ class Invent(object):
     
     return value.lower() == "true"
 
+  ##\brief Verifies that component is assembled and parts have passed Qual. Debug only
+  ##
+  ##
+  ## Checks that part is assembled against BoM. All sub-parts must be properly associated
+  ## to the parent part. All sub-parts must have passed qualification.
+  ##\param serial str : Serial number to check
+  ##\return True if part is assembled
+  def check_assembled(self, serial):
+    self.login()
+
+    url = self.site + "invent/api.py?Action.checkAssembled=1&reference=%s" % (serial,)
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    hdf.readString(body)
+    
+    val = hdf.getValue("CGI.out", "")
+    return val.lower() == "true"
+
+
   ##\brief Lookup item by a reference. Debug mode only.
   ##
   ## Item references are stored as key-values. Ex: { "wan0", "005a86000000" }
