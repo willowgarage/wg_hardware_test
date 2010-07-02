@@ -61,7 +61,7 @@ def _is_serial_valid(reference):
 ##
 ## Performs all action relating to inventory system
 ## Will login automatically before all functions if needed
-class Invent:
+class Invent(object):
   ##@param username str : Username for WG invent system
   ##@param password str : Password for WG invent system
   def __init__(self, username, password, debug=False):
@@ -112,22 +112,17 @@ class Invent:
     if not _is_serial_valid(serial):
       return False
 
-    if 0: # Waiting for invent upgrade
-      url = self.site + "invent/api.py?Action.isItemValid=1&reference=%s" % (serial,)
-      fp = self.opener.open(url)
-      body = fp.read()
-      fp.close()
-      
-      i = string.find(body, "\n<!--")
-      value = string.strip(body[:i])
-      
-      if value != "True":
-        return False
+    url = self.site + "invent/api.py?Action.isItemValid=1&reference=%s" % (serial,)
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+    
+    i = string.find(body, "\n<!--")
+    value = string.strip(body[:i])
+    
+    return value.lower() == "true"
 
-    ##\todo Need some other stuff here. #4060
-    return True
 
-  ##\brief Debug mode only
   def get_attachments(self, key):
     self.login()
 
@@ -137,8 +132,6 @@ class Invent:
     fp = self.opener.open(url)
     body = fp.read()
     fp.close()
-
-    print body
 
     hdf = neo_util.HDF()
     hdf.readString(body)
