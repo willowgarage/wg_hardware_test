@@ -189,6 +189,7 @@ class TestMonitorPanel(wx.Panel):
         self._current_log = {}
         self._diag_msgs = {}
 
+        # Data for status output
         self._is_running = False
         self._stat_level = 127 # Not launched
         self._test_msg = 'None'
@@ -222,7 +223,7 @@ class TestMonitorPanel(wx.Panel):
         self.invent_timer.Start(self.invent_timeout * 500)
         self._is_invent_stale = True
 
-        self.update_controls()
+        self._update_controls()
         self._enable_controls()
 
     def _create_monitor(self):
@@ -280,6 +281,8 @@ class TestMonitorPanel(wx.Panel):
             self._status_sub.unregister()
             self._status_sub = None
 
+        self._monitor_panel.shutdown()
+
         self._manager.close_tab(self._serial)
 
     def on_user_entry(self, event):
@@ -321,8 +324,7 @@ class TestMonitorPanel(wx.Panel):
 
         self._current_log = {}
 
-    ##\todo Private
-    def calc_run_time(self):
+    def _calc_run_time(self):
         end_condition = self._end_cond_type.GetStringSelection()
         
         duration = self._test_duration_ctrl.GetValue()
@@ -336,9 +338,8 @@ class TestMonitorPanel(wx.Panel):
         else: #if end_condition == 'Continuous':
             return 10**10 # Roughly 300 years
 
-    ##\todo Private
-    def calc_remaining(self):
-        total_sec = self.calc_run_time()
+    def _calc_remaining(self):
+        total_sec = self._calc_run_time()
         cum_sec = self._record.get_cum_time()
 
         return total_sec - cum_sec
@@ -366,7 +367,7 @@ class TestMonitorPanel(wx.Panel):
                 rospy.logerr('Halting test on machine %s. Update is stale for %d seconds' % (self._bay.name, int(interval)))
                 self.update_test_record('Halted test after no data received for %d seconds.' % int(interval))
 
-            self.update_controls(4)
+            self._update_controls(4)
             self.update_test_record()
             self.stop_if_done()
         else:
@@ -506,15 +507,14 @@ class TestMonitorPanel(wx.Panel):
             self._status_bar.SetValue("Test Monitor: No Updates/Stale")        
 
     ##\brief Called after status message or timer callback
-    ##\todo Make private
-    def update_controls(self, level = 4, msg = 'None'):
+    def _update_controls(self, level = 4, msg = 'None'):
         self._update_status_bar(level, msg)
 
         # These are updated here instead of the callback, because of the stale timer
         self._stat_level = level
         self._test_msg = msg
 
-        remaining = self.calc_remaining()
+        remaining = self._calc_remaining()
         remain_str = "N/A" 
         if remaining < 10**6:
             remain_str = get_duration_str(remaining)
@@ -542,7 +542,7 @@ class TestMonitorPanel(wx.Panel):
             self._launch_button.SetLabel("Launch")
         
     def stop_if_done(self):
-        remain = self.calc_remaining()
+        remain = self._calc_remaining()
         
         if remain < 0:
             self._stop_count += 1
@@ -580,7 +580,7 @@ class TestMonitorPanel(wx.Panel):
 
         self.start_timer()
 
-        self.update_controls(test_level, test_msg)
+        self._update_controls(test_level, test_msg)
         self.update_test_record()
         self.stop_if_done()
 
@@ -638,7 +638,7 @@ class TestMonitorPanel(wx.Panel):
                 return
             
 
-        self.update_controls()
+        self._update_controls()
         self._enable_controls()
 
     ##\brief Called when user presses "stop" button
@@ -690,7 +690,7 @@ class TestMonitorPanel(wx.Panel):
         # Enable GUI
         self._launch_button.Enable(True)
         self._launch_button.SetLabel("Launch")
-        self.update_controls()
+        self._update_controls()
         self._enable_controls()
 
     def stop_test(self):
@@ -700,6 +700,8 @@ class TestMonitorPanel(wx.Panel):
         if self._status_sub:
             self._status_sub.unregister()
         self._status_sub = None
+
+        self._monitor_panel.change_diagnostic_topic('empty')
 
         self._is_running = False
 
@@ -814,7 +816,7 @@ class TestMonitorPanel(wx.Panel):
 
         @return False if test has no time left
         """
-        if self.calc_remaining() <= 0:
+        if self._calc_remaining() <= 0:
             wx.MessageBox('Test has no allowable time left. Add more hours/minutes and retry.',
                           'Out of Time', wx.OK|wx.ICON_ERROR, self)
             return False
@@ -924,7 +926,7 @@ class TestMonitorPanel(wx.Panel):
         self._monitor_panel.change_diagnostic_topic(local_diag)
         self._status_sub = rospy.Subscriber(local_status, TestStatus, self.status_callback)
 
-        self.update_controls()
+        self._update_controls()
         self._enable_controls()
         self._launch_button.Enable(True)
 
