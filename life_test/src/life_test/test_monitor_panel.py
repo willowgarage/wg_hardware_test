@@ -568,14 +568,12 @@ class TestMonitorPanel(wx.Panel):
     ##\todo Private
     def new_msg(self):
         with self._mutex:
-            level_dict = { 0: 'OK', 1: 'Warn', 2: 'Error', 3: 'Stale' }
-
             test_level = self._status_msg.test_ok
             test_msg = self._status_msg.message
 
         self._last_message_time = rospy.get_time()            
 
-        self._is_running = (self._status_msg.test_ok == 0)
+        self._is_running = (test_level == 0)
         self._is_stale = False
 
         self.start_timer()
@@ -707,7 +705,7 @@ class TestMonitorPanel(wx.Panel):
 
     def _check_machine(self, bay):
         """
-        @brief Check the machine is online.
+        Check the machine is online.
 
         @return True if machine is OK
         """
@@ -779,7 +777,7 @@ class TestMonitorPanel(wx.Panel):
 
     def _load_bay(self):
         """
-        @brief Checks that the bay is valid, reserves bay, runs power.
+        Checks that the bay is valid, reserves bay, runs power.
 
         @return None if bay invalid
         """
@@ -794,7 +792,7 @@ class TestMonitorPanel(wx.Panel):
 
     def _enable_bay(self):
         """
-        @brief Reserve bay from manager, enable power
+        Reserve bay from manager, enable power
         
         @return False if unable to reserve bay or enable power
         """
@@ -812,7 +810,7 @@ class TestMonitorPanel(wx.Panel):
 
     def _check_test_ready(self):
         """
-        @brief Check if test has <0 time remaining.
+        Check if test has <0 time remaining.
 
         @return False if test has no time left
         """
@@ -824,7 +822,7 @@ class TestMonitorPanel(wx.Panel):
 
     def _confirm_launch(self):
         """
-        @brief Checks with user to make sure test can start.
+        Checks with user to make sure test can start.
 
         @return True if user is OK
         """
@@ -836,7 +834,7 @@ class TestMonitorPanel(wx.Panel):
         
     def launch_test(self):
         """
-        @brief Launches test on correct bay
+        Launches test on correct bay
 
         @return False if launch failed or aborted
         """
@@ -860,6 +858,7 @@ class TestMonitorPanel(wx.Panel):
             self._launch_button.Enable(True)
             return False
 
+        # Check SSH authentication
         if not self._check_keys(bay):
             self._launch_button.Enable(True)
             return False
