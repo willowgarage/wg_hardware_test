@@ -166,6 +166,10 @@ class PlotsPanel(wx.Panel):
     self._rxconsole_panel.setEnabled(True)
     self._notebook.AddPage(self._rxconsole_panel, "ROS Output")
     
+  def close(self):
+    self._monitor_panel.shutdown()
+    # Maybe do something with rxconsole to shut down
+
   ##\brief Displays plots, HTML of results
   ##
   ##\param result_page str : HTML result page of results
@@ -301,6 +305,8 @@ class QualificationFrame(wx.Frame):
     self._top_sizer = wx.BoxSizer(wx.HORIZONTAL)
     self._top_panel.SetSizer(self._top_sizer)
     self._current_panel = None
+    self._plots_panel = None
+
     self._log_panel = xrc.XRCCTRL(self._root_panel, "log_panel")
     self._log = xrc.XRCCTRL(self._log_panel, 'log')
 
@@ -365,7 +371,11 @@ class QualificationFrame(wx.Frame):
     if self._results:
       self._results.close()
     self._results = None
+
+    if self._plots_panel:
+      self._plots_panel.close()
     self._plots_panel = None
+
     self.reset_params()
   
   ##\brief Resets parameters of qualification node to starting state
