@@ -75,12 +75,12 @@ import rxtools.cppwidgets
 ##\brief Passed to qualification manager
 ##
 ## Holds data about item to be qualified. Subtests can hold more data
-class QualTestObject():
+class QualTestObject(object):
   def __init__(self, name, serial):
     self.name = name
     self.serial = serial
 
-class QualOptions:
+class QualOptions(object):
   def __init__(self):
     self.debug = False
     self.always_show_results = False

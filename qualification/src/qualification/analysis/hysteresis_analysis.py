@@ -48,7 +48,7 @@ from StringIO import StringIO
 
 from pr2_self_test_msgs.msg import Plot, TestParam, TestValue
 
-class HysteresisParameters:
+class HysteresisParameters(object):
     def __init__(self):
         self.joint_name = None
         
@@ -115,7 +115,7 @@ def get_test_value(name, value, min, max):
     return TestValue(str(name), str(value), str(min), str(max))
     
     
-class HysteresisDirectionData:
+class HysteresisDirectionData(object):
     def __init__(self, position, effort, velocity):
         self.range_max = max(position)
         self.range_min = min(position)
@@ -127,7 +127,7 @@ class HysteresisDirectionData:
         self.effort   = numpy.array(effort)  [min_index: max_index]
         self.velocity = numpy.array(velocity)[min_index: max_index]
 
-class HysteresisTestData:
+class HysteresisTestData(object):
     def __init__(self, positive_data, negative_data):
         self.positive = positive_data
         self.negative = negative_data
@@ -135,7 +135,8 @@ class HysteresisTestData:
         self.range_max = max(self.positive.range_max, self.negative.range_max)
         self.range_min = min(self.positive.range_min, self.negative.range_min)
 
-class HysteresisAnalysisResult:
+class HysteresisAnalysisResult(object):
+    __slots__ = ['html', 'summary', 'result', 'values' ]
     def __init__(self):
         self.html = ''
         self.summary = ''

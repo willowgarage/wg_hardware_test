@@ -83,7 +83,7 @@ def write_temp_tar_file(results_dir):
     return temp_tar_file
 
 ##\brief Holds results from pre-startup and shutdown scripts
-class TestScriptResult:
+class TestScriptResult(object):
     ##@param test_script is test/TestScript that we tested
     def __init__(self, test_script, srv_result):
         self.name = test_script.get_name()
@@ -115,7 +115,7 @@ class TestScriptResult:
 ##
 ## Stores results of subtests in any case. Completely encapsulates
 ## numeric values of result types from users. 
-class SubTestResultType:
+class SubTestResultType(object):
     __result_types = { 
         0: "Pass", 
         1: "Fail", 
@@ -190,7 +190,7 @@ class SubTestResultType:
 ##
 ##\todo Make unit test of this class. Test should try getting subtest, TestResultRequest
 ## and writing images, displaying results.
-class SubTestResult:
+class SubTestResult(object):
     ##\param subtest test/SubTest : Subtest that completed
     ##\param msg srv/TestResultRequest : Received msg from analysis
     def __init__(self, subtest, msg):
@@ -434,7 +434,7 @@ em { font-style:normal; font-weight: bold; }\
 ##
 ##
 ##\todo Make unit test of this class. Should get a series of subresults, check links, 
-class QualTestResult:
+class QualTestResult(object):
     ##\param qual_item QualTestItem : Item under test
     ##\param qual_test Test : Test we're running
     ##\param start_time int : Start time from rospy, or time.time()
