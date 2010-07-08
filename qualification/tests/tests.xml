@@ -108,11 +108,11 @@
   <!-- Special tests -->
   <test serial="faketes" debug="true"
 	file="simple_example/test.xml" descrip="Simple Example" />
-  <test serial="fakeout" debug="true"
+  <test serial="faketes" debug="true"
 	file="simple_example/test_timeout.xml" descrip="Test Timeout" />
 
   <!-- EtherCAT diagnostic test -->
-  <test serial="ectest" debug="true"
+  <test serial="ecattes" debug="true"
         file="ectest/test.xml" descrip="ECAT Chain test"/>
   
 
