@@ -40,11 +40,13 @@ import roslib; roslib.load_manifest(PKG)
 import os, sys
 from xml.dom import minidom
 
+from wg_station import WGTestStation
+
 TESTS_DIR = os.path.join(roslib.packages.get_pkg_dir(PKG), 'tests')
 CONFIG_DIR = os.path.join(roslib.packages.get_pkg_dir(PKG), 'config')
 
 ##\todo This is clunky. Should this load the test.xml file for everything?
-def load_tests_from_map(tests, test_descripts_by_file, debugs):
+def load_tests_from_map(tests, test_descripts_by_file, debugs = []):
   # Load test directory
   tests_xml_path = os.path.join(TESTS_DIR, 'tests.xml')
   try:
@@ -67,10 +69,7 @@ def load_tests_from_map(tests, test_descripts_by_file, debugs):
     if debug_test:
       debugs.append(serial)
 
-    if tests.has_key(serial):
-      tests[serial].append(test_file)
-    else:
-      tests[serial] = [ test_file ]
+    tests.setdefault(serial, []).append(test_file)
       
     test_descripts_by_file[test_file] = descrip
     
@@ -116,5 +115,32 @@ def load_configs_from_map(config_files, config_descripts_by_file):
 
     config_files.setdefault(serial, []).append(test_str)
     config_descripts_by_file[ test_str ] = descrip
+
+  return True
+
+
+def load_wg_station_map(wg_teststations):
+  """
+  Loads "map" of WG test stations. Each station has a GUI, a remote host
+  and a power board.
+  \param wg_teststations {} : Output dictionary of test stations
+  \return True if loaded successfully
+  """
+  map_xml_path = os.path.join(roslib.packages.get_pkg_dir(PKG), 'wg_map.xml')
+  
+  try:
+    doc = minidom.parse(map_xml_path)
+  except IOError:
+    print >> sys.stderr, "Could not load test map from '%s'"%(map_xml_path)
+    return False
+
+  stations = doc.getElementsByTagName('station')
+
+  for st in stations:
+    my_station = WGTestStation()
+
+    if not my_station.xmlLoad(st):
+      return False
+    wg_teststations[my_station.gui_host] = my_station
 
   return True

@@ -682,8 +682,6 @@ class QualificationFrame(wx.Frame):
   ##\brief Uses roslaunch_caller to launch file
   ##@param file str : Full path of launch script
   def launch_file(self, file):
-    #self.log('Launching file %s' % (os.path.basename(file)))
-    
     f = open(file, 'r')
     launch_xml = f.read()
     f.close()
@@ -696,7 +694,7 @@ class QualificationFrame(wx.Frame):
     launch = roslaunch_caller.ScriptRoslaunch(script, None)
     try:
       launch.start()
-    except:
+    except Exception, e:
       traceback.print_exc()
       self.log('Caught exception launching file:\n%s' % traceback.format_exc())
       return None
