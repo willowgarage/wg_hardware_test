@@ -54,7 +54,7 @@ class FailedLoadError(Exception): pass
 ##@param pre_test str (optional): Launch file for pre-subtest script
 ##@param post_test str (optional): Launch file for post-subtest script
 ##@param name str (optional): Human readable name of subtest
-class SubTest:
+class SubTest(object):
   def __init__(self, subtest, key, name, timeout = -1, pre_test=None, post_test=None):
     self._test_script = subtest
     self._pre_script = pre_test
@@ -120,7 +120,7 @@ class SubTest:
 
 ##\brief Holds pre-startup/shutdown scripts for qual tests
 ##\todo Change private vars to _names
-class TestScript:
+class TestScript(object):
   ##@param launch_file: Complete file name of launch file
   ##@param name str (optional): Human readable name of pre-startup script
   ##@param timeout int (optional) : Timeout in seconds of test
@@ -162,7 +162,7 @@ class TestScript:
 ##\brief Qualification test to run. 
 ##
 ##Holds instructions, subtests, pre_startup scripts, etc.
-class Test:
+class Test(object):
   def __init__(self):
     self._name = None
     self._startup_script = None
