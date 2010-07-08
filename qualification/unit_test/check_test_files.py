@@ -48,11 +48,10 @@ import os, sys
 class QualificationTestParser(unittest.TestCase):
     def setUp(self):
         self.test_files = {}
-        descs = {}
-        self.tests_ok = load_tests_from_map(self.test_files, descs, [])
+        self.tests_ok = load_tests_from_map(self.test_files)
 
         self.config_files = {}
-        self.configs_ok = load_configs_from_map(self.config_files, descs)
+        self.configs_ok = load_configs_from_map(self.config_files)
 
     def test_wg_station_map(self):
         self.assert_(load_wg_station_map({}), "Unable to load WG station map. Configuration file \"wg_map.xml\" is invalid")
@@ -61,43 +60,13 @@ class QualificationTestParser(unittest.TestCase):
     def test_check_tests_parsed(self):
         self.assert_(self.tests_ok, "Tests failed to load (tests.xml)")
         self.assert_(self.test_files is not None, "Tests list is None, nothing to load")
+        self.assert_(len(self.test_files.items()) > 0, "No tests loaded")
 
-    ##\brief All test.xml files must load and validate
-    def test_load_qual_tests(self):
-        tests_dir = os.path.join(roslib.packages.get_pkg_dir('qualification'), 'tests')
-        
-        for sn, lst in self.test_files.iteritems():
-            for my_test_file in lst:
-                my_test_full_path = str(os.path.join(tests_dir, my_test_file))
-
-                test_dir = os.path.dirname(my_test_full_path)
-
-                self.assert_(os.path.exists(my_test_full_path), "Test file %s does not exist, unable to validate" % my_test_full_path)
-                test_str = open(my_test_full_path).read()
-                
-                my_test = Test()
-                my_test.load(test_str, test_dir)
-                self.assert_(my_test.validate(), "Test failed to validate. Directory: %s\nXML: %s" % (my_test_file, test_str))
-
-    ##\brief All config files must load successfully
+     ##\brief All config files must load successfully
     def test_check_configs_parsed(self):
-        #self.assert_(False)
-
         self.assert_(self.configs_ok, "Configs failed to load (tests.xml)")
         self.assert_(self.config_files is not None, "Configs list is None, nothing to load")
-
-    ##\brief All config files must validate
-    def test_load_qual_configs(self):
-        configs_dir = roslib.packages.get_pkg_dir('qualification')
-        
-        for sn, lst in self.config_files.iteritems():
-            for my_config_str in lst:
-                my_config = Test()
-                my_config.load(my_config_str, configs_dir)
-                self.assert_(my_config.validate(), "Configuration script failed to validate. Directory: %s\nXML: %s" % (configs_dir, my_config_str))
-
-    def tearDown(self):
-        pass
+        self.assert_(len(self.config_files.items()) > 0, "No config scripts loaded")
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == '-v':
@@ -105,9 +74,7 @@ if __name__ == '__main__':
         suite = unittest.TestSuite()
         suite.addTest(QualificationTestParser('test_wg_station_map'))
         suite.addTest(QualificationTestParser('test_check_tests_parsed'))
-        suite.addTest(QualificationTestParser('test_load_qual_tests'))
         suite.addTest(QualificationTestParser('test_check_configs_parsed'))
-        suite.addTest(QualificationTestParser('test_load_qual_configs'))
         
         unittest.TextTestRunner(verbosity = 2).run(suite)
     else:

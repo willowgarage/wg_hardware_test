@@ -40,13 +40,20 @@ import roslib; roslib.load_manifest(PKG)
 import os, sys
 from xml.dom import minidom
 
+from test import Test
 from wg_station import WGTestStation
 
 TESTS_DIR = os.path.join(roslib.packages.get_pkg_dir(PKG), 'tests')
 CONFIG_DIR = os.path.join(roslib.packages.get_pkg_dir(PKG), 'config')
+QUAL_DIR = roslib.packages.get_pkg_dir(PKG)
 
-##\todo This is clunky. Should this load the test.xml file for everything?
-def load_tests_from_map(tests, test_descripts_by_file, debugs = []):
+def load_tests_from_map(tests, debugs = []):
+  """
+  Loads tests from tests/tests.xml configuration file
+
+  \param tests {} : Test by serial. { str: [ Test ] }
+  \return True if loaded successfully and all tests validated
+  """
   # Load test directory
   tests_xml_path = os.path.join(TESTS_DIR, 'tests.xml')
   try:
@@ -59,23 +66,52 @@ def load_tests_from_map(tests, test_descripts_by_file, debugs = []):
   
   # Loads tests by serial number of part
   test_elements = doc.getElementsByTagName('test')
-  for test in test_elements:
-    serial = test.attributes['serial'].value
-    test_file = test.attributes['file'].value
-    descrip = test.attributes['descrip'].value
+  for tst in test_elements:
+    if not tst.attributes.has_key('serial'):
+      print >> sys.stderr, "Tst XML element does not have attribute \"serial\". Unable to load. XML: %s" % str(tst)
+      return False
+    serial = tst.attributes['serial'].value
+    if not len(serial) == 7: 
+      print >> sys.stderr, "Serial number is invalid: %s" % serial
+      return False
+
+    if not tst.attributes.has_key('file'):
+      print >> sys.stderr, "Test XML element does not have attribute \"file\". Unable to load. XML: %s" % str(tst)
+      return False
+    test_file = tst.attributes['file'].value
+
+    if not tst.attributes.has_key('descrip'):
+      print >> sys.stderr, "Test XML element does not have attribute \"descrip\". Unable to load. XML: %s" % str(tst)
+      return False
+    descrip = tst.attributes['descrip'].value
 
     # Mark as debug test, which allows us to run outside debug mode
-    debug_test = test.attributes.has_key('debug') and test.attributes['debug'].value == "true"
+    debug_test = tst.attributes.has_key('debug') and tst.attributes['debug'].value.lower() == "true"
     if debug_test:
       debugs.append(serial)
 
-    tests.setdefault(serial, []).append(test_file)
-      
-    test_descripts_by_file[test_file] = descrip
+    test_path = os.path.join(os.path.join(TESTS_DIR, test_file))
+    test_dir = os.path.dirname(test_path)
+    test_str = open(test_path).read()
+
+    my_test = Test(descrip)
+    if not my_test.load(test_str, test_dir):
+      print >> sys.stderr, "Unable to load test %s" % descrip
+      return False
+
+    my_test.debug_ok = debug_test
+
+    tests.setdefault(serial, []).append(my_test)
     
   return True
 
-def load_configs_from_map(config_files, config_descripts_by_file):
+def load_configs_from_map(config_files):
+  """
+  Loads configuration scripts from config/configs.xml configuration file
+
+  \param tests {} : Configs by serial. { str: [ Test ] }
+  \return True if loaded successfully and all tests validated
+  """
   # Load part configuration scripts
   config_xml_path = os.path.join(CONFIG_DIR, 'configs.xml')
   try:
@@ -86,35 +122,50 @@ def load_configs_from_map(config_files, config_descripts_by_file):
     
   config_elements = doc.getElementsByTagName('config')
   for conf in config_elements:
-    try:
-      serial = conf.attributes['serial'].value
-      file = conf.attributes['file'].value
-      descrip = conf.attributes['descrip'].value
-      
-      powerboard = True
-      if conf.attributes.has_key('powerboard'):
-        powerboard = conf.attributes['powerboard'].value != "false"
-    except:
-      print 'Caught exception parsing configuration file'
-      import traceback
-      traceback.print_exc()
+    if not conf.attributes.has_key('serial'):
+      print >> sys.stderr, "Test XML element does not have attribute \"serial\". Unable to load. XML: %s" % str(conf)
       return False
+    serial = conf.attributes['serial'].value
+    if not len(serial) == 7: 
+      print >> sys.stderr, "Serial number is invalid: %s" % serial
+      return False
+
+
+    if not conf.attributes.has_key('file'):
+      print >> sys.stderr, "Test XML element does not have attribute \"file\". Unable to load. XML: %s" % str(conf)
+      return False
+    test_file = conf.attributes['file'].value
+
+    if not conf.attributes.has_key('descrip'):
+      print >> sys.stderr, "Test XML element does not have attribute \"descrip\". Unable to load. XML: %s" % str(conf)
+      return False
+    descrip = conf.attributes['descrip'].value
+      
+    powerboard = True
+    if conf.attributes.has_key('powerboard'):
+      powerboard = conf.attributes['powerboard'].value.lower() == "true"
+      
 
     # Generate test XML. If we need power board, add prestartup/shutdown
     # to turn on/off power
-    test = ['<test name="%s">' % descrip]
+    tst = ['<test name="%s">' % descrip]
     if powerboard:
-      test.append('<pre_startup name="Power Cycle">scripts/power_cycle.launch</pre_startup>')
-    test.append('<pre_startup name="%s">config/%s</pre_startup>' % (descrip, file))
-    test.append('<subtest name="%s Test">config/subtest_conf.launch</subtest>' % (descrip))
+      tst.append('<pre_startup name="Power On">scripts/power_cycle.launch</pre_startup>')
+    tst.append('<pre_startup name="%s">config/%s</pre_startup>' % (descrip, test_file))
+    tst.append('<subtest name="%s Test">config/subtest_conf.launch</subtest>' % (descrip))
     if powerboard:
-      test.append('<shutdown name="Shutdown">scripts/power_board_disable.launch</shutdown>')
-    test.append('</test>')
-      
-    test_str = '\n'.join(test)
+      tst.append('<shutdown name="Shutdown">scripts/power_board_disable.launch</shutdown>')
+    tst.append('</test>')
 
-    config_files.setdefault(serial, []).append(test_str)
-    config_descripts_by_file[ test_str ] = descrip
+    test_str = '\n'.join(tst)
+
+    my_conf = Test(descrip)
+    if not my_conf.load(test_str, QUAL_DIR):
+      print >> sys.stderr, "Unable to load test %s" % descrip
+      print >> sys.stderr, "Test XML: %s" % tst
+      return False
+    
+    config_files.setdefault(serial, []).append(my_conf)
 
   return True
 
@@ -123,7 +174,7 @@ def load_wg_station_map(wg_teststations):
   """
   Loads "map" of WG test stations. Each station has a GUI, a remote host
   and a power board.
-  \param wg_teststations {} : Output dictionary of test stations
+  \param wg_teststations { str : WGTestStation } : Output dictionary of test stations
   \return True if loaded successfully
   """
   map_xml_path = os.path.join(roslib.packages.get_pkg_dir(PKG), 'wg_map.xml')

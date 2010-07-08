@@ -128,6 +128,7 @@ class TestScript(object):
     self.launch_file = launch_file
     self.name = name
     self.timeout = timeout
+
   
   ##\brief Check that launch file exists and is ".launch" file
   def validate(self):
@@ -163,13 +164,15 @@ class TestScript(object):
 ##
 ##Holds instructions, subtests, pre_startup scripts, etc.
 class Test(object):
-  def __init__(self):
-    self._name = None
+  def __init__(self, name):
+    self._name = name
     self._startup_script = None
     self._shutdown_script = None
     self._instructions_file = None
     self.pre_startup_scripts = []
     self.subtests = []
+
+    self.debug_ok = False # If True, it can run outside of debug mode
 
   ##\brief Check that all prestartups, subtests, instructions, etc are real files
   ##
@@ -221,16 +224,20 @@ class Test(object):
     try:
       doc = minidom.parseString(test_str)
     except IOError:
-      rospy.logerr('Unable to parse test string:\n%s' % test_str)
+      print >> sys.stderr, 'Unable to parse test string:\n%s' % test_str
+      import traceback
+      traceback.print_exc()
       return False
     
     test_list = doc.getElementsByTagName('test')
     if len(test_list) != 1:
       return False
     test_main = test_list[0]
-    if not test_main.attributes.has_key('name'):
-      return False
-    self._name = test_main.attributes['name'].value
+
+    # We pull name from the main file
+    #if not test_main.attributes.has_key('name'):
+    #  return False
+    #self._name = test_main.attributes['name'].value
 
     pre_startups = doc.getElementsByTagName('pre_startup')
     if (pre_startups != None and len(pre_startups) > 0):
@@ -304,8 +311,7 @@ class Test(object):
         my_sub = SubTest(script, key, name, timeout, pre, post)
         self.subtests.append(my_sub)
 
-    # Validate the test before we load it
-    return self.validate()
+    return True
                                         
   ##\todo Change functions names to Python style or properties
   ##\brief Name or basename or startup script
