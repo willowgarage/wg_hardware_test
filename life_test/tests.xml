@@ -88,7 +88,7 @@
   </test>
 
   <test serial="6804204" name="Shoulder Test"
-	short="Shoulder" duration="40"
+	short="Shoulder" duration="30"
 	desc="Tests shoulder with dummy UA."
 	rate="1.0" script="shoulder_test/test_gui.launch"
 	type="Burn-in Test" power="true" >
