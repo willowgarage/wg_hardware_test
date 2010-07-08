@@ -34,14 +34,14 @@
 
 ##\author Kevin Watts
 
-import roslib; roslib.load_manifest('qualification')
+PKG = 'qualification'
+import roslib; roslib.load_manifest(PKG)
 
 import rospy
 
 import os
 import sys
 import socket
-from datetime import datetime
 import wx
 import time
 from wx import xrc
@@ -52,12 +52,10 @@ from xml.dom import minidom
 from qualification.test import *
 from qualification.qual_frame import *
 
-from roslaunch_caller import roslaunch_caller 
+from qualification.test_loader import load_configs_from_map, load_tests_from_map, load_wg_station_map
 
-from qualification.test_loader import load_configs_from_map, load_tests_from_map
-
-TESTS_DIR = os.path.join(roslib.packages.get_pkg_dir('qualification'), 'tests')
-CONFIG_DIR = os.path.join(roslib.packages.get_pkg_dir('qualification'), 'config')
+TESTS_DIR = os.path.join(roslib.packages.get_pkg_dir(PKG), 'tests')
+CONFIG_DIR = os.path.join(roslib.packages.get_pkg_dir(PKG), 'config')
 
 class ConfigObject(QualTestObject):
   def __init__(self, name, serial):
@@ -115,7 +113,6 @@ class SerialPanel(wx.Panel):
 
     self._panel.Bind(wx.EVT_CHAR, self.on_char)
     self._serial_text.SetFocus()
-    #self._serial_text.Bind(wx.EVT_COMMAND_TEXT_ENTER, self.on_test)
 
   def _is_debug_test(self, serial):
     return self._debug_tests.count(serial[0:7]) > 0
@@ -152,7 +149,7 @@ class SerialPanel(wx.Panel):
     name = self._config_descripts_by_file[config_str]
     
     config_test = Test()
-    if not config_test.load(config_str, roslib.packages.get_pkg_dir('qualification')):
+    if not config_test.load(config_str, roslib.packages.get_pkg_dir(PKG)):
       wx.MessageBox('Unable to load configuration data and parameters. Check file and try again.','Failed to load test', wx.OK|wx.ICON_ERROR, self)
       return 
     
@@ -401,23 +398,12 @@ class ComponentQualFrame(QualificationFrame):
       except socket.gaierror:
         wx.MessageBox('Hostname %s is invalid. Try again or click "Cancel".' % host, 'Test Host Invalid', wx.OK)
         
-
-  ##\todo Move to test loader, don't set params during load
   def load_wg_test_map(self):
-    # Load 'Map' of WG test locations to find defaults for this machine
-    map_xml_path = os.path.join(roslib.packages.get_pkg_dir('qualification'), 'wg_map.xml')
-    
+    wgstations = {}
+    load_ok = load_wg_station_map(wgstations)
+
     gui_name = socket.gethostname()
 
-    try:
-      doc = minidom.parse(map_xml_path)
-    except IOError:
-      rospy.logerr("Could not load test map from '%s'"%(map_xml_path))
-      doc = None
-
-    if doc:
-      stations = doc.getElementsByTagName('station')
-    
     # Sets default host, powerboard to None
     rospy.set_param('/qualification/powerboard/serial', '0000')
     rospy.set_param('/qualification/powerboard/0', False)
@@ -425,23 +411,32 @@ class ComponentQualFrame(QualificationFrame):
     rospy.set_param('/qualification/powerboard/2', False)
     os.environ['ROS_TEST_HOST'] = gui_name
     
-    if not doc:
+    if not load_ok:
       wx.MessageBox('Error: Unable to parse \'qualification/wg_map.xml\'. Please check the document and retry.','Unable to parse configuration', wx.OK|wx.ICON_ERROR, self)
 
       return
 
-    ##\todo Fix powerboard breakers (always look True)
-    for station in stations:
-      if station.attributes['gui'].value == gui_name:
-        rospy.set_param('/qualification/powerboard/serial', station.attributes['powerboard'].value) 
-        rospy.set_param('/qualification/powerboard/0', 'true' == station.attributes['breaker0'].value.lower()) 
-        rospy.set_param('/qualification/powerboard/1', 'true' == station.attributes['breaker1'].value.lower())
-        rospy.set_param('/qualification/powerboard/2', 'true' == station.attributes['breaker2'].value.lower())
-        os.environ['ROS_TEST_HOST'] = station.attributes['host'].value
-        break
+    if not gui_name in wgstations:
+      wx.MessageBox('Warning: Host %s not found in list of known hosts. Check file: \'qualification/wg_map.xml\'. You may be unable to run certain qualification tests' % gui_name,'Host not found', wx.OK|wx.ICON_ERROR, self)
+      return
+
+    my_station = wgstations[gui_name]
+    rospy.set_param('/qualification/powerboard/serial', my_station.powerboard)
+    rospy.set_param('/qualification/powerboard/0', my_station.breaker0)
+    rospy.set_param('/qualification/powerboard/1', my_station.breaker1)
+    rospy.set_param('/qualification/powerboard/2', my_station.breaker2)
+
+    try:
+      machine_addr = socket.gethostbyname(my_station.test_host)
+      os.environ['ROS_TEST_HOST'] = my_station.test_host
+    except socket.gaierror:
+      wx.MessageBox('Unable to resolve remote test host %s. The file: \'qualification/wg_map.xml\' may be invalid.' % my_station.test_host, 'Remote Host Not Found', wx.OK|wx.ICON_ERROR, self)
+
+    
+
+
+
       
-    if rospy.get_param('/qualification/powerboard/serial') == '0000':
-      wx.MessageBox('Warning: Host %s not found in list of known hosts. Check file: \'qualification/wg_map.xml\' and retry.' % gui_name,'Host not found', wx.OK|wx.ICON_ERROR, self)
       
 
 

@@ -39,7 +39,7 @@ PKG = 'qualification'
 import roslib; roslib.load_manifest(PKG)
 import rostest, unittest
 
-from qualification.test_loader import load_tests_from_map, load_configs_from_map
+from qualification.test_loader import load_tests_from_map, load_configs_from_map, load_wg_station_map
 from qualification.test import Test
 
 import os, sys
@@ -53,6 +53,9 @@ class QualificationTestParser(unittest.TestCase):
 
         self.config_files = {}
         self.configs_ok = load_configs_from_map(self.config_files, descs)
+
+    def test_wg_station_map(self):
+        self.assert_(load_wg_station_map({}), "Unable to load WG station map. Configuration file \"wg_map.xml\" is invalid")
 
     ##\brief All test.xml files must load properly
     def test_check_tests_parsed(self):
@@ -100,6 +103,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == '-v':
         # Use to run tests verbosly
         suite = unittest.TestSuite()
+        suite.addTest(QualificationTestParser('test_wg_station_map'))
         suite.addTest(QualificationTestParser('test_check_tests_parsed'))
         suite.addTest(QualificationTestParser('test_load_qual_tests'))
         suite.addTest(QualificationTestParser('test_check_configs_parsed'))
