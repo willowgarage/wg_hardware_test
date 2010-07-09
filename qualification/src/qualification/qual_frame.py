@@ -293,6 +293,8 @@ class QualificationFrame(wx.Frame):
     self._result_service = None
     self._prestartup_done_srv = None
     self._shutdown_done_srv = None
+
+    self._invent_client = None
         
     # Load the XRC resource
     xrc_path = os.path.join(roslib.packages.get_pkg_dir('qualification'), 'xrc/gui.xrc')
@@ -907,6 +909,8 @@ class QualificationFrame(wx.Frame):
 
       rospy.set_param('/invent/username', username)
       rospy.set_param('/invent/password', password)
+
+      self._invent_client = invent
       return True
     else:
       return False
@@ -914,21 +918,26 @@ class QualificationFrame(wx.Frame):
 
   ##\brief Loads inventory object, prompts for username/password if needed
   def get_inventory_object(self):
-    username = rospy.get_param('/invent/username', '')
-    password = rospy.get_param('/invent/password', '')
+    if self._invent_client and self._invent_client.login():
+      return self._invent_client
 
-    if (username != None and password != None):
+    username = rospy.get_param('/invent/username', None)
+    password = rospy.get_param('/invent/password', None)
+
+    if (username and password):
       invent = Invent(username, password)
       if (invent.login() == True):
-        return invent
+        self._invent_client = invent
+        return self._invent_client
 
       rospy.set_param('/invent/username', '')
       rospy.set_param('/invent/password', '')
     
-    if not self.login_to_invent():
+    if not self.login_to_invent() or not self._invent_client or not self._invent_client.login():
       return None
     else:
-      return Invent(username, password)
+      # self._invent_client is set by login_to_invent()
+      return self._invent_client
 
   ##\brief Prompts user if they are sure they want to submit results
   def verify_submit(self):
