@@ -138,8 +138,8 @@ class SerialPanel(wx.Panel):
 
     return tests_ok and configs_ok
 
-  def _is_debug_test(serial):
-    return serial in self._debugs
+  def _is_debug_test(self, serial):
+    return serial[0:7] in self._debugs
 
   ##\brief Checks that serial number is valid using invent_client
   def _check_serial_input(self, serial):
@@ -150,7 +150,7 @@ class SerialPanel(wx.Panel):
       return True
 
     iv = self._manager.get_inventory_object()
-    if not iv:
+    if not iv or not iv.login():
       wx.MessageBox("Unable to check serial number. Unable to login in Inventory system", "Error - Unable to check serial number", wx.OK|wx.ICON_ERROR, self)
       return False
 
@@ -158,7 +158,7 @@ class SerialPanel(wx.Panel):
 
   def on_config(self, event):
     # Get selected launch file
-    serial = self._serial_text_conf.GetValue()
+    serial = str(self._serial_text_conf.GetValue())
 
     if not self._check_serial_input(serial):
       wx.MessageBox('Invalid serial number, unable to configure. Check serial number and retry.','Error - Invalid serial number', wx.OK|wx.ICON_ERROR, self)
