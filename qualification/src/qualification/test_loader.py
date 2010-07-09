@@ -59,9 +59,12 @@ def load_tests_from_map(tests, debugs = []):
   try:
     doc = minidom.parse(tests_xml_path)
   except IOError:
+    print >> sys.stderr, "Could not load tests description from '%s'. IOError, file may be invalid."%(tests_xml_path)
+    return False  
+  except Exception:
+    print >> sys.stderr, "Could not load tests description from '%s'. Unknown exception."%(tests_xml_path)
     import traceback
     traceback.print_exc()
-    print >> sys.stderr, "Could not load tests description from '%s'"%(tests_xml_path)
     return False  
   
   # Loads tests by serial number of part
@@ -117,8 +120,13 @@ def load_configs_from_map(config_files):
   try:
     doc = minidom.parse(config_xml_path)
   except IOError:
-    print >> sys.stderr, "Could not load configuation scripts from '%s'"%(config_xml_path)
+    print >> sys.stderr, "Could not load configuation scripts from '%s'. IOError, file may be invalid."%(config_xml_path)
     return False
+  except Exception:
+    print >> sys.stderr, "Could not load tests description from '%s'. Unknown exception."%(tests_xml_path)
+    import traceback
+    traceback.print_exc()
+    return False  
     
   config_elements = doc.getElementsByTagName('config')
   for conf in config_elements:
@@ -129,7 +137,6 @@ def load_configs_from_map(config_files):
     if not len(serial) == 7: 
       print >> sys.stderr, "Serial number is invalid: %s" % serial
       return False
-
 
     if not conf.attributes.has_key('file'):
       print >> sys.stderr, "Test XML element does not have attribute \"file\". Unable to load. XML: %s" % str(conf)
