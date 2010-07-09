@@ -34,14 +34,14 @@
 
 ##\author Kevin Watts
 
-import roslib; roslib.load_manifest('qualification')
+PKG = 'qualification'
+import roslib; roslib.load_manifest(PKG)
 
 import rospy
 
 import os
 import sys
 import socket
-from datetime import datetime
 import wx
 import time
 from wx import xrc
@@ -52,12 +52,10 @@ from xml.dom import minidom
 from qualification.test import *
 from qualification.qual_frame import *
 
-from roslaunch_caller import roslaunch_caller 
+from qualification.test_loader import load_configs_from_map, load_tests_from_map, load_wg_station_map
 
-from qualification.test_loader import load_configs_from_map, load_tests_from_map
-
-TESTS_DIR = os.path.join(roslib.packages.get_pkg_dir('qualification'), 'tests')
-CONFIG_DIR = os.path.join(roslib.packages.get_pkg_dir('qualification'), 'config')
+TESTS_DIR = os.path.join(roslib.packages.get_pkg_dir(PKG), 'tests')
+CONFIG_DIR = os.path.join(roslib.packages.get_pkg_dir(PKG), 'config')
 
 class ConfigObject(QualTestObject):
   def __init__(self, name, serial):
@@ -81,13 +79,9 @@ class SerialPanel(wx.Panel):
     self._res = resource
 
     self._tests = {}
-    self._test_descripts_by_file = {}
-    self._debug_tests = []
-    load_tests_from_map(self._tests, self._test_descripts_by_file, self._debug_tests)
-
+    self._debugs = [] # Hold any SN that can run in debug mode
     self._configs = {}
-    self._config_descripts_by_file = {}
-    load_configs_from_map(self._configs, self._config_descripts_by_file)
+    loaded_ok = self.load_test_config_files()
     
     self._panel = resource.LoadPanel(self, 'serial_panel')
     self._sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -115,10 +109,37 @@ class SerialPanel(wx.Panel):
 
     self._panel.Bind(wx.EVT_CHAR, self.on_char)
     self._serial_text.SetFocus()
-    #self._serial_text.Bind(wx.EVT_COMMAND_TEXT_ENTER, self.on_test)
+
+    if not loaded_ok:
+      wx.MessageBox("Warning: Unable to load tests configuration files. May be corrupt. Revert any changes you have made to these files and retry", "Invalid Configuration Files", wx.OK|wx.ICON_ERROR, self)
+
+  
+  def load_test_config_files(self):
+    """
+    Called at startup or by menu option. Loads configuration files that define tests.
+    """
+    tests = {}
+    debugs = [] # Hold any SN that can run in debug mode
+    try:
+      tests_ok = load_tests_from_map(tests, debugs) 
+      if tests_ok:
+        self._debugs = debugs
+        self._tests = tests
+    except Exception, e:
+      tests_ok = False
+
+    configs = {}
+    try:
+      configs_ok = load_configs_from_map(self._configs)
+      if configs_ok:
+        self._configs = configs
+    except Exception, e:
+      configs_ok = False
+
+    return tests_ok and configs_ok
 
   def _is_debug_test(self, serial):
-    return self._debug_tests.count(serial[0:7]) > 0
+    return serial[0:7] in self._debugs
 
   ##\brief Checks that serial number is valid using invent_client
   def _check_serial_input(self, serial):
@@ -129,16 +150,15 @@ class SerialPanel(wx.Panel):
       return True
 
     iv = self._manager.get_inventory_object()
-    if not iv:
+    if not iv or not iv.login():
       wx.MessageBox("Unable to check serial number. Unable to login in Inventory system", "Error - Unable to check serial number", wx.OK|wx.ICON_ERROR, self)
       return False
 
     return iv.check_serial_valid(serial)
 
-  ##@todo Everything
   def on_config(self, event):
     # Get selected launch file
-    serial = self._serial_text_conf.GetValue()
+    serial = str(self._serial_text_conf.GetValue())
 
     if not self._check_serial_input(serial):
       wx.MessageBox('Invalid serial number, unable to configure. Check serial number and retry.','Error - Invalid serial number', wx.OK|wx.ICON_ERROR, self)
@@ -148,15 +168,15 @@ class SerialPanel(wx.Panel):
       wx.MessageBox('No configuration procedure defined for that serial number.','Error - Invalid serial number', wx.OK|wx.ICON_ERROR, self)
       return
 
-    config_str = self.select_conf_to_load(serial)
-    name = self._config_descripts_by_file[config_str]
-    
-    config_test = Test()
-    if not config_test.load(config_str, roslib.packages.get_pkg_dir('qualification')):
+    config_test = self.select_conf_to_load(serial)
+    if config_test is None:
+      return
+
+    if not config_test.validate():
       wx.MessageBox('Unable to load configuration data and parameters. Check file and try again.','Failed to load test', wx.OK|wx.ICON_ERROR, self)
       return 
     
-    item = ConfigObject(name, serial)
+    item = ConfigObject(config_test.get_name(), serial)
 
     self._manager.begin_test(config_test, item)
 
@@ -180,31 +200,25 @@ class SerialPanel(wx.Panel):
 
     short_serial = serial[0:7]
 
-    test_folder_file = self._tests[short_serial][0]
-    if len(self._tests[short_serial]) > 1:
-      # Load select_test_dialog to ask which test
-      test_folder_file = self.select_test_to_load(short_serial)
+    my_test = self.select_test_to_load(short_serial)
     
-    if test_folder_file is None:
+    if my_test is None:
       return
 
-    test_path = os.path.join(os.path.join(TESTS_DIR, test_folder_file))
-    test_dir = os.path.dirname(test_path)
-    test_str = open(test_path).read()
-
-    current_test = Test()
-    if not current_test.load(test_str, test_dir):
+    if not my_test.validate():
       wx.MessageBox('Unable to load test data and parameters. Check file %s and try again.' % test_file,'Failed to load test', wx.OK|wx.ICON_ERROR, self)
       return 
 
     # Item
-    name = self._test_descripts_by_file[test_folder_file]
-    item = QualTestObject(name, serial)
+    item = QualTestObject(my_test.get_name(), serial)
   
-    self._manager.begin_test(current_test, item)
+    self._manager.begin_test(my_test, item)
  
   # Select if we have multiple, etc
   def select_string_from_list(self, msg, lst):
+    if len(lst) == 1:
+      return lst[0]
+
     # Load robot selection dialog
     dialog = self._res.LoadDialog(self, 'select_test_dialog')
     select_text = xrc.XRCCTRL(dialog, 'select_text')
@@ -232,11 +246,11 @@ class SerialPanel(wx.Panel):
     # Load select_test_dialog
     configs_by_descrip = {}
     for conf in self._configs[short_serial]:
-      configs_by_descrip[self._config_descripts_by_file[conf]] = conf
+      configs_by_descrip[conf.get_name()] = conf
       
-    msg = 'Select type to configure component.'
+    msg = 'Select configuration type'
 
-    descrips = dict.keys(configs_by_descrip)
+    descrips = configs_by_descrip.keys()
     descrips.sort()
   
     choice = self.select_string_from_list(msg, descrips)
@@ -249,9 +263,9 @@ class SerialPanel(wx.Panel):
     # Load select_test_dialog
     tests_by_descrip = {}
     for test in self._tests[short_serial]:
-      tests_by_descrip[self._test_descripts_by_file[test]] = test
+      tests_by_descrip[test.get_name()] = test
     
-    descrips = dict.keys(tests_by_descrip)
+    descrips = tests_by_descrip.keys()
     descrips.sort()
     
     msg = 'Select component or component type to qualify.'
@@ -270,19 +284,24 @@ class SerialPanel(wx.Panel):
 
 class ComponentQualFrame(QualificationFrame):
   def __init__(self, parent, options):
+    self._serial_panel = None
     QualificationFrame.__init__(self, parent, options)
     
     self.load_wg_test_map()
     self.create_menubar()
 
   def get_loader_panel(self):
-    return SerialPanel(self._top_panel, self._res, self)
+    if not self._serial_panel:
+      self._serial_panel = SerialPanel(self._top_panel, self._res, self)
+    return self._serial_panel
   
   ##\todo Overloaded in subclasses
   def create_menubar(self):
     menubar = wx.MenuBar()
     self._file_menu = wx.Menu()
     self._file_menu.Append(1001, "Invent Login\tCTRL+l")
+    self._file_menu.Append(1002, "R&eload Test/Config Lists")
+    self._file_menu.Append(1003, "Reload W&G Station Map")
     self._file_menu.Append(wx.ID_EXIT, "E&xit")
     menubar.Append(self._file_menu, "&File")
 
@@ -335,6 +354,22 @@ class ComponentQualFrame(QualificationFrame):
         return
       if (event.GetId() == 1001):
         self.login_to_invent()
+        return
+      if (event.GetId() == 1002):
+        if not self._serial_panel.load_test_config_files():
+          wx.MessageBox('Configuration files for loading tests are invalid. Check the files "tests/tests.xml" and "config/configs.xml" and retry.',
+                        'Invalid Configuration Files', wx.OK|wx.ICON_ERROR, self)
+        else:
+          wx.MessageBox('Reloaded configuration files successfully.',
+                        'Reloaded Configuration Files', wx.OK, self)
+        return
+      if (event.GetId() == 1003):
+        if not self.load_wg_test_map():
+          wx.MessageBox('Configuration file for loading WG station map is invalid. Check the file wg_map.xml" and retry.',
+                        'Invalid Configuration File', wx.OK|wx.ICON_ERROR, self)
+        else:
+          wx.MessageBox('Reloaded WG station map configuration file successfully.',
+                        'Reloaded Configuration File', wx.OK, self)
         return
 
     if (event.GetEventObject() == self._options_menu):
@@ -401,23 +436,12 @@ class ComponentQualFrame(QualificationFrame):
       except socket.gaierror:
         wx.MessageBox('Hostname %s is invalid. Try again or click "Cancel".' % host, 'Test Host Invalid', wx.OK)
         
-
-  ##\todo Move to test loader, don't set params during load
   def load_wg_test_map(self):
-    # Load 'Map' of WG test locations to find defaults for this machine
-    map_xml_path = os.path.join(roslib.packages.get_pkg_dir('qualification'), 'wg_map.xml')
-    
+    wgstations = {}
+    load_ok = load_wg_station_map(wgstations)
+
     gui_name = socket.gethostname()
 
-    try:
-      doc = minidom.parse(map_xml_path)
-    except IOError:
-      rospy.logerr("Could not load test map from '%s'"%(map_xml_path))
-      doc = None
-
-    if doc:
-      stations = doc.getElementsByTagName('station')
-    
     # Sets default host, powerboard to None
     rospy.set_param('/qualification/powerboard/serial', '0000')
     rospy.set_param('/qualification/powerboard/0', False)
@@ -425,23 +449,34 @@ class ComponentQualFrame(QualificationFrame):
     rospy.set_param('/qualification/powerboard/2', False)
     os.environ['ROS_TEST_HOST'] = gui_name
     
-    if not doc:
+    if not load_ok:
       wx.MessageBox('Error: Unable to parse \'qualification/wg_map.xml\'. Please check the document and retry.','Unable to parse configuration', wx.OK|wx.ICON_ERROR, self)
 
-      return
+      return False
 
-    ##\todo Fix powerboard breakers (always look True)
-    for station in stations:
-      if station.attributes['gui'].value == gui_name:
-        rospy.set_param('/qualification/powerboard/serial', station.attributes['powerboard'].value) 
-        rospy.set_param('/qualification/powerboard/0', 'true' == station.attributes['breaker0'].value.lower()) 
-        rospy.set_param('/qualification/powerboard/1', 'true' == station.attributes['breaker1'].value.lower())
-        rospy.set_param('/qualification/powerboard/2', 'true' == station.attributes['breaker2'].value.lower())
-        os.environ['ROS_TEST_HOST'] = station.attributes['host'].value
-        break
+    if not gui_name in wgstations:
+      wx.MessageBox('Warning: Host %s not found in list of known hosts. Check file: \'qualification/wg_map.xml\'. You may be unable to run certain qualification tests' % gui_name,'Host not found', wx.OK|wx.ICON_ERROR, self)
+      return False
+
+    my_station = wgstations[gui_name]
+    rospy.set_param('/qualification/powerboard/serial', my_station.powerboard)
+    rospy.set_param('/qualification/powerboard/0', my_station.breaker0)
+    rospy.set_param('/qualification/powerboard/1', my_station.breaker1)
+    rospy.set_param('/qualification/powerboard/2', my_station.breaker2)
+
+    try:
+      machine_addr = socket.gethostbyname(my_station.test_host)
+      os.environ['ROS_TEST_HOST'] = my_station.test_host
+    except socket.gaierror:
+      wx.MessageBox('Unable to resolve remote test host %s. The file: \'qualification/wg_map.xml\' may be invalid.' % my_station.test_host, 'Remote Host Not Found', wx.OK|wx.ICON_ERROR, self)
+      return False
+
+    return True
+    
+
+
+
       
-    if rospy.get_param('/qualification/powerboard/serial') == '0000':
-      wx.MessageBox('Warning: Host %s not found in list of known hosts. Check file: \'qualification/wg_map.xml\' and retry.' % gui_name,'Host not found', wx.OK|wx.ICON_ERROR, self)
       
 
 

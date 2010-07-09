@@ -53,6 +53,7 @@ from pr2_self_test_msgs.srv import ConfirmConf, ConfirmConfRequest, ConfirmConfR
 from wg_invent_client import Invent
 
 prog_path = os.path.join(roslib.packages.get_pkg_dir(PKG), "fwprog")
+ECAT_IFACE = "ecat0" # EtherCAT interface
 
 class MCBProgramConfig:
     def __init__(self, expected):
@@ -100,7 +101,9 @@ class MCBProgramConfig:
         except Exception, e:
             rospy.logerr(traceback.format_exc())
 
-
+    ##\brief Ask user for retry prompt using confirm_conf service
+    ##
+    ##\return True if should retry
     def prompt_user(self, msg, details):
         rospy.loginfo('Prompting user: %s' % msg)
 
@@ -141,7 +144,7 @@ class MCBProgramConfig:
 
     ## Counts boards, returns true if passed
     def count_boards(self):
-        count_cmd = "pr2_grant " + os.path.join(prog_path, "eccount") + " -i eth0"
+        count_cmd = "pr2_grant " + os.path.join(prog_path, "eccount") + " -i " + ECAT_IFACE
 
         while not rospy.is_shutdown():
             p = subprocess.Popen(count_cmd, stdout =subprocess.PIPE,
@@ -167,7 +170,7 @@ class MCBProgramConfig:
             elif count == 204:
                 msg = "Has no link to device. Check device cable and power. Retry?"
             elif count == 205:
-                msg = "Ethernet interface is not UP. The computer needs to be configured. Run \"sudo ifconfig eth0 up\" and click OK to retry."
+                msg = "Ethernet interface is not UP. The computer needs to be configured. Run the \"Restart %s\" application and click OK to retry." % ECAT_IFACE
             elif count > 199:
                 msg = "Error counting MCB's. eccount gave error code: %s. Retry?" % count
             elif count < self.expected:
@@ -182,7 +185,7 @@ class MCBProgramConfig:
                 return False
 
     def check_link(self):
-        emltest_cmd = "pr2_grant " + os.path.join(prog_path, "emltest") + " -q -j8 -ieth0 -T10000,2"
+        emltest_cmd = "pr2_grant " + os.path.join(prog_path, "emltest") + " -q -j8 -i %s -T10000,2" % ECAT_IFACE
 
         p = subprocess.Popen(emltest_cmd, stdout = subprocess.PIPE, 
                              stderr = subprocess.PIPE, shell = True)
@@ -198,10 +201,10 @@ class MCBProgramConfig:
 
         return True
 
-
+    ##@brief Get serial numbers for each MCB
     def get_serials(self):
         for board in range(0, self.expected):
-            check_cmd = "pr2_grant " + os.path.join(prog_path, 'device') + ' -i eth0 -K -p %d' % (board + 1)
+            check_cmd = "pr2_grant " + os.path.join(prog_path, 'device') + ' -i %s -K -p %d' % (ECAT_IFACE, board + 1)
             try:
                 p = subprocess.Popen(check_cmd, stdout = subprocess.PIPE,
                                      stderr = subprocess.PIPE, shell = True)
@@ -222,7 +225,7 @@ class MCBProgramConfig:
 
         return True
 
-                        
+    ##@brief Check that boards have passed MCB qualification in Invent
     def check_boards(self):
         # Get invent username/password
         for index, serial in enumerate(self.serials):
@@ -234,10 +237,10 @@ class MCBProgramConfig:
         return True
 
             
-    ## Programs MCB's and calls result service when finished
+    ##@brief Programs MCB's and calls result service when finished
     def program_boards(self):
         for board in range(0, self.expected):
-            program_cmd = "pr2_grant " + os.path.join(prog_path, "fwprog") + " -i eth0 -p %s %s/*.bit" % ((board + 1), prog_path)
+            program_cmd = "pr2_grant " + os.path.join(prog_path, "fwprog") + " -i %s -p %s %s/*.bit" % (ECAT_IFACE, (board + 1), prog_path)
 
             while not rospy.is_shutdown():
                 p = subprocess.Popen(program_cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
@@ -262,7 +265,8 @@ class MCBProgramConfig:
                 
         self.finished(True, "Boards programmed. Num. boards: %d. Serials: %s" % (self.expected, str(self.serials)))
         return True
-    
+
+    ##@brief Configures boards with given configurations
     def configure_boards(self, mcbs, assembly = False):
         path = roslib.packages.get_pkg_dir("ethercat_hardware")
         actuator_path = os.path.join(path, "actuators.conf")
@@ -270,7 +274,7 @@ class MCBProgramConfig:
         for mcb in mcbs:
             name, num = mcb.split(',')
 
-            cmd = "pr2_grant " + os.path.join(path, "motorconf") + " -i eth0 -p -n %s -d %s -a %s" % (name, num, actuator_path)
+            cmd = "pr2_grant " + os.path.join(path, "motorconf") + " -i %s -p -n %s -d %s -a %s" % (ECAT_IFACE, name, num, actuator_path)
 
             while not rospy.is_shutdown():
                 p = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
@@ -301,11 +305,13 @@ class MCBProgramConfig:
         self.finished(True, "Boards configured. Num. boards: %d. Serials: %s" % (self.expected, str(self.serials)))
         return
 
+    ##@brief Updates logs in invent for each board
     def update_conf(self, mcbs):
         for index, serial in enumerate(self.serials):
             conf_name = mcbs[index].split(',')[0]
             self.invent.setKV(serial, 'Configuration', conf_name)
 
+    
     def check_assembly(self):
         test_component = rospy.get_param('/qual_item/serial', None)
         if test_component is None:

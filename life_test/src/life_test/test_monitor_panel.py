@@ -48,6 +48,8 @@ from time import sleep, strftime, localtime
 import threading
 import socket, subprocess
 
+import paramiko
+import Crypto
 
 import wx
 from wx import xrc
@@ -187,6 +189,7 @@ class TestMonitorPanel(wx.Panel):
         self._current_log = {}
         self._diag_msgs = {}
 
+        # Data for status output
         self._is_running = False
         self._stat_level = 127 # Not launched
         self._test_msg = 'None'
@@ -197,15 +200,13 @@ class TestMonitorPanel(wx.Panel):
         # Launches test, call stop to kill it
         self._test_launcher = None
 
-        # Test log data
-        self._test_complete = False
-
         # Timeout for etherCAT diagnostics, starts when test launched
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
         self._last_message_time = rospy.get_time()
-        self._timeout_interval = 30.0
+        self._timeout_interval = 10.0
         self._is_stale = True
+        self.timer.Start(1000 * self._timeout_interval)
 
         # Timeout for powerboard status, starts if power comes up
         self.power_timer = wx.Timer(self)
@@ -220,7 +221,7 @@ class TestMonitorPanel(wx.Panel):
         self.invent_timer.Start(self.invent_timeout * 500)
         self._is_invent_stale = True
 
-        self.update_controls()
+        self._update_controls()
         self._enable_controls()
 
     def _create_monitor(self):
@@ -254,21 +255,26 @@ class TestMonitorPanel(wx.Panel):
             self._test_duration_ctrl.SetRange(hrs, 168) # Week
             self._test_duration_ctrl.SetValue(hrs)
         elif choice == 'Minutes':
-            min = math.ceil((active_time / 60))
-            self._test_duration_ctrl.SetRange(min, 600) # 10 Hrs
-            self._test_duration_ctrl.SetValue(min + 10)
+            minv = math.ceil((active_time / 60))
+            self._test_duration_ctrl.SetRange(minv, 600) # 10 Hrs
+            self._test_duration_ctrl.SetValue(minv + 10)
         else:
             self._test_duration_ctrl.SetRange(0, 0) # Can't change limits
             self._test_duration_ctrl.SetValue(0)
 
     def on_close(self, event):
+        if not self._record.test_complete:
+            dialog = wx.MessageDialog(self, 'WARNING: Test is not complete. Has the test run for the full alloted time? Press OK to close this window anyway.', 'Test Not Complete', wx.OK|wx.CANCEL)
+            if dialog.ShowModal() != wx.ID_OK:
+                return
+
         try:
             self.update_test_record('Closing down test.')
             self.record_test_log()
 
             if self._bay is not None:
                 self._manager.test_stop(self._bay)
-        except:
+        except Exception, e:
             rospy.logerr('Exception on close: %s' % traceback.format_exc())
 
         if self.launched:
@@ -277,6 +283,8 @@ class TestMonitorPanel(wx.Panel):
         if self._status_sub is not None:
             self._status_sub.unregister()
             self._status_sub = None
+
+        self._monitor_panel.shutdown()
 
         self._manager.close_tab(self._serial)
 
@@ -319,8 +327,7 @@ class TestMonitorPanel(wx.Panel):
 
         self._current_log = {}
 
-    ##\todo Private
-    def calc_run_time(self):
+    def _calc_run_time(self):
         end_condition = self._end_cond_type.GetStringSelection()
         
         duration = self._test_duration_ctrl.GetValue()
@@ -334,16 +341,11 @@ class TestMonitorPanel(wx.Panel):
         else: #if end_condition == 'Continuous':
             return 10**10 # Roughly 300 years
 
-    ##\todo Private
-    def calc_remaining(self):
-        total_sec = self.calc_run_time()
+    def _calc_remaining(self):
+        total_sec = self._calc_run_time()
         cum_sec = self._record.get_cum_time()
 
         return total_sec - cum_sec
-        
-        
-    def start_timer(self):
-        self.timer.Start(1000 * self._timeout_interval, True)
         
     def on_timer(self, event):
         if not self.launched:
@@ -353,18 +355,18 @@ class TestMonitorPanel(wx.Panel):
         
         was_stale = self._is_stale
 
-        if interval > 300:  # 300 second timeout before we mark stale
-            # Make EtherCAT status stale
+        if interval > 180:  # 180 second timeout before we mark stale
             self._is_running = False
             self._is_stale = True
 
-            # Halt test if it goes stale, #4007
             if not was_stale:
-                self.on_halt_test()
-                rospy.logerr('Halting test on machine %s. Update is stale for %d seconds' % (self._bay.name, int(interval)))
-                self.update_test_record('Halted test after no data received for %d seconds.' % int(interval))
+                rospy.logerr('Stopping test on machine %s. Update is stale for %d seconds' % (self._bay.name, int(interval)))
+                self.update_test_record('Stopping test after no data received for %d seconds.' % int(interval))
+                # Tear down test if its stale to stop safely, #4443
+                self.stop_test()
+                self.update_test_record('Test on bay %s was stopped after no updates, but is incomplete' % self._bay.name)
 
-            self.update_controls(4)
+            self._update_controls(4)
             self.update_test_record()
             self.stop_if_done()
         else:
@@ -504,15 +506,14 @@ class TestMonitorPanel(wx.Panel):
             self._status_bar.SetValue("Test Monitor: No Updates/Stale")        
 
     ##\brief Called after status message or timer callback
-    ##\todo Make private
-    def update_controls(self, level = 4, msg = 'None'):
+    def _update_controls(self, level = 4, msg = 'None'):
         self._update_status_bar(level, msg)
 
         # These are updated here instead of the callback, because of the stale timer
         self._stat_level = level
         self._test_msg = msg
 
-        remaining = self.calc_remaining()
+        remaining = self._calc_remaining()
         remain_str = "N/A" 
         if remaining < 10**6:
             remain_str = get_duration_str(remaining)
@@ -540,7 +541,7 @@ class TestMonitorPanel(wx.Panel):
             self._launch_button.SetLabel("Launch")
         
     def stop_if_done(self):
-        remain = self.calc_remaining()
+        remain = self._calc_remaining()
         
         if remain < 0:
             self._stop_count += 1
@@ -550,35 +551,33 @@ class TestMonitorPanel(wx.Panel):
         # Make sure we've had five consecutive seconds of 
         # negative time before we shutdown
         if self._stop_count > 5 and not self._record.test_complete:
-            
             self._record.complete_test()
             self.stop_test()
             self._enable_controls()
-        
 
-    ##\todo Private
-    def status_callback(self, msg):
+    def _status_callback(self, msg):
+        """
+        Callback from BAY/test_status topic
+        """
         with self._mutex:
             self._status_msg = msg
 
-        wx.CallAfter(self.new_msg)
+        wx.CallAfter(self._new_msg)
 
-    ##\todo Private
-    def new_msg(self):
+    def _new_msg(self):
+        """
+        Updates state with new data from test_status
+        """
         with self._mutex:
-            level_dict = { 0: 'OK', 1: 'Warn', 2: 'Error', 3: 'Stale' }
-
             test_level = self._status_msg.test_ok
             test_msg = self._status_msg.message
 
         self._last_message_time = rospy.get_time()            
 
-        self._is_running = (self._status_msg.test_ok == 0)
+        self._is_running = (test_level == 0)
         self._is_stale = False
 
-        self.start_timer()
-
-        self.update_controls(test_level, test_msg)
+        self._update_controls(test_level, test_msg)
         self.update_test_record()
         self.stop_if_done()
 
@@ -590,9 +589,10 @@ class TestMonitorPanel(wx.Panel):
         launch = '<launch>\n'
         launch += '<group ns="%s" >\n' % bay.name
 
-        launch += '<param name="tf_prefix" type="string" value="%s" />\n' % bay.name
+        #launch += '<param name="tf_prefix" type="string" value="%s" />\n' % bay.name
         # Remap
         launch += '<remap from="/diagnostics" to="%s" />\n' % local_diag_topic
+        launch += '<remap from="/tf" to="/%s/tf" />\n' % bay.name
         
         # Init machine
         # Set default to remote machine
@@ -623,9 +623,6 @@ class TestMonitorPanel(wx.Panel):
         return launch
 
 
-    # Put in master file
-    # Add subscriber to diagnostics
-    # Launch file, subscribe diagnostics
     def start_stop_test(self, event):
         if self.launched:
             if not self.stop_test_user():
@@ -633,9 +630,8 @@ class TestMonitorPanel(wx.Panel):
         else:
             if not self.launch_test():
                 return
-            
 
-        self.update_controls()
+        self._update_controls()
         self._enable_controls()
 
     ##\brief Called when user presses "stop" button
@@ -670,7 +666,6 @@ class TestMonitorPanel(wx.Panel):
         if self._bay.board is not None:
             if not self._manager.power_disable(self._bay):
                 wx.MessageBox("Power disable command failed. Unable to command power board", "Power command failed", wx.OK|wx.ICON_ERROR, self)
-
         
         # Shutdown processes
         if self._test_launcher:
@@ -686,8 +681,7 @@ class TestMonitorPanel(wx.Panel):
 
         # Enable GUI
         self._launch_button.Enable(True)
-        self._launch_button.SetLabel("Launch")
-        self.update_controls()
+        self._update_controls()
         self._enable_controls()
 
     def stop_test(self):
@@ -698,11 +692,13 @@ class TestMonitorPanel(wx.Panel):
             self._status_sub.unregister()
         self._status_sub = None
 
+        self._monitor_panel.change_diagnostic_topic('empty')
+
         self._is_running = False
 
     def _check_machine(self, bay):
         """
-        @brief Check the machine is online.
+        Check the machine is online.
 
         @return True if machine is OK
         """
@@ -710,21 +706,71 @@ class TestMonitorPanel(wx.Panel):
             machine_addr = socket.gethostbyname(bay.machine)
         except socket.gaierror:
             wx.MessageBox('Hostname "%s" (bay "%s") is invalid. The machine may be offline or disconnected.' % (bay.machine, bay.name),
-                          'Test Bay Invalid', wx.OK)
+                          'Test Bay Invalid', wx.OK|wx.ICON_ERROR)
             return False
 
         # Check that it is pingable
         retcode = subprocess.call('ping -c1 -W1 %s > /dev/null' % bay.machine, shell=True)
         if retcode != 0:
             wx.MessageBox('Cannot contact machine "%s" for bay "%s". It may be offline or disconnected. Check the machine and retry.' % (bay.machine, bay.name),
-                          'Test Bay Unavailable', wx.OK)
+                          'Test Bay Unavailable', wx.OK|wx.ICON_ERROR)
             return False
+
+        return True
+
+    def _check_keys(self, bay):
+        """
+        Check that machine has valid keys for remote launching
+
+        Uses paramiko to make sure it can open a connection to the remote machine. Will open a message box with
+        error message if it is unable to log in. Returns False if failure, True if OK.
+        """
+        ssh = paramiko.SSHClient()
+
+        # Load system host keys, ignore if we don't have them
+        try:
+            if os.path.isfile('/etc/ssh/ssh_known_hosts'): #default ubuntu location
+                ssh.load_system_host_keys('/etc/ssh/ssh_known_hosts')         
+        except IOError:
+            pass
+        
+        try:
+            ssh.load_system_host_keys()
+        except IOError:
+            wx.MessageBox('Unable to load host keys from ~/.ssh/known_hosts. File may be corrupt. Run "rm ~/.ssh/known_hosts" to attempt to clear this problem', 
+                          'Launch Error - Known Hosts', wx.OK)
+
+        # Allow unknown hosts
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        try:
+            ssh.connect(bay.machine, 22, None, timeout=10)
+        except paramiko.BadHostKeyException:
+            wx.MessageBox('Unable to verify host key for machine %s. Check authetication with "ssh MACHINE"' % bay.machine,
+                          'Bad Host Key', wx.OK|wx.ICON_ERROR)
+            return False
+        except paramiko.AuthenticationException:
+            wx.MessageBox('Unable to log in to remote machine %s. Authentication failed. Machine may not be configured.' % bay.machine,
+                          'Authentication Failed', wx.OK|wx.ICON_ERROR)
+            return False
+        except paramiko.SSHException:
+            wx.MessageBox('Unable to launch. Unknown server %s. Machine may be invalid.' % bay.machine,
+                          'Unknown Server', wx.OK|wx.ICON_ERROR)
+            return False
+        except Exception:
+            wx.MessageBox('Unable to launch on machine %s. Unknown exception' % bay.machine,
+                          'Unknown Launching Exception', wx.OK|wx.ICON_ERROR)
+            import traceback
+            update_test_record(traceback.format_exc())
+            return False
+
+        ssh.close()
 
         return True
 
     def _load_bay(self):
         """
-        @brief Checks that the bay is valid, reserves bay, runs power.
+        Checks that the bay is valid, reserves bay, runs power.
 
         @return None if bay invalid
         """
@@ -739,7 +785,7 @@ class TestMonitorPanel(wx.Panel):
 
     def _enable_bay(self):
         """
-        @brief Reserve bay from manager, enable power
+        Reserve bay from manager, enable power
         
         @return False if unable to reserve bay or enable power
         """
@@ -757,11 +803,11 @@ class TestMonitorPanel(wx.Panel):
 
     def _check_test_ready(self):
         """
-        @brief Check if test has <0 time remaining.
+        Check if test has <0 time remaining.
 
         @return False if test has no time left
         """
-        if self.calc_remaining() <= 0:
+        if self._calc_remaining() <= 0:
             wx.MessageBox('Test has no allowable time left. Add more hours/minutes and retry.',
                           'Out of Time', wx.OK|wx.ICON_ERROR, self)
             return False
@@ -769,7 +815,7 @@ class TestMonitorPanel(wx.Panel):
 
     def _confirm_launch(self):
         """
-        @brief Checks with user to make sure test can start.
+        Checks with user to make sure test can start.
 
         @return True if user is OK
         """
@@ -781,13 +827,12 @@ class TestMonitorPanel(wx.Panel):
         
     def launch_test(self):
         """
-        @brief Launches test on correct bay
+        Launches test on correct bay
 
         @return False if launch failed or aborted
         """
         # Lock out launch button
         self._launch_button.Enable(False)
-        self._test_complete = False
 
         # Check to make sure we have time
         if not self._check_test_ready():
@@ -802,6 +847,11 @@ class TestMonitorPanel(wx.Panel):
 
         # Make sure the machine is OK
         if not self._check_machine(bay):
+            self._launch_button.Enable(True)
+            return False
+
+        # Check SSH authentication
+        if not self._check_keys(bay):
             self._launch_button.Enable(True)
             return False
 
@@ -841,6 +891,8 @@ class TestMonitorPanel(wx.Panel):
 
         self.update_test_record('Launching test %s on bay %s, machine %s.' % (self._test._name, self._bay.name, self._bay.machine))
 
+        self._last_message_time = rospy.get_time()
+
         # Local diagnostic topic
         local_diag = '/' + self._bay.name + '/diagnostics'
 
@@ -865,9 +917,9 @@ class TestMonitorPanel(wx.Panel):
         local_status = '/' + str(self._bay.name) + '/test_status'
         self._is_running = False # We're not running until we hear back from test
         self._monitor_panel.change_diagnostic_topic(local_diag)
-        self._status_sub = rospy.Subscriber(local_status, TestStatus, self.status_callback)
+        self._status_sub = rospy.Subscriber(local_status, TestStatus, self._status_callback)
 
-        self.update_controls()
+        self._update_controls()
         self._enable_controls()
         self._launch_button.Enable(True)
 
@@ -882,8 +934,13 @@ class TestMonitorPanel(wx.Panel):
             halt_srv = rospy.ServiceProxy(self._bay.name + '/halt_test', Empty)
             halt_srv()
 
+            return True
+
         except Exception, e:
             rospy.logerr('Exception on halt test.\n%s' % traceback.format_exc())
+
+            self.update_test_record('Unable to reset test, caught exception: %s' % e)
+            return False
 
     def on_reset_test(self, event = None):
         """
@@ -893,14 +950,18 @@ class TestMonitorPanel(wx.Panel):
             self.update_test_record('Resetting test.')
             reset = rospy.ServiceProxy(self._bay.name + '/reset_test', Empty)
             reset()
+
+            return True
             
-        except:
+        except Exception, e:
             rospy.logerr('Exception on reset test.\n%s' % traceback.format_exc())
+            self.update_test_record('Unable to reset test, caught exception: %s' % e)
+            return False
       
 
     def record_test_log(self):
         """
-        Called when test is closing down
+        Called when test is closing down. 
         """
         self._record.load_attachments(self._manager.invent_client)
 

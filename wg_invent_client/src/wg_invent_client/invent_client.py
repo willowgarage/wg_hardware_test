@@ -32,7 +32,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-##\author Scott Hassen
+##\author Scott Hassan
 ##\brief Client for WG inventory system
 
 
@@ -61,7 +61,7 @@ def _is_serial_valid(reference):
 ##
 ## Performs all action relating to inventory system
 ## Will login automatically before all functions if needed
-class Invent:
+class Invent(object):
   ##@param username str : Username for WG invent system
   ##@param password str : Password for WG invent system
   def __init__(self, username, password, debug=False):
@@ -105,29 +105,73 @@ class Invent:
     self._logged_time = time.time()
     return True
 
-  ##\brief Debug mode only. Check invent DB for serial
+  ##\brief Check invent DB for serial, make sure it is valid
   ##
   ##\return bool : True if serial is valid, False if not
   def check_serial_valid(self, serial):
     if not _is_serial_valid(serial):
       return False
 
-    if 0: # Waiting for invent upgrade
-      url = self.site + "invent/api.py?Action.isItemValid=1&reference=%s" % (serial,)
-      fp = self.opener.open(url)
-      body = fp.read()
-      fp.close()
-      
-      i = string.find(body, "\n<!--")
-      value = string.strip(body[:i])
-      
-      if value != "True":
-        return False
+    self.login()
 
-    ##\todo Need some other stuff here. #4060
-    return True
+    url = self.site + "invent/api.py?Action.isItemValid=1&reference=%s" % (serial,)
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+    
+    i = string.find(body, "\n<!--")
+    value = string.strip(body[:i])
+    
+    return value.lower() == "true"
 
-  ##\brief Debug mode only
+  ##\brief Verifies that component is assembled and parts have passed Qual. Debug only
+  ##
+  ##
+  ## Checks that part is assembled against BoM. All sub-parts must be properly associated
+  ## to the parent part. All sub-parts must have passed qualification.
+  ##\param serial str : Serial number to check
+  ##\return True if part is assembled
+  def check_assembled(self, serial):
+    self.login()
+
+    url = self.site + "invent/api.py?Action.checkAssembled=1&reference=%s" % (serial,)
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    hdf.readString(body)
+    
+    val = hdf.getValue("CGI.out", "")
+    return val.lower() == "true"
+
+
+  ##\brief Lookup item by a reference. Debug mode only.
+  ##
+  ## Item references are stored as key-values. Ex: { "wan0", "005a86000000" }
+  ## This returns all items associated with a given reference value.
+  ##\param str : Reference to lookup
+  ##\return [ str ] : All items serial numbers that matched reference
+  def lookup_by_reference(self, ref):
+    self.login()
+
+    url = self.site + "invent/api.py?Action.lookupByReference=1&reference=%s" % (ref,)
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    hdf.readString(body)
+
+    rv = []
+    for k,o in hdfhelp.hdf_ko_iterator(hdf.getObj("CGI.cur.items")):
+      rv.append(o.getValue("reference", ""))
+
+    return rv
+
+  ##\brief List all attachments for an item
+  ##
+  ##\return { str : str } : Attachment ID to filename
   def get_attachments(self, key):
     self.login()
 
@@ -137,8 +181,6 @@ class Invent:
     fp = self.opener.open(url)
     body = fp.read()
     fp.close()
-
-    print body
 
     hdf = neo_util.HDF()
     hdf.readString(body)

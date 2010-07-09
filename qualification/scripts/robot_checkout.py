@@ -48,6 +48,8 @@ from std_msgs.msg import Bool
 
 import traceback
 
+ETHERCAT_WAIT_TIME = 10
+
 ##\brief Sorts diagnostic messages by level, name
 def level_cmp(a, b):
     if a._level == b._level:
@@ -110,9 +112,6 @@ class RobotCheckout:
     def __init__(self):
         rospy.init_node('robot_checkout')
         
-        self._motors_halted = True
-        self.motors_topic = rospy.Subscriber("pr2_etherCAT/motors_halted", Bool, self.on_motor_cb)
-
         self._calibrated = False
         self._joints_ok = False
         
@@ -142,8 +141,10 @@ class RobotCheckout:
         self.has_sent_result = False
 
         self._expected_actuators = rospy.get_param('~motors', None)
-        if self._expected_actuators is None:
-            rospy.logwarn('Not given list of expected actuators! Deprecation warning')
+
+        self._motors_halted = True
+        self._last_motors_time = 0
+        self.motors_topic = rospy.Subscriber("pr2_etherCAT/motors_halted", Bool, self.on_motor_cb)
 
         self.robot_data = rospy.Subscriber('robot_checkout', RobotData, self.on_robot_data)
         self.result_srv = rospy.ServiceProxy('test_result', TestResult)
@@ -153,7 +154,8 @@ class RobotCheckout:
         
     def on_motor_cb(self, msg):
         self._motors_halted = msg.data
-        
+        self._last_motors_time = rospy.get_time()
+
     def send_failure_call(self, caller = 'No caller', except_str = ''):
         if self.has_sent_result:
             rospy.logerr('Wanted to send failure call after result sent. Caller: %s. Exception:\n%s' % (caller, except_str))
@@ -172,6 +174,11 @@ class RobotCheckout:
             rospy.logerr('Caught exception sending failure call! %s' % traceback.format_exc())
             traceback.print_exc()
             
+    def _check_motors_stale(self):
+        """
+        Returns true if "motors_halted" topic hasn't updated in a while.
+        """
+        return self._last_motors_time == 0 or rospy.get_time() - self._last_motors_time > ETHERCAT_WAIT_TIME
 
     def wait_for_data(self):
         try:
@@ -180,14 +187,26 @@ class RobotCheckout:
             for i in range(0, 20):
                 if not rospy.is_shutdown():
                     sleep(0.5)
-                    
+           
+            # If motors haven't updated, we'll abort early since pr2_etherCAT probably died
+            if self._check_motors_stale():
+                self.checkout_robot()
+                return
+
             rospy.logdebug('Waiting for robot checkout controller')
             # Now start checking for robot data, done if we have it
             while not rospy.is_shutdown():
+                # If etherCAT dies, abort early
+                if self._check_motors_stale():
+                    self.checkout_robot()
+                    return
+
                 # If the visualizer fails, abort early
                 if self._has_visual_check and not self._visual_ok:
                     self.checkout_robot()
                     return
+
+                # Have data
                 if self._has_robot_data and self._has_visual_check:
                     self.checkout_robot()
                     return
@@ -322,6 +341,11 @@ class RobotCheckout:
             if self._motors_halted:
                 html += "<p>Motors halted, robot is not working.</p>\n"
                 summary = "Motors halted. Check runstop. " + summary
+            
+            if self._check_motors_stale():
+                html += '<p>No recent updates from pr2_etherCAT. pr2_etherCAT may have crashed.</p>'
+                summary = "No updates from pr2_etherCAT. May have crashed. Check MCB's, cable and power."
+            
 
             html += diag_html + '<hr size="2">\n'
             html += self._visual_html + '<hr size="2">\n'
@@ -356,8 +380,6 @@ class RobotCheckout:
             found_acts = []
 
             html = ['<p><b>Actuator Data</b></p><br>\n']
-            if self._expected_actuators is None:
-                html.append('<p>WARNING: No list of expected actuators was given. In the future, this will cause a failure.</p>\n')
             html.append('<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">\n')
             html.append('<tr><td><b>Index</b></td><td><b>Name</b></td><td><b>ID</b></td><td><b>Expected</b></td></tr>\n')
             for act_data in act_datas:
@@ -368,12 +390,10 @@ class RobotCheckout:
                 expect = 'N/A'
                 found_acts.append(act_data.name)
                 # Compare found against expected
-                if self._expected_actuators is not None:
-                    expect = 'True'
-                    if not act_data.name in self._expected_actuators:
-                        expect = 'False'
-                        self._acts_ok = False
-                        
+                expect = 'True'
+                if not self._expected_actuators or not act_data.name in self._expected_actuators:
+                    expect = 'False'
+                    self._acts_ok = False
 
                 html.append('<tr><td>%d</td><td>%s</td><td>%d</td><td>%s</td></tr>\n' % (index, name, id, expect))
 
@@ -383,6 +403,9 @@ class RobotCheckout:
                     if not name in found_acts:
                         html.append('<tr><td>N/A</td><td>%s</td><td>Not Found</td><td>True</td></tr>\n' % (name))
                         self._acts_ok = False
+            else:
+                html.append('<tr><td>No Actuators Expected</td><td>Uh oh!</td><td>Not Found</td><td>True</td></tr>\n')
+                self._acts_ok = False
 
             html.append('</table>\n')
             

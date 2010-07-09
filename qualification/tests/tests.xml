@@ -60,7 +60,6 @@
 	file="shoulder_test/test_motor.xml" descrip="Shoulder Motor Test" />
   <test serial="6802817" 
 	file="shoulder_test/test_motor.xml" descrip="Shoulder Motor Test" />
-
   
   <!-- Upperarm tests -->
   <test serial="6804139" 
@@ -75,11 +74,11 @@
 	file="upperarm_test/test_forearm_roll.xml" descrip="UA Slip Ring Test" />
 
   <!-- Wrist test -->
-  <test serial="6804213" 
+  <test serial="6804213" id="4213-1"
 	file="wrist_test/test.xml" descrip="Wrist Test" />
-  <test serial="6804213" 
+  <test serial="6804213" id="4213-2"
 	file="wrist_test/test_dummy_grip.xml" descrip="Wrist Test (Dummy Gripper)" />
-  <test serial="6804213" 
+  <test serial="6804213" id="4213-4"
 	file="wrist_test/test_post_burn.xml" descrip="Wrist Test (Post Burn-in)" />
 
   <!-- Gripper -->
@@ -109,11 +108,11 @@
   <!-- Special tests -->
   <test serial="faketes" debug="true"
 	file="simple_example/test.xml" descrip="Simple Example" />
-  <test serial="fakeout" debug="true"
+  <test serial="faketes" debug="true"
 	file="simple_example/test_timeout.xml" descrip="Test Timeout" />
 
   <!-- EtherCAT diagnostic test -->
-  <test serial="ectest" debug="true"
+  <test serial="ecattes" debug="true"
         file="ectest/test.xml" descrip="ECAT Chain test"/>
   
 

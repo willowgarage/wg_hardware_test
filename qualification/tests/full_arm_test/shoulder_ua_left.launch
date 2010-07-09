@@ -15,6 +15,5 @@
   	output="screen" name="full_arm_cal"
 	args="cal_l_shoulder_pan cal_l_shoulder_lift cal_l_upper_arm_roll cal_l_elbow_flex cal_l_forearm_roll" />
 
-   <!-- Uses eth2 to run wge100 camera -->
    <include file="$(find qualification)/tests/wge100_component.launch" />
 </launch>

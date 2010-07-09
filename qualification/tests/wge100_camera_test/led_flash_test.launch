@@ -2,7 +2,7 @@
   <include file="$(find qualification)/tests/wge100_camera_test/ethercat.launch" />
   
   <group ns="forearm">
-    <param name="camera_url" type="str" value="any://@192.168.202.2#eth2"/>
+    <param name="camera_url" type="str" value="any://@192.168.202.2#lan0"/>
     <param name="ext_trig" type="bool" value="True"/>
     <param name="video_mode" type="str" value="320x240x60"/>
     <param name="do_colorize" type="bool" value="True"/>

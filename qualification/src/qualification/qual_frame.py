@@ -75,12 +75,12 @@ import rxtools.cppwidgets
 ##\brief Passed to qualification manager
 ##
 ## Holds data about item to be qualified. Subtests can hold more data
-class QualTestObject():
+class QualTestObject(object):
   def __init__(self, name, serial):
     self.name = name
     self.serial = serial
 
-class QualOptions:
+class QualOptions(object):
   def __init__(self):
     self.debug = False
     self.always_show_results = False
@@ -166,6 +166,10 @@ class PlotsPanel(wx.Panel):
     self._rxconsole_panel.setEnabled(True)
     self._notebook.AddPage(self._rxconsole_panel, "ROS Output")
     
+  def close(self):
+    self._monitor_panel.shutdown()
+    # Maybe do something with rxconsole to shut down
+
   ##\brief Displays plots, HTML of results
   ##
   ##\param result_page str : HTML result page of results
@@ -289,6 +293,8 @@ class QualificationFrame(wx.Frame):
     self._result_service = None
     self._prestartup_done_srv = None
     self._shutdown_done_srv = None
+
+    self._invent_client = None
         
     # Load the XRC resource
     xrc_path = os.path.join(roslib.packages.get_pkg_dir('qualification'), 'xrc/gui.xrc')
@@ -301,6 +307,8 @@ class QualificationFrame(wx.Frame):
     self._top_sizer = wx.BoxSizer(wx.HORIZONTAL)
     self._top_panel.SetSizer(self._top_sizer)
     self._current_panel = None
+    self._plots_panel = None
+
     self._log_panel = xrc.XRCCTRL(self._root_panel, "log_panel")
     self._log = xrc.XRCCTRL(self._log_panel, 'log')
 
@@ -365,7 +373,11 @@ class QualificationFrame(wx.Frame):
     if self._results:
       self._results.close()
     self._results = None
+
+    if self._plots_panel:
+      self._plots_panel.close()
     self._plots_panel = None
+
     self.reset_params()
   
   ##\brief Resets parameters of qualification node to starting state
@@ -532,8 +544,8 @@ class QualificationFrame(wx.Frame):
         self.cancel(s)
         return
       
-      #rospy.sleep(2.0)
-      #rospy.loginfo('Sleeping after startup script')
+      rospy.sleep(2.0)
+      rospy.loginfo('Sleeping after startup script')
 
     else:
       self.log('No startup script, launching subtests')
@@ -672,8 +684,6 @@ class QualificationFrame(wx.Frame):
   ##\brief Uses roslaunch_caller to launch file
   ##@param file str : Full path of launch script
   def launch_file(self, file):
-    #self.log('Launching file %s' % (os.path.basename(file)))
-    
     f = open(file, 'r')
     launch_xml = f.read()
     f.close()
@@ -686,7 +696,7 @@ class QualificationFrame(wx.Frame):
     launch = roslaunch_caller.ScriptRoslaunch(script, None)
     try:
       launch.start()
-    except:
+    except Exception, e:
       traceback.print_exc()
       self.log('Caught exception launching file:\n%s' % traceback.format_exc())
       return None
@@ -899,6 +909,8 @@ class QualificationFrame(wx.Frame):
 
       rospy.set_param('/invent/username', username)
       rospy.set_param('/invent/password', password)
+
+      self._invent_client = invent
       return True
     else:
       return False
@@ -906,21 +918,26 @@ class QualificationFrame(wx.Frame):
 
   ##\brief Loads inventory object, prompts for username/password if needed
   def get_inventory_object(self):
-    username = rospy.get_param('/invent/username', '')
-    password = rospy.get_param('/invent/password', '')
+    if self._invent_client and self._invent_client.login():
+      return self._invent_client
 
-    if (username != None and password != None):
+    username = rospy.get_param('/invent/username', None)
+    password = rospy.get_param('/invent/password', None)
+
+    if (username and password):
       invent = Invent(username, password)
       if (invent.login() == True):
-        return invent
+        self._invent_client = invent
+        return self._invent_client
 
       rospy.set_param('/invent/username', '')
       rospy.set_param('/invent/password', '')
     
-    if not self.login_to_invent():
+    if not self.login_to_invent() or not self._invent_client or not self._invent_client.login():
       return None
     else:
-      return Invent(username, password)
+      # self._invent_client is set by login_to_invent()
+      return self._invent_client
 
   ##\brief Prompts user if they are sure they want to submit results
   def verify_submit(self):

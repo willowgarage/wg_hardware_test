@@ -345,7 +345,7 @@
 																					<flag>wxALL|wxALIGN_CENTER_VERTICAL</flag>
 																					<border>5</border>
 																					<object class="wxStaticText" name="duration_label">
-																						<label>cycles</label>
+																						<label>hours</label>
 																					</object>
 																				</object>
 																			</object>

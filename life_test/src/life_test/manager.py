@@ -240,7 +240,7 @@ class TestManagerFrame(wx.Frame):
             self._active_boards.setdefault(bay.board, {})[bay.breaker] = serial
 
         if bay.board is not None and self._power_node is None:
-            self._power_node = roslaunch_caller.ScriptRoslaunch('<launch><node pkg="pr2_power_board" type="power_node" name="power_board" /></launch>')
+            self._power_node = roslaunch_caller.ScriptRoslaunch('<launch><node pkg="pr2_power_board" type="power_node" name="power_board" respawn="true" /></launch>')
             self._power_node.start()
 
         return True
