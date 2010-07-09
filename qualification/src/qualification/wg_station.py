@@ -82,17 +82,17 @@ class WGTestStation(object):
         if not xmlDoc.attributes.has_key('breaker0'):
             print >> sys.stderr, "Unable to find attribute \"breaker0\" in XML doc for test station. XML: %s" % str(xmlDoc)
             return False
-        self._breaker0 = xmlDoc.attributes['powerboard'].value.lower() == 'true'
+        self._breaker0 = xmlDoc.attributes['breaker0'].value.lower() == 'true'
 
         if not xmlDoc.attributes.has_key('breaker1'):
             print >> sys.stderr, "Unable to find attribute \"breaker1\" in XML doc for test station. XML: %s" % str(xmlDoc)
             return False
-        self._breaker1 = xmlDoc.attributes['powerboard'].value.lower() == 'true'
+        self._breaker1 = xmlDoc.attributes['breaker1'].value.lower() == 'true'
 
         if not xmlDoc.attributes.has_key('breaker2'):
             print >> sys.stderr, "Unable to find attribute \"breaker2\" in XML doc for test station. XML: %s" % str(xmlDoc)
             return False
-        self._breaker2 = xmlDoc.attributes['powerboard'].value.lower() == 'true'
+        self._breaker2 = xmlDoc.attributes['breaker2'].value.lower() == 'true'
 
         return True
 
