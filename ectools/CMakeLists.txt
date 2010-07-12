@@ -28,4 +28,4 @@ rosbuild_genmsg()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 #target_link_libraries(example ${PROJECT_NAME})
 
-#rosbuild_add_executable(ecstats src/ecstats.cpp)
+rosbuild_add_executable(ecstats src/ecstats.cpp)

@@ -27,6 +27,7 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
+#include <netinet/in.h>
 
 using std::cout;
 using std::cerr;
