@@ -90,7 +90,8 @@ def get_virtual_gloves():
                            'r_gripper_r_finger_link',
                            'r_gripper_r_finger_tip_link',
                            'r_wrist_roll_link',
-                           'r_wrist_flex_link']
+                           'r_wrist_flex_link',
+                           'r_forearm_link']
 
     r_glove.object.shapes.append(glove_shape)
     r_glove.object.poses.append(glove_pose)
