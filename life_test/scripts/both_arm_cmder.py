@@ -112,6 +112,7 @@ def get_virtual_gloves():
 def get_virtual_table(height = 0.42):
     table_msg = CollisionObject()
 
+    table_msg.id = "table"
     table_msg.operation.operation = CollisionObjectOperation.ADD    
 
     table_msg.header.stamp = rospy.get_rostime()
