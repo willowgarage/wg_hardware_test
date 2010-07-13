@@ -83,7 +83,8 @@ def main():
   marker_pub = rospy.Publisher('visualization_markers', Marker)
   cmd_pub = rospy.Publisher('cmd_vel', Twist)
 
-  listener.waitForTransform(base_frame, map_frame, rospy.Time(0), rospy.Duration(5))
+  rospy.sleep(15)
+  listener.waitForTransform(base_frame, map_frame, rospy.Time(), rospy.Duration(60))
 
   t_start = rospy.Time.now().to_sec()
   started = time.asctime()
