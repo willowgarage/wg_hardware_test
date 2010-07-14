@@ -1,6 +1,9 @@
 <launch>
   <include file="$(find pr2_arm_navigation_actions)/launch/both_arms_collision_free_trajectory_control.launch" />
 
+  <!-- Publish markers for visualization -->
+  <include file="$(find planning_environment)/launch/display_planner_collision_model.launch" />  
+  
   <rosparam command="load" ns="trajectory_filter" 
   	    file="$(find life_test)/pr2_test/config/joint_limits.yaml" />
   <param name="robot_description_collision/robot_padd" type="double" value="0.01" /> 

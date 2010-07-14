@@ -90,7 +90,8 @@ def get_virtual_gloves():
                            'r_gripper_r_finger_link',
                            'r_gripper_r_finger_tip_link',
                            'r_wrist_roll_link',
-                           'r_wrist_flex_link']
+                           'r_wrist_flex_link',
+                           'r_forearm_link']
 
     r_glove.object.shapes.append(glove_shape)
     r_glove.object.poses.append(glove_pose)
@@ -111,6 +112,7 @@ def get_virtual_gloves():
 def get_virtual_table(height = 0.42):
     table_msg = CollisionObject()
 
+    table_msg.id = "table"
     table_msg.operation.operation = CollisionObjectOperation.ADD    
 
     table_msg.header.stamp = rospy.get_rostime()

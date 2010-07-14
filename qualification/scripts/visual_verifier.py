@@ -196,11 +196,10 @@ if __name__ == "__main__":
     call_done_service(ScriptDoneRequest.RESULT_ERROR, "Visual verifier not given path to actual config file.\nusage: visual_verifier.py 'path to config file'\nFile %s does not exist" % sys.argv[1])
     print >> sys.stderr, 'Usage: visual_verifier.py \'path to config file\'.\nGiven file does not exist'
     sys.exit(1)
-  
-  rospy.init_node('visual_verifier')
 
   try:
     app = VisualizerApp(sys.argv[1])
+    rospy.init_node('visual_verifier')
 
     # Uses this timeout to automatically pass visual verifier
     # Used in automated testing.
