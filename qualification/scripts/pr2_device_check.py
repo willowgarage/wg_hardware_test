@@ -196,6 +196,10 @@ if __name__ == '__main__':
         if not wge in my_parts:
             print >> sys.stderr, "Camera %s was not found in parts list" % wge
             ok = False
+
+    if not len(wge100s) == 6:
+        print >> sys.stderr, "Not all wge100's found on robot. Expected 6, found %d" % len(wge100s)
+        ok = False
     
     # Check HK's
     for hk in hks:
