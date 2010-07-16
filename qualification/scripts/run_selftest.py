@@ -67,7 +67,7 @@ def add_reference(reference):
         extramsg = '<p>Unable to login to invent to store item reference. Serial: %s. Reference: %s.</p>\n' % (serial, node_id)
         return False
     
-    iv.addItemReference(serial, '', node_id)
+    iv.addItemReference(serial, '', reference)
 
     return True
 
