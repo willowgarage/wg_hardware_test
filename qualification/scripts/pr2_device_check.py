@@ -133,7 +133,9 @@ def get_mcb_serials():
         
         for ln in o.split('\n'):
             if ln.startswith('serial :'):
-                serials.append(ln[9:].strip())
+                sn = ln[9:].strip()
+                if sn not in serials:
+                    serials.append(sn)
 
     return serials
 
