@@ -46,8 +46,7 @@ import subprocess
 
 from wg_invent_client import Invent
 
-class HokuyoReferenceException(Exception): pass
-class wge100SerialException(Exception): pass
+class GetIDException(Exception): pass
 
 WGE100_PN = '68050' # Prefix for all wge100 camera PN's
 
@@ -58,7 +57,7 @@ def get_wge100_serials():
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.PIPE)
     (o, e) = p.communicate()
     if p.returncode != 0:
-        raise wge100SerialException("Unable to run \"discover\" to find camera serials!")
+        raise GetIDException("Unable to run \"discover\" to find camera serials!")
     
     serials = []
 
@@ -79,6 +78,24 @@ def get_wge100_serials():
 
     return serials
 
+def get_prosilica_ref():
+    cmd = '%s/bin/ListAttributes' % roslib.packages.get_pkg_dir('prosilica_gige_sdk')
+    p = subprocess.Popen([cmd, '10.68.0.20'], stdout = subprocess.PIPE, 
+                         stderr= subprocess.PIPE)
+    
+    (o, e) = p.communicate()
+    if p.returncode != 0:
+        raise GetIDException("Unable to get Prosilica ID")
+
+    lines = o.split('\n')
+    for ln in lines:
+        if ln.find('UniqueId') == -1:
+            continue
+        
+        return ln.split()[-1]
+    
+    return ''
+
 def get_hk_refs():
     ids = []
     for port in [ 'base_hokuyo', 'tilt_hokuyo' ]:
@@ -87,10 +104,10 @@ def get_hk_refs():
                              stderr = subprocess.PIPE)
         (o, e) = p.communicate()
         if p.returncode != 0:
-            raise HokuyoReferenceException("Unable to get HK ID for %s" % port)
+            raise GetIDException("Unable to get HK ID for %s" % port)
         
         if len(o.split()) < 3:
-            raise HokuyoReferenceException("Unable to get HK ID for %s. Output invalid: %s" % (port, o))
+            raise GetIDException("Unable to get HK ID for %s. Output invalid: %s" % (port, o))
 
         hk_id = o.split()[-1]
         ids.append(hk_id)
@@ -150,24 +167,39 @@ if __name__ == '__main__':
         parser.error("Robot serial number %s is invalid" % options.robot)
 
     print 'Pulling devices from robot'
+    prosilica = get_prosilica_ref()
     hks = get_hk_refs()
     wge100s = get_wge100_serials()
     mcbs = get_mcb_serials()
+
+
 
     print 'Getting parts from Invent'
     my_parts = iv.get_sub_items(robot, True)
 
     ok = True
 
+    # Check prosilica
+    serials = iv.lookup_by_reference(prosilica)
+    if not len(serials) == 1:
+        print >> sys.stderr, "Invalid serial numbers listed for Prosilica camera. %s" % ', '.join(serials)
+        ok = False
+
+    if len(serials) == 1 and serials[0] not in my_parts:
+        print >> sys.stderr, "Prosilica serial %s is not listed in Invent. ID: %s" % (serials[0], prosilica)
+        ok = False
+
+    # Check wge100 cameras
     for wge in wge100s:
         if not wge in my_parts:
             print >> sys.stderr, "Camera %s was not found in parts list" % wge
             ok = False
     
+    # Check HK's
     for hk in hks:
         serials = iv.lookup_by_reference(hk)
         if not len(serials) == 1:
-            print >> sys.stderr, "Invalid serial numbers for HK reference %s. Serials: %s" % (hk, serials)
+            print >> sys.stderr, "Invalid serial numbers for HK reference %s. Serials: %s" % (hk, ', '.join(serials))
             ok = False
             continue
 
@@ -175,9 +207,10 @@ if __name__ == '__main__':
             print >> sys.stderr, "Hokuyo %s not found in parts list. Device ID: %s" % (serials[0], hk)
             ok = False
 
+    # Check etherCAT chain
     for mcb in mcbs:
         if not mcb in my_parts:
-            print >> sys.stderr, "MCB %s was not found in parts list" % mcb
+            print >> sys.stderr, "EtherCAT device %s was not found in parts list" % mcb
             ok = False
 
     if ok:
