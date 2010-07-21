@@ -208,15 +208,16 @@ class FingerTipVerifyFrame(wx.Frame):
         else:
             r.html_result = '<p>Fingertip verification failed</p>\n<p>%s</p>' % msg
             r.text_summary = 'Fingertip verification failed.'
-            r.result = TestResultRequest.RESULT_PASS
+            r.result = TestResultRequest.RESULT_FAIL
 
         print 'Sending test result. Summary: %s' % r.text_summary
         try:
             rospy.wait_for_service('test_result', 2)
-        except:
-            return
+        except Exception, e:
+            return False
         self.result_service.call(r)
         self.data_sent = True
+        return True
 
     def result_cb(self, result, msg = ''):
         self.send_results(result, msg = '')
@@ -234,8 +235,8 @@ class FingerTipVerifyFrame(wx.Frame):
             self._panel.on_close()
             self.send_results(False, 'Window closed')
             
-        except:
-            pass
+        except Exception, e:
+            print >> sys.stderr, "Caught exception on close:\n%s" % str(e)
 
         self.Destroy()
         
