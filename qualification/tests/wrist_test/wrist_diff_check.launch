@@ -1,7 +1,7 @@
 <launch>
   <!-- Wrist diff controller -->
   <group ns="test_controller" clear_params="true">
-    <param name="type" type="string" value="WristDifferenceController" />
+    <param name="type" type="string" value="joint_qualification_controllers/WristDifferenceController" />
     <param name="timeout" type="double" value="30.0" />
     <param name="roll_velocity" type="double" value="1.5" />
     <param name="flex_position" type="double" value="-1.0" />
