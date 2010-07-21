@@ -4,11 +4,11 @@
   <!-- Spwns the controllers -->
   <node name="led_trig_spawner" pkg="pr2_controller_manager" type="spawner" output="screen" args="trig_controller led_controller" />
   <group ns="trig_controller">
-    <param name="type" type="string" value="TriggerController" />
+    <param name="type" type="string" value="ethercat_trigger_controllers/TriggerController" />
     <param name="actuator" type="string" value="wge100_camera_qual_trig" />
   </group>
   <group ns="led_controller">
-    <param name="type" type="string" value="TriggerController" />
+    <param name="type" type="string" value="ethercat_trigger_controllers/TriggerController" />
     <param name="actuator" type="string" value="wge100_camera_qual_led" />
   </group>
   

@@ -8,7 +8,7 @@
 
   <!-- Torso Calibration -->
   <group ns="cal_torso_limit_controller">
-    <param name="type" type="string" value="JointLimitCalibrationController" />
+    <param name="type" type="string" value="joint_qualification_controllers/JointLimitCalibrationController" />
     <param name="joint" type="string" value="torso_lift_joint" />
     <param name="actuator" type="string" value="torso_lift_motor" />
     <param name="transmission" type="string" value="torso_lift_trans" />

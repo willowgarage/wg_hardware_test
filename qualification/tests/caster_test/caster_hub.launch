@@ -7,7 +7,7 @@
 
   <!-- Caster calibration -->
   <group ns="cal_caster_fl_hub" >
-    <param name="type" type="string" value="JointCalibrationController" />
+    <param name="type" type="string" value="pr2_calibration_controllers/JointCalibrationController" />
     <param name="actuator" type="string" value="fl_caster_rotation_motor" />
     <param name="joint" type="string" value="fl_caster_rotation_joint" />
     <param name="transmission" type="string" value="fl_caster_rotation_trans" />
