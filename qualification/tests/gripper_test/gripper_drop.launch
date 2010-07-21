@@ -8,7 +8,7 @@
 
   <!-- Turn on LED -->
   <group ns="r_gripper_led" >
-    <param name="type" type="str" value="TriggerController" />
+    <param name="type" type="str" value="ethercat_trigger_controllers/TriggerController" />
     <param name="actuator" type="str" value="r_gripper_motor" />
     <param name="running" type="bool" value="True" />
     <param name="active_low" type="bool" value="True" />
