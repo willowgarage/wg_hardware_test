@@ -13,7 +13,6 @@
     <param name="slope" type="double" value="-2.0" />
     
     <group ns="velocity_controller" >
-      <param name="type" type="string" value="JointVelocityController" />
       <param name="joint" type="string" value="head_tilt_joint" />
       <param name="pid/p" type="double" value="3.0" />
       <param name="pid/i" type="double" value="40.0" />
