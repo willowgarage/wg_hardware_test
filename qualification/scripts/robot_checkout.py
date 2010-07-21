@@ -45,6 +45,7 @@ from pr2_self_test_msgs.srv import ScriptDone, ScriptDoneRequest, ScriptDoneResp
 
 from joint_qualification_controllers.msg import RobotData
 from std_msgs.msg import Bool
+from std_srvs.srv import Empty
 
 import traceback
 
@@ -81,6 +82,18 @@ def _write_diag_summary(error_names, num_error, num_warn, num_stale):
         return 'Hokuyo error. Check connections. '
 
     return 'Diagnostics FAIL: %s errors, %s warnings, %s stale items. ' % (num_error, num_warn, num_stale)
+
+def reset_motors():
+    """Resets motors on startup. Motors can halt for a watchdog timeout on startup. #4578 """
+    try:
+        rospy.wait_for_service('pr2_etherCAT/reset_motors', 3)
+        proxy = rospy.ServiceProxy('pr2_etherCAT/reset_motors', Empty)
+        proxy()
+        return True
+    except Exception, e:
+        print >> sys.stderr, "Exception resetting motors!"
+        traceback.print_exc()
+        return False
 
 class DiagnosticItem:
     def __init__(self, name, level, message):
@@ -490,6 +503,7 @@ if __name__ == '__main__':
     try:
         checkout = RobotCheckout()
         sleep(1)
+        reset_motors()
         checkout.wait_for_data()
         rospy.spin()
     except KeyboardInterrupt:
