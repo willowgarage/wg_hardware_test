@@ -1,6 +1,6 @@
 <launch>
   <group ns="test_controller" clear_params="true">
-    <param name="type" type="string" value="HysteresisController" />
+    <param name="type" type="string" value="joint_qualification_controllers/HysteresisController" />
     <param name="velocity" type="double" value="1.5" />
     <param name="max_effort" type="double" value="2.0" />
     <param name="max_expected" type="double" value="0.18" />
