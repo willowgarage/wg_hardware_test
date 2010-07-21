@@ -12,7 +12,6 @@
     <param name="sd_max" type="double" value="0.18" />
 
     <group ns="velocity_controller" >
-      <param name="type" type="string" value="JointVelocityController" />
       <param name="joint" type="string" value="fl_caster_rotation_joint" />
       <param name="pid/p" type="double" value="2.0" />
       <param name="pid/i" type="double" value="5.0" />

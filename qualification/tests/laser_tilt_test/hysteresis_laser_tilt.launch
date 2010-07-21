@@ -13,7 +13,6 @@
     <param name="slope" type="double" value="0.1035" />
 
     <group ns="velocity_controller" >
-      <param name="type" type="string" value="JointVelocityController" />
       <param name="joint" type="string" value="laser_tilt_mount_joint" />
       <param name="pid/p" type="double" value="0.20" />
       <param name="pid/i" type="double" value="10.00" />

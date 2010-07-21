@@ -10,7 +10,6 @@
     <param name="timeout" type="double" value="30" />
 
     <group ns="velocity_controller" >
-      <param name="type" type="string" value="JointVelocityController" />
       <param name="joint" type="string" value="r_gripper_joint" />
       <param name="pid/p" type="double" value="3000.0" />
       <param name="pid/i" type="double" value="15000.0" />

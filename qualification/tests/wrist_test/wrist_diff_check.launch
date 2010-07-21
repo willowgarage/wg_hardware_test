@@ -14,7 +14,6 @@
     <param name="flex_sd" type="double" value="0.1" />
 
     <group ns="flex_position_controller" >
-      <param name="type" type="string" value="JointPositionController" />
       <param name="joint" type="string" value="r_wrist_flex_joint" />
       <param name="pid/p" type="double" value="1" />
       <param name="pid/i" type="double" value="0.5" />
@@ -23,7 +22,6 @@
     </group>
     
     <group ns="roll_velocity_controller" >
-      <param name="type" type="string" value="JointVelocityController" />
       <param name="joint" type="string" value="r_wrist_roll_joint" />
       <param name="pid/p" type="double" value="2.0" />
       <param name="pid/i" type="double" value="1.0" />
