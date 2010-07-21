@@ -492,6 +492,9 @@ class QualTestResult(object):
         # Remove any temporary files
         shutil.rmtree(TEMP_DIR)
 
+    @property
+    def results_dir(self): return self._results_dir
+
     def set_results_dir(self, path):
         if not path.endswith('/'):
             path += '/'

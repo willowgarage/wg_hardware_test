@@ -965,7 +965,7 @@ class QualificationFrame(wx.Frame):
     self._results.set_notes(notes)
     self._results.set_operator(rospy.get_param('invent/username', ''))
 
-    self.log('Results logged to %s' % self._results._results_dir)
+    self.log('Results logged to %s' % self._results.results_dir)
     res, log_str = self._results.log_results(invent)
     self.log(log_str)
 
