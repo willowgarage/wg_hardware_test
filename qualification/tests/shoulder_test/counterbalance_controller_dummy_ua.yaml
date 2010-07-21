@@ -1,11 +1,10 @@
 test_controller:
-  type: CounterbalanceTestController
+  type: joint_qualification_controllers/CounterbalanceTestController
   settle_time: 2.0
   dither_points: 1000
   timeout: 180
   lift:
     joint: r_shoulder_lift_joint
-    type: JointPositionController
     pid/p: 75.0
     pid/i: 5.0
     pid/d: 10.0
