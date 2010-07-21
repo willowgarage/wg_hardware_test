@@ -1,5 +1,5 @@
 r_arm_controller:
-  type: "JointSplineTrajectoryController"
+  type: "robot_mechanism_controllers/JointSplineTrajectoryController"
   joints:
     - r_shoulder_pan_joint
     - r_shoulder_lift_joint
@@ -28,7 +28,7 @@ r_arm_controller:
         goal: 0.02
 
 l_arm_controller:
-  type: "JointSplineTrajectoryController"
+  type: "robot_mechanism_controllers/JointSplineTrajectoryController"
   joints:
     - l_shoulder_pan_joint
     - l_shoulder_lift_joint
