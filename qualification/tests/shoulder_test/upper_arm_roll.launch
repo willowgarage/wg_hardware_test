@@ -8,7 +8,7 @@
 
   <!-- UA roll joint calibrates off positive limit -->
   <group ns="cal_r_upper_arm_roll_limit" >
-    <param name="type" type="string" value="JointLimitCalibrationController" />
+    <param name="type" type="string" value="joint_qualification_controllers/JointLimitCalibrationController" />
     <param name="joint" type="string" value="r_upper_arm_roll_joint" />
     <param name="actuator" type="string" value="r_upper_arm_roll_motor" />
     <param name="transmission" type="string" value="r_upper_arm_roll_trans" />

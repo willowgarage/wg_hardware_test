@@ -63,12 +63,9 @@ from datetime import datetime
 
 import shutil
 
-##\todo These might go in /hwlog instead
-RESULTS_DIR = os.path.join(roslib.packages.get_pkg_dir(PKG), 'results')
-
 import result_dir
 TEMP_DIR = result_dir.TEMP_DIR
-
+RESULTS_DIR = result_dir.RESULTS_DIR
 
 ##\todo Rename to '_' name
 def write_temp_tar_file(results_dir):
@@ -473,12 +470,8 @@ class QualTestResult(object):
         self._results_name = '%s_%s' % (self._serial, self._start_time_filestr)
 
         # Record that directory made
-        self._results_dir = os.path.join(RESULTS_DIR, self._results_name)
-        if not os.path.isdir(self._results_dir):
-            self._made_dir = self._results_dir
-            os.mkdir(self._results_dir)
-        else:
-            self._made_dir = ''
+        self._made_dir = None
+        self.set_results_dir(os.path.join(RESULTS_DIR, self._results_name))
 
         self._error = False
         self._canceled = False
@@ -490,11 +483,26 @@ class QualTestResult(object):
 
     def close(self):
         # Delete extra directories if empty
-        if self._made_dir != '' and len(os.listdir(self._made_dir)) == 0:
+        if self._made_dir and len(os.listdir(self._made_dir)) == 0:
             os.rmdir(self._made_dir)
 
-
+        # Remove any temporary files
         shutil.rmtree(TEMP_DIR)
+
+    @property
+    def results_dir(self): return self._results_dir
+
+    def set_results_dir(self, path):
+        if not path.endswith('/'):
+            path += '/'
+
+        self._results_dir = path
+        if not os.path.isdir(self._results_dir):
+            self._made_dir = self._results_dir
+            os.mkdir(self._results_dir)
+        else:
+            self._made_dir = None
+        
        
     def set_notes(self, note):
         self._note = note

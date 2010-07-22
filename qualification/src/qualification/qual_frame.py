@@ -33,11 +33,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 ##\author Kevin Watts
-##\brief Contains main functionality for PR2 production qualification system. 
+##\brief Contains main functionality for WG production qualification system. 
 
 PKG = 'qualification'
+
 import roslib
-import roslib.packages
 roslib.load_manifest(PKG)
 
 import rospy
@@ -63,13 +63,9 @@ from qualification.result import *
 import traceback
 
 from wg_invent_client import Invent
-
-#import runtime_monitor
 from runtime_monitor.monitor_panel import MonitorPanel
-
 from roslaunch_caller import roslaunch_caller 
 
-#import rxtools
 import rxtools.cppwidgets
 
 ##\brief Passed to qualification manager
@@ -898,23 +894,23 @@ class QualificationFrame(wx.Frame):
     # These values don't come through in the xrc file
     username_ctrl.SetMinSize(wx.Size(200, -1))
     password_ctrl.SetMinSize(wx.Size(200, -1))
-    if (dialog.ShowModal() == wx.ID_OK):
-      username = username_ctrl.GetValue()
-      password = password_ctrl.GetValue()
-
-      invent = Invent(username, password)
-
-      if (invent.login() == False):
-        return self.login_to_invent()
-
-      rospy.set_param('/invent/username', username)
-      rospy.set_param('/invent/password', password)
-
-      self._invent_client = invent
-      return True
-    else:
+    if (dialog.ShowModal() != wx.ID_OK):
       return False
 
+    username = username_ctrl.GetValue()
+    password = password_ctrl.GetValue()
+    
+    invent = Invent(username, password)
+
+    if (invent.login() == False):
+      return self.login_to_invent()
+    
+    rospy.set_param('/invent/username', username)
+    rospy.set_param('/invent/password', password)
+    
+    self._invent_client = invent
+    return True
+    
 
   ##\brief Loads inventory object, prompts for username/password if needed
   def get_inventory_object(self):
@@ -952,7 +948,7 @@ class QualificationFrame(wx.Frame):
   ##\brief Submits qualifications results to inventory, emails teams
   ##
   ## Uses result.py functions
-  def submit_results(self, notes, dir):
+  def submit_results(self, notes, directory):
     if not self.verify_submit():
       return
 
@@ -963,16 +959,13 @@ class QualificationFrame(wx.Frame):
       self.reset()
       return
 
-    ##\todo Make function in results to get/set output directory
-    if not dir.endswith('/'):
-      dir += '/'
-    self._results._results_dir = dir 
+    self._results.set_results_dir(directory)
 
     invent = self.get_inventory_object()
     self._results.set_notes(notes)
     self._results.set_operator(rospy.get_param('invent/username', ''))
 
-    self.log('Results logged to %s' % self._results._results_dir)
+    self.log('Results logged to %s' % self._results.results_dir)
     res, log_str = self._results.log_results(invent)
     self.log(log_str)
 

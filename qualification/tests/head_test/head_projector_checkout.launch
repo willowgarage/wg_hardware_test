@@ -77,7 +77,7 @@
   <node pkg="qualification" type="check_projector_on.py" name="check_projector_on" />
 
   <group ns="test_controller" clear_params="true">
-    <param name="type" type="string" value="CheckoutController" />
+    <param name="type" type="string" value="joint_qualification_controllers/CheckoutController" />
     <param name="timeout" type="double" value="30.0" />
   </group>
   

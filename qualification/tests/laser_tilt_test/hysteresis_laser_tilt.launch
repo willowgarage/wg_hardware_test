@@ -1,6 +1,6 @@
 <launch>
   <group ns="test_controller" clear_params="true">
-    <param name="type" type="string" value="HysteresisController" />
+    <param name="type" type="string" value="joint_qualification_controllers/HysteresisController" />
     <param name="velocity" type="double" value="1.5" />
     <param name="max_effort" type="double" value="0.60" />
     <param name="max_expected" type="double" value="0.03" />
@@ -13,7 +13,6 @@
     <param name="slope" type="double" value="0.1035" />
 
     <group ns="velocity_controller" >
-      <param name="type" type="string" value="JointVelocityController" />
       <param name="joint" type="string" value="laser_tilt_mount_joint" />
       <param name="pid/p" type="double" value="0.20" />
       <param name="pid/i" type="double" value="10.00" />

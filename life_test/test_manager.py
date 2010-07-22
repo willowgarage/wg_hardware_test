@@ -56,13 +56,18 @@ class TestManagerApp(wx.App):
             print >> sys.stderr, 'Failed to launch core. Another core may already be running.\n\n'
             wx.MessageBox('A ROS core is still running and preventing the Test Manager system from starting. Shut down ROS processes by using the "Kill ROS" icon.','ROS Already Running', wx.OK|wx.ICON_ERROR, None)
             sys.exit(1)
+            
+        import life_test.result_dir 
+        if not life_test.result_dir.check_results_dir():
+            print >> sys.stderr, "Unable to write to results directory. Permissions invalid"
+            wx.MessageBox("Unable to write to the \"/hwlog/test_manager\" directory. Open a terminal and type, \"sudo chmod +rwx -R /hwlog/test_manager\" to fix the offending directory. You will have to restart Test Manager",
+                          "Unable to Write Results", wx.OK|wx.ICON_ERROR, None)
+            sys.exit(1)
 
-        
         img_path = os.path.join(roslib.packages.get_pkg_dir(PKG), 'xrc', 'splash.jpg')
         
         bitmap = wx.Bitmap(img_path, type=wx.BITMAP_TYPE_JPEG)
         self._splash = wx.SplashScreen(bitmap, wx.SPLASH_CENTRE_ON_SCREEN, 30000, None, -1)
-
 
         rospy.init_node("Test_Manager")
 

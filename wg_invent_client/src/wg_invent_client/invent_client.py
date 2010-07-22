@@ -124,7 +124,7 @@ class Invent(object):
     
     return value.lower() == "true"
 
-  ##\brief Verifies that component is assembled and parts have passed Qual. Debug only
+  ##\brief Verifies that component is assembled and parts have passed Qual. 
   ##
   ##
   ## Checks that part is assembled against BoM. All sub-parts must be properly associated
@@ -140,13 +140,17 @@ class Invent(object):
     fp.close()
 
     hdf = neo_util.HDF()
-    hdf.readString(body)
-    
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return False
+
     val = hdf.getValue("CGI.out", "")
     return val.lower() == "true"
 
 
-  ##\brief Lookup item by a reference. Debug mode only.
+  ##\brief Lookup item by a reference. 
   ##
   ## Item references are stored as key-values. Ex: { "wan0", "005a86000000" }
   ## This returns all items associated with a given reference value.
@@ -161,7 +165,11 @@ class Invent(object):
     fp.close()
 
     hdf = neo_util.HDF()
-    hdf.readString(body)
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return []
 
     rv = []
     for k,o in hdfhelp.hdf_ko_iterator(hdf.getObj("CGI.cur.items")):
@@ -183,7 +191,11 @@ class Invent(object):
     fp.close()
 
     hdf = neo_util.HDF()
-    hdf.readString(body)
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return {}
 
     ret = {}
     for k,o in hdfhelp.hdf_ko_iterator(hdf.getObj("CGI.cur.attachments")):
@@ -207,7 +219,11 @@ class Invent(object):
     fp.close()
 
     hdf = neo_util.HDF()
-    hdf.readString(body)
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return {}
 
     ret = {}
     for k,o in hdfhelp.hdf_ko_iterator(hdf.getObj("CGI.cur.refs")):
@@ -273,6 +289,7 @@ class Invent(object):
   ##@param reference str : Serial number of component
   ##@param key str : Key (name)
   ##@param value str : Value
+  ##@return True if set Key properly
   def setKV(self, reference, key, value):
     self.login()
 
@@ -280,9 +297,12 @@ class Invent(object):
     value = value.strip()
 
     if not key:
-      raise ValueError, "the key is blank"
+      print >> sys.stderr, "Unable to set empty key into inventory system. Reference: %s, Value: %s" % (reference, value)
+      return False
+
     if not value:
-      raise ValueError, "the value is blank"
+      print >> sys.stderr, "Unable to set empty value into inventory system. Reference: %s, Key: %s" % (reference, key)
+      return False
 
     url = self.site + "invent/api.py?Action.setKeyValue=1&reference=%s&key=%s&value=%s" % (reference, urllib2.quote(key), urllib2.quote(value))
 
@@ -372,7 +392,11 @@ class Invent(object):
     fp.close()
 
     hdf = neo_util.HDF()
-    hdf.readString(body)
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return {}
 
     ret = []
     for k,o in hdfhelp.hdf_ko_iterator(hdf.getObj("CGI.cur.items")):

@@ -3,7 +3,7 @@
   <!-- Spawns the controllers -->
   <node name="$(anon spawner-projector)" pkg="pr2_controller_manager" type="spawner" output="screen" args="proj_controller projector_trigger" />
   <group ns="projector_trigger">
-    <param name="type" type="string" value="MultiTriggerController" />
+    <param name="type" type="string" value="ethercat_trigger_controllers/MultiTriggerController" />
     <param name="digital_output" type="string" value="led_projector_digital_out_M" />
     <param name="period" type="double" value="0.020" />
     <param name="zero_offset" type="double" value="0.000" />
@@ -12,7 +12,7 @@
     <param name="values" type="string" value="15 14" />
   </group>
   <group ns="proj_controller">
-    <param name="type" type="string" value="ProjectorController" />
+    <param name="type" type="string" value="ethercat_trigger_controllers/ProjectorController" />
     <param name="actuator" type="string" value="led_projector" />
     <param name="current" type="double" value="1.0" />
   </group>

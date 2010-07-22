@@ -1,6 +1,6 @@
 <launch>
   <group ns="test_controller" clear_params="true">
-    <param name="type" type="string" value="HysteresisController" />
+    <param name="type" type="string" value="joint_qualification_controllers/HysteresisController" />
     <param name="velocity" type="double" value="1.25" />
     <param name="max_effort" type="double" value="3.0" />
     <param name="max_expected" type="double" value="1.05" />
@@ -12,7 +12,6 @@
     <param name="tolerance" type="double" value="0.25" />
 
     <group ns="velocity_controller" >
-      <param name="type" type="string" value="JointVelocityController" />
       <param name="joint" type="string" value="r_shoulder_pan_joint" />
       <param name="pid/p" type="double" value="9.0" />
       <param name="pid/i" type="double" value="45.0" />
