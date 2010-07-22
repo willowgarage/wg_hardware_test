@@ -62,6 +62,9 @@ import tempfile, tarfile
 LOG_UPDATE = 7200 # Update log if no entries before this time
 INVENT_TIMEOUT = 600
 
+import result_dir
+RESULTS_DIR = result_dir.RESULTS_DIR
+
 
 def _get_csv_header_lst(params):
     """
@@ -122,9 +125,7 @@ class LogEntry(object):
 
 class TestRecord:
     """
-    @brief Updates CSV record with state changes for a test
-    
-    
+    Updates CSV record with state changes for a test    
     
     """
     def __init__(self, test, serial, file_path = None):
@@ -166,10 +167,15 @@ class TestRecord:
         csv_name = csv_name.replace(' ', '_').replace('/', '-')
 
         if not file_path:
-            file_path = os.path.join(roslib.packages.get_pkg_dir(PKG), 'logs')
+            file_path = RESULTS_DIR
+        else:
+            file_path = os.path.expanduser(file_path)
+
+        if not os.path.isdir(file_path):
+            os.mkdir(file_path)
+
         self.log_file = os.path.join(file_path, csv_name)
 
-        
         with open(self.log_file, 'ab') as f:
             log_csv = csv.writer(f)
             log_csv.writerow(_get_csv_header_lst(self._test.params))
