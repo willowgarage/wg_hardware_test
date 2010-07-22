@@ -55,9 +55,15 @@ class QualificationApp(wx.App):
             wx.MessageBox('A ROS core is still running and preventing the qualification system from starting. Shut down ROS processes by using the "Kill ROS" icon.','ROS Already Running', wx.OK|wx.ICON_ERROR, None)
             sys.exit(1)
 
-        from qualification.result_dir import check_qual_result_dir
-        if not check_qual_result_dir():
+        # Check that we can write our results into temporary, permenant files
+        from qualification.result_dir import check_qual_result_dir, check_qual_temp_dir
+        if not check_qual_temp_dir():
             wx.MessageBox("Unable to write to the temporary results directory. This will cause weird problems. Open a terminal and type, \"sudo rm /tmp/* -rf\" to remove the offending directory. You will have to restart the qualification system.", 
+                          "Unable to Write Results", wx.OK|wx.ICON_ERROR, None)
+            sys.exit(1)
+
+        if not check_qual_result_dir():
+            wx.MessageBox("Unable to write to the \"/hwlog/qualification\" directory. Open a terminal and type, \"sudo chmod +rwx -R /hwlog/qualification\" to fix the offending directory. You will have to restart the qualification system.", 
                           "Unable to Write Results", wx.OK|wx.ICON_ERROR, None)
             sys.exit(1)
 

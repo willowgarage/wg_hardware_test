@@ -38,12 +38,26 @@
 import os, tempfile
 
 TEMP_DIR = os.path.join(tempfile.gettempdir(), 'qualification')
+RESULTS_DIR = os.path.join('/hwlog', 'qualification')
 
-def check_qual_result_dir():
+def check_qual_temp_dir():
     try:
         if not os.path.isdir(TEMP_DIR):
             os.mkdir(TEMP_DIR)
-    except:
+    except Exception, e:
+        import traceback
+        traceback.print_exc()
         return False
 
     return os.access(TEMP_DIR, os.R_OK) and os.access(TEMP_DIR, os.W_OK) and os.access(TEMP_DIR, os.X_OK)
+
+def check_qual_result_dir():
+    try:
+        if not os.path.isdir(RESULTS_DIR):
+            os.mkdir(RESULTS_DIR)
+    except Exception, e:
+        import traceback
+        traceback.print_exc()
+        return False
+
+    return os.access(RESULTS_DIR, os.R_OK) and os.access(RESULTS_DIR, os.W_OK) and os.access(RESULTS_DIR, os.X_OK)
