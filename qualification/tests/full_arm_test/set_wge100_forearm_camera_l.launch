@@ -1,4 +1,7 @@
 <launch>
+  <include file="$(find qualification)/tests/init.machine" />
+
   <node pkg="qualification" type="prestartup_caller.py" name="wge100_cam_config"
+        machine="test_host" 
         args="wge100_camera set_name any://#lan0@10.68.0.98 forearm_l 10.68.0.41" />
 </launch>
