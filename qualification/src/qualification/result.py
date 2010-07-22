@@ -63,12 +63,9 @@ from datetime import datetime
 
 import shutil
 
-##\todo These might go in /hwlog instead
-RESULTS_DIR = os.path.join(roslib.packages.get_pkg_dir(PKG), 'results')
-
 import result_dir
 TEMP_DIR = result_dir.TEMP_DIR
-
+RESULTS_DIR = result_dir.RESULTS_DIR
 
 ##\todo Rename to '_' name
 def write_temp_tar_file(results_dir):
