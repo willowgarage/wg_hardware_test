@@ -2,7 +2,7 @@
   <station gui="wgburn2.willowgarage.com" host="testi" powerboard="1001" breaker0="True"
 	   breaker1="True" breaker2="True" />
 
-    <station gui="cmi" host="testp" powerboard="1011" breaker0="True"
+    <station gui="wgburn3.willowgarage.com" host="testp" powerboard="1011" breaker0="True"
 	   breaker1="False" breaker2="False" />
 
     <station gui="nsf" host="nsf" powerboard="1001" breaker0="False"
