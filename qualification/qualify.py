@@ -63,7 +63,7 @@ class QualificationApp(wx.App):
             sys.exit(1)
 
         if not check_qual_result_dir():
-            wx.MessageBox("Unable to write to the \"/hwlog/qualification\" directory. Open a terminal and type, \"sudo chmod +rwx -R /hwlog/qualification\" to fix the offending directory. You will have to restart the qualification system.", 
+            wx.MessageBox("Unable to write to the \"~/wg_hardware_test/qualification\" directory. Open a terminal and type, \"sudo chmod +rwx -R ~/wg_hardware_test/qualification\" to fix the offending directory. You will have to restart the qualification system.", 
                           "Unable to Write Results", wx.OK|wx.ICON_ERROR, None)
             sys.exit(1)
 
