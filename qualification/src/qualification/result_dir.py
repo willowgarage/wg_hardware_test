@@ -54,7 +54,7 @@ def check_qual_temp_dir():
 def check_qual_result_dir():
     try:
         if not os.path.isdir(RESULTS_DIR):
-            os.mkdir(RESULTS_DIR)
+            os.makedirs(RESULTS_DIR)
     except Exception, e:
         import traceback
         traceback.print_exc()
