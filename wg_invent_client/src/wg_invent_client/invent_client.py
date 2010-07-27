@@ -231,7 +231,39 @@ class Invent(object):
     
     return ret
 
-  ## Add reference to an item
+  ##@brief Remove reference from item. Debug only
+  ##
+  ##@param key str : Serial number of item
+  ##@param name str : Reference name
+  ##@return bool : True if reference was removed. Returns False if no reference found
+  def remove_item_reference(self, key, name):
+    self.login()
+
+    key = key.strip()
+
+    url = self.site + "invent/api.py?Action.removeItemReference=1&key=%s&name=%s" % (key,urllib2.quote(name))
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    ##\todo Fix Invent to allow this type of return values
+    if False:
+      hdf = neo_util.HDF()
+      try:
+        hdf.readString(body)
+      except Exception, e:
+        print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+        return False
+      
+      val = hdf.getValue("CGI.out", "")
+      return val.lower() == "true"
+
+    return True
+
+
+
+  ##@brief Add reference to an item
+  ##
   ##@param key str : Serial number of item
   ##@param name str : Reference name
   ##@param reference str : Reference value
