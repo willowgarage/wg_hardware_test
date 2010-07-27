@@ -32,7 +32,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-##\author Scott Hassan
+##\author Scott Hassan, Kevin Watts
 ##\brief Client for WG inventory system
 
 
@@ -358,6 +358,8 @@ class Invent(object):
     fp.read()
     fp.close()
 
+    return True
+
   ##\brief Returns True if part has 'Test Status'='PASS', False otherwise
   def get_test_status(self, reference):
     return self.getKV(reference, 'Test Status') == 'PASS'
@@ -429,6 +431,7 @@ class Invent(object):
   ##\brief Returns list of sub items (references) for a particular parent
   ##\param reference str : WG PN of component or assembly
   ##\param recursive bool [optional] : Sub-sub-...-sub-parts of reference
+  ##\return [ str ] : Serial number of sub-assemblies of component
   def get_sub_items(self, reference, recursive = False):
     self.login()
     
