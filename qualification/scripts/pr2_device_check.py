@@ -96,6 +96,19 @@ def get_prosilica_ref():
     
     return ''
 
+def get_imu_ref():
+    cmd = '%s/get_id' % roslib.packages.get_pkg_dir('microstrain_3dmgx2_imu')
+    p = subprocess.Popen([cmd, '/etc/ros/sensors/imu', '-q'], stdout = subprocess.PIPE, 
+                         stderr= subprocess.PIPE)
+    
+    (o, e) = p.communicate()
+    if p.returncode != 0:
+        raise GetIDException("Unable to get IMU device ID")
+
+    lines = o.split('\n')
+    return lines[-1].split()[-1]
+
+
 def get_hk_refs():
     ids = []
     for port in [ 'base_hokuyo', 'tilt_hokuyo' ]:
@@ -173,13 +186,23 @@ if __name__ == '__main__':
     hks = get_hk_refs()
     wge100s = get_wge100_serials()
     mcbs = get_mcb_serials()
-
+    imu_id = get_imu_ref()
 
 
     print 'Getting parts from Invent'
     my_parts = iv.get_sub_items(robot, True)
 
     ok = True
+
+    # Check IMU
+    serials = iv.lookup_by_reference(imu_id)
+    if not len(serials) == 1:
+        print >> sys.stderr, "Invalid serial numbers listed for IMU. %s" % ', '.join(serials)
+        ok = False
+
+    if len(serials) == 1 and serials[0] not in my_parts:
+        print >> sys.stderr, "IMU serial %s is not listed in Invent. ID: %s" % (serials[0], imu_id)
+        ok = False
 
     # Check prosilica
     serials = iv.lookup_by_reference(prosilica)
