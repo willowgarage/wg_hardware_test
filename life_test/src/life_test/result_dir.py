@@ -42,7 +42,7 @@ RESULTS_DIR = os.path.join(os.path.expanduser('~/wg_hardware_test'), 'test_manag
 def check_results_dir():
     try:
         if not os.path.isdir(RESULTS_DIR):
-            os.mkdir(RESULTS_DIR)
+            os.makedirs(RESULTS_DIR)
     except Exception, e:
         import traceback
         traceback.print_exc()

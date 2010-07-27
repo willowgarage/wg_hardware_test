@@ -172,7 +172,7 @@ class TestRecord:
             file_path = os.path.expanduser(file_path)
 
         if not os.path.isdir(file_path):
-            os.mkdir(file_path)
+            os.makedirs(file_path)
 
         self.log_file = os.path.join(file_path, csv_name)
 
