@@ -235,6 +235,7 @@ class Invent(object):
   ##@param key str : Serial number of item
   ##@param name str : Reference name
   ##@param reference str : Reference value
+  ##@return bool : True if reference is valid (Debug mode only)
   def addItemReference(self, key, name, reference):
     self.login()
 
@@ -244,7 +245,22 @@ class Invent(object):
     fp = self.opener.open(url)
     body = fp.read()
     fp.close()
-    
+
+    ##\todo Fix Invent to allow this type of return values
+    if False:
+      hdf = neo_util.HDF()
+      try:
+        hdf.readString(body)
+      except Exception, e:
+        print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+        return False
+      
+      val = hdf.getValue("CGI.out", "")
+      return val.lower() == "true"
+
+    return True
+
+
   ## Generates Willow Garage mac address for item. Used for forearm cameras
   ## Does not return mac address
   ##@param key str : Serial number of item
