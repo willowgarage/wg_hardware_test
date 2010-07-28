@@ -391,7 +391,7 @@ class TestManagerFrame(wx.Frame):
         if self._rooms.has_key(socket.gethostname()):
             self.room = self._rooms[socket.gethostname()]
         else:
-            self.room = room # Last room
+            self.room = TestRoom(socket.gethostname())
         
 
     # Loads tests from XML file

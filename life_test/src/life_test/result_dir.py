@@ -37,12 +37,12 @@
 
 import os
 
-RESULTS_DIR = os.path.join('/hwlog', 'test_manager')
+RESULTS_DIR = os.path.join(os.path.expanduser('~/wg_hardware_test'), 'test_manager')
 
 def check_results_dir():
     try:
         if not os.path.isdir(RESULTS_DIR):
-            os.mkdir(RESULTS_DIR)
+            os.makedirs(RESULTS_DIR)
     except Exception, e:
         import traceback
         traceback.print_exc()

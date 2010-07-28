@@ -38,7 +38,7 @@
 import os, tempfile
 
 TEMP_DIR = os.path.join(tempfile.gettempdir(), 'qualification')
-RESULTS_DIR = os.path.join('/hwlog', 'qualification')
+RESULTS_DIR = os.path.join(os.path.expanduser('~/wg_hardware_test'), 'qualification')
 
 def check_qual_temp_dir():
     try:
@@ -54,7 +54,7 @@ def check_qual_temp_dir():
 def check_qual_result_dir():
     try:
         if not os.path.isdir(RESULTS_DIR):
-            os.mkdir(RESULTS_DIR)
+            os.makedirs(RESULTS_DIR)
     except Exception, e:
         import traceback
         traceback.print_exc()

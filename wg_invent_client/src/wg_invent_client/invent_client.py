@@ -32,7 +32,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-##\author Scott Hassan
+##\author Scott Hassan, Kevin Watts
 ##\brief Client for WG inventory system
 
 
@@ -231,10 +231,43 @@ class Invent(object):
     
     return ret
 
-  ## Add reference to an item
+  ##@brief Remove reference from item. Debug only
+  ##
+  ##@param key str : Serial number of item
+  ##@param name str : Reference name
+  ##@return bool : True if reference was removed. Returns False if no reference found
+  def remove_item_reference(self, key, name):
+    self.login()
+
+    key = key.strip()
+
+    url = self.site + "invent/api.py?Action.removeItemReference=1&key=%s&name=%s" % (key,urllib2.quote(name))
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    ##\todo Fix Invent to allow this type of return values
+    if False:
+      hdf = neo_util.HDF()
+      try:
+        hdf.readString(body)
+      except Exception, e:
+        print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+        return False
+      
+      val = hdf.getValue("CGI.out", "")
+      return val.lower() == "true"
+
+    return True
+
+
+
+  ##@brief Add reference to an item
+  ##
   ##@param key str : Serial number of item
   ##@param name str : Reference name
   ##@param reference str : Reference value
+  ##@return bool : True if reference is valid (Debug mode only)
   def addItemReference(self, key, name, reference):
     self.login()
 
@@ -244,7 +277,22 @@ class Invent(object):
     fp = self.opener.open(url)
     body = fp.read()
     fp.close()
-    
+
+    ##\todo Fix Invent to allow this type of return values
+    if False:
+      hdf = neo_util.HDF()
+      try:
+        hdf.readString(body)
+      except Exception, e:
+        print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+        return False
+      
+      val = hdf.getValue("CGI.out", "")
+      return val.lower() == "true"
+
+    return True
+
+
   ## Generates Willow Garage mac address for item. Used for forearm cameras
   ## Does not return mac address
   ##@param key str : Serial number of item
@@ -284,6 +332,91 @@ class Invent(object):
       return noteid
     return None
 
+  ##\brief Gets notes for an item. Debug only
+  ##
+  ##\param reference str : Serial number to check
+  ##\param deleted bool : Retrieve deleted notes in addition to non-deleted notes
+  ##\return { str : str } : Note ID to note text
+  def get_item_notes(self, reference, deleted = False):
+    self.login()
+
+    url = self.site + "invent/api.py?Action.GetItemNotes=1&reference=%s" % (reference)
+    if deleted:
+      url += "&deleted=1"
+    
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return {}
+
+    ret = {}
+    for k,o in hdfhelp.hdf_ko_iterator(hdf.getObj("CGI.cur.notes")):
+      ret[o.getValue("noteid", "")] = o.getValue("note", "")
+
+    return ret
+
+  ##\brief Delete note for item. Debug only
+  ##
+  ## Soft-delete only. Will return True if note has already been deleted
+  ##\param noteid str : Note to delete
+  ##\return bool : True if successful
+  def delete_note(self, noteid):
+    self.login()
+    
+    url = self.site + "invent/api.py?Action.DeleteNote=1&noteid=%s" % (noteid)
+
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return False
+    
+    val = hdf.getValue("CGI.out", "")
+    return val.lower() == "true"
+
+  ##\brief Get information about note. Debug only
+  ##
+  ## Returns tuple of note information as strings. Reference is serial number. 
+  ## Date is UTC format. "deleted" is "1" for deleted, "0" if not.
+  ##\param noteid str : Note ID
+  ##\return (reference, note, username, date, deleted) (str, str, str, str, str) : 
+  def get_note(self, noteid):
+    self.login()
+
+    url = self.site + "invent/api.py?Action.GetNote=1&noteid=%s" % (noteid)
+
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return ('', '', '', '', '')
+    
+    ref = hdf.getValue("CGI.cur.item.reference", "")
+    note = hdf.getValue("CGI.cur.note.note", "")
+    user = hdf.getValue("CGI.cur.note.whom", "")
+    date = hdf.getValue("CGI.cur.note.date", "")
+    deleted = hdf.getValue("CGI.cur.note.deleted", "")
+
+    return (ref, note, user, date, deleted)
+    
+
+
   ##\brief Set value of component's key
   ## Set key-value of component. Ex: setKV(my_ref, 'Test Status', 'PASS')
   ##@param reference str : Serial number of component
@@ -309,6 +442,8 @@ class Invent(object):
     fp = self.opener.open(url)
     fp.read()
     fp.close()
+
+    return True
 
   ##\brief Returns True if part has 'Test Status'='PASS', False otherwise
   def get_test_status(self, reference):
@@ -381,6 +516,7 @@ class Invent(object):
   ##\brief Returns list of sub items (references) for a particular parent
   ##\param reference str : WG PN of component or assembly
   ##\param recursive bool [optional] : Sub-sub-...-sub-parts of reference
+  ##\return [ str ] : Serial number of sub-assemblies of component
   def get_sub_items(self, reference, recursive = False):
     self.login()
     

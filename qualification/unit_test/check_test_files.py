@@ -53,8 +53,12 @@ class QualificationTestParser(unittest.TestCase):
         self.config_files = {}
         self.configs_ok = load_configs_from_map(self.config_files)
 
+        self.wg_stations = {}
+        self.wg_stations_ok = load_wg_station_map(self.wg_stations)
+
     def test_wg_station_map(self):
-        self.assert_(load_wg_station_map({}), "Unable to load WG station map. Configuration file \"wg_map.xml\" is invalid")
+        self.assert_(self.wg_stations_ok, "Unable to load WG station map. Configuration file \"wg_map.xml\" is invalid")
+        self.assert_(len(self.wg_stations.items()) > 0, "No WG stations loaded")
 
     ##\brief All test.xml files must load properly
     def test_check_tests_parsed(self):
@@ -62,11 +66,19 @@ class QualificationTestParser(unittest.TestCase):
         self.assert_(self.test_files is not None, "Tests list is None, nothing to load")
         self.assert_(len(self.test_files.items()) > 0, "No tests loaded")
 
+        for sn, tsts in self.test_files.iteritems():
+            for t in tsts:
+                self.assert_(t.validate(), "Test failed to validate. Serial number: %s" % sn)
+
      ##\brief All config files must load successfully
     def test_check_configs_parsed(self):
         self.assert_(self.configs_ok, "Configs failed to load (tests.xml)")
         self.assert_(self.config_files is not None, "Configs list is None, nothing to load")
         self.assert_(len(self.config_files.items()) > 0, "No config scripts loaded")
+
+        for sn, tsts in self.config_files.iteritems():
+            for t in tsts:
+                self.assert_(t.validate(), "Config file failed to validate. Serial number: %s" % sn)
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == '-v':

@@ -60,7 +60,7 @@ class TestManagerApp(wx.App):
         import life_test.result_dir 
         if not life_test.result_dir.check_results_dir():
             print >> sys.stderr, "Unable to write to results directory. Permissions invalid"
-            wx.MessageBox("Unable to write to the \"/hwlog/test_manager\" directory. Open a terminal and type, \"sudo chmod +rwx -R /hwlog/test_manager\" to fix the offending directory. You will have to restart Test Manager",
+            wx.MessageBox("Unable to write to the \"~/wg_hardware_test/test_manager\" directory. Open a terminal and type, \"sudo chmod +rwx -R ~/wg_hardware_test/test_manager\" to fix the offending directory. You will have to restart Test Manager",
                           "Unable to Write Results", wx.OK|wx.ICON_ERROR, None)
             sys.exit(1)
 

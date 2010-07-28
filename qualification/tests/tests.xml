@@ -14,7 +14,6 @@
 	file="torso_lift_test/test.xml" descrip="Torso Lift Test" />  
   <test serial="6804080" 
 	file="torso_lift_test/test_drive.xml" descrip="Torso Drivetrain Test" />  
-
   
   <!-- Head  -->
   <test serial="6804040" 
@@ -115,7 +114,6 @@
   <test serial="ecattes" debug="true"
         file="ectest/test.xml" descrip="ECAT Chain test"/>
   
-
   <!-- Instruments and devices -->
   <test serial="6801024" 
 	file="hokuyo_test/test_self_only.xml" descrip="Hokuyo Self-Test Only" />

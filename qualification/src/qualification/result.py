@@ -273,7 +273,7 @@ class SubTestResult(object):
 
         dir_name = os.path.join(path, self.filename_base())
         if not os.path.isdir(dir_name):
-            os.mkdir(dir_name)
+            os.makedirs(dir_name)
 
         for plot in self._plots:
             stream = StringIO(plot.image)
@@ -455,7 +455,7 @@ class QualTestResult(object):
         self._item_name = qual_item.name
 
         if not os.path.isdir(TEMP_DIR):
-            os.mkdir(TEMP_DIR)
+            os.makedirs(TEMP_DIR)
 
         ##\todo Fix this
         # See if the qual_item is a configuration item
@@ -499,7 +499,7 @@ class QualTestResult(object):
         self._results_dir = path
         if not os.path.isdir(self._results_dir):
             self._made_dir = self._results_dir
-            os.mkdir(self._results_dir)
+            os.makedirs(self._results_dir)
         else:
             self._made_dir = None
         
