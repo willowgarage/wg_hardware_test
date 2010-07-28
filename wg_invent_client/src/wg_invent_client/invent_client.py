@@ -177,13 +177,10 @@ class Invent(object):
 
     return rv
 
-
-    
-
   ## Return any references to an item. References are grouped by
   ## name, and are stored as NAME:REFERENCE,... under each item.
   ##@param key str : Serial number of item
-  ##@return Dictionary of { name, reference }
+  ##@return { str : str } : { name, reference }
   def getItemReferences(self, key):
     self.login()
 
@@ -235,8 +232,6 @@ class Invent(object):
       return val.lower() == "true"
 
     return True
-
-
 
   ##@brief Add reference to an item
   ##
@@ -346,6 +341,30 @@ class Invent(object):
     self.login()
     
     url = self.site + "invent/api.py?Action.DeleteNote=1&noteid=%s" % (noteid)
+
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return False
+    
+    val = hdf.getValue("CGI.out", "")
+    return val.lower() == "true"
+
+  ##\brief Restore (un-delete) note for item. Debug only
+  ##
+  ## Will return True if note has already been restored
+  ##\param noteid str : Note to delete
+  ##\return bool : True if successful
+  def restore_note(self, noteid):
+    self.login()
+    
+    url = self.site + "invent/api.py?Action.restoreNote=1&noteid=%s" % (noteid)
 
     fp = self.opener.open(url)
     body = fp.read()
