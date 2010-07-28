@@ -480,6 +480,32 @@ class Invent(object):
     
     return value
 
+  ##\brief List Key-Value pairs of component. Debug only
+  ##
+  ##\param reference str : Serial number of component
+  ##\return { str : str } : Key values of component
+  def listKVs(self, reference):
+    self.login()
+
+    url = self.site + "invent/api.py?Action.listKeyValues=1&reference=%s" % (reference)
+
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return {}
+
+    ret = {}
+    for k,o in hdfhelp.hdf_ko_iterator(hdf.getObj("CGI.cur.kvs")):
+      ret[o.getValue("key", "")] = o.getValue("value", "")
+
+    return ret
+
   ##\brief Adds attachment to component
   ##
   ## Adds file as attachment to component. Attachment it encoded to unicode,
