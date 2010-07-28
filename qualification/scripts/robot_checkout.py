@@ -37,6 +37,7 @@ roslib.load_manifest(PKG)
 import rospy
 from time import sleep
 
+import sys
 
 from diagnostic_msgs.msg import DiagnosticArray
 
@@ -49,7 +50,8 @@ from std_srvs.srv import Empty
 
 import traceback
 
-ETHERCAT_WAIT_TIME = 10
+ETHERCAT_WAIT_TIME = 10 # After no updates, etherCAT assumed to crash
+OPERATOR_WAIT_TIME = 60 # After operator presses P/F button, submit results
 
 ##\brief Sorts diagnostic messages by level, name
 def level_cmp(a, b):
@@ -130,6 +132,7 @@ class RobotCheckout:
         
         self._has_robot_data = False
         self._has_visual_check = False
+        self._visual_check_time = 0
 
         #self._mutex = threading.Lock()
         self._messages = []
@@ -219,6 +222,12 @@ class RobotCheckout:
                     self.checkout_robot()
                     return
 
+                # If we've had data for a while, just finish anyway
+                if self._has_visual_check and \
+                        (rospy.get_time() - self._visual_check_time) > OPERATOR_WAIT_TIME:
+                    self.checkout_robot()
+                    return
+
                 # Have data
                 if self._has_robot_data and self._has_visual_check:
                     self.checkout_robot()
@@ -245,6 +254,7 @@ class RobotCheckout:
     def on_visual_check(self, srv):
         rospy.logdebug('Got visual check')
         self._has_visual_check = True
+        self._visual_check_time = rospy.get_time()
         
         if srv.result == ScriptDoneRequest.RESULT_OK:
             self._visual_ok = True
