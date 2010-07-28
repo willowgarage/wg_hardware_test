@@ -535,7 +535,10 @@ class Invent(object):
   ##@param name str : Attachment filename
   ##@param mimetype MIMEType : MIMEType of file
   ##@param attachment any : Attachement data
-  def add_attachment(self, reference, name, mimetype, attachment, note = None, id=None):
+  ##@param note str : Note to add with attachment (description)
+  ##@param aid str : Attachment ID. If set, attempts to overwrite attachment at ID
+  ##\return str : Attachment ID of set attachment 
+  def add_attachment(self, reference, name, mimetype, attachment, note = None, aid=None):
     self.login()
 
     if not name:
@@ -550,8 +553,8 @@ class Invent(object):
     fields.append(('name', name))
     if note is not None:
       fields.append(('note', note))
-    if id is not None:
-      fields.append(('aid', id))
+    if aid is not None:
+      fields.append(('aid', aid))
 
     files = []
     files.append(("attach", name, attachment))
@@ -563,14 +566,14 @@ class Invent(object):
     pat = re.compile("rowid=([0-9]+)")
     m = pat.search(response)
     if m is not None:
-      id = int(m.group(1))
-      return id
+      aid = int(m.group(1))
+      return aid
     return None
 
   ##\brief List all attachments for an item
   ##
   ##\return { str : str } : Attachment ID to filename
-  def get_attachments(self, key):
+  def list_attachments(self, key):
     self.login()
 
     key = key.strip()
@@ -715,8 +718,8 @@ def build_request(theurl, fields, files, txheaders=None):
   return urllib2.Request(theurl, body, txheaders)
 
 def encode_multipart_formdata(fields, files, BOUNDARY = '-----'+mimetools.choose_boundary()+'-----'):
-
-    """ Encodes fields and files for uploading.
+    """ 
+    Encodes fields and files for uploading.
 
     fields is a sequence of (name, value) elements for regular form fields - or a dictionary.
 
