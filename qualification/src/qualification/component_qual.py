@@ -142,7 +142,10 @@ class SerialPanel(wx.Panel):
     return serial[0:7] in self._debugs
 
   ##\brief Checks that serial number is valid using invent_client
-  def _check_serial_input(self, serial):
+  ##\param serial str : Serial number to check
+  ##\param check_pass bool : Check if component has passed qualification
+  ##\return bool : True if OK. Pop-up box explains error to user if False
+  def _check_serial_input(self, serial, check_pass = False):
     if self._manager.options.debug:
       return True
 
@@ -153,14 +156,18 @@ class SerialPanel(wx.Panel):
     if not iv or not iv.login():
       wx.MessageBox("Unable to check serial number. Unable to login in Inventory system", "Error - Unable to check serial number", wx.OK|wx.ICON_ERROR, self)
       return False
-
+    
+    if check_pass and not iv.get_test_status(serial):
+      wx.MessageBox("Component has not passed qualification. Please qualify the component.", "Error - Unqualified Component", wx.OK|wx.ICON_ERROR, self)
+      return False
+    
     return iv.check_serial_valid(serial)
 
   def on_config(self, event):
     # Get selected launch file
     serial = str(self._serial_text_conf.GetValue())
 
-    if not self._check_serial_input(serial):
+    if not self._check_serial_input(serial, True):
       wx.MessageBox('Invalid serial number, unable to configure. Check serial number and retry.','Error - Invalid serial number', wx.OK|wx.ICON_ERROR, self)
       return
 
@@ -186,8 +193,18 @@ class SerialPanel(wx.Panel):
   def has_test(self, serial):
     return self._tests.has_key(serial[0:7])
 
+  def _check_assembly(self, serial):
+    if self._manager.options.debug:
+      return True
+
+    if self._is_debug_test(serial):
+      return True
+
+    iv = self._manager.get_inventory_object()
+    
+    return iv.check_assembled(serial)
+
   def on_test(self, event):
-    # Get the first 7 characters of the serial
     serial = self._serial_text.GetValue()
     
     if not self._check_serial_input(serial):
@@ -208,6 +225,12 @@ class SerialPanel(wx.Panel):
     if not my_test.validate():
       wx.MessageBox('Unable to load test data and parameters. Check file %s and try again.' % test_file,'Failed to load test', wx.OK|wx.ICON_ERROR, self)
       return 
+
+    if my_test.check_assembly and not self._check_assembly(serial):
+      wx.MessageBox('Component is not properly assembled in Invent. Use the "Assemble" page in Invent to verify component assebly.',
+                    'Component Not Assembled', wx.OK|wx.ICON_ERROR, self)
+      return
+      
 
     # Item
     item = QualTestObject(my_test.get_name(), serial)

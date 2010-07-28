@@ -1,4 +1,4 @@
-<test name="Shoulder Test" >
+<test name="Shoulder Test" check-assembly="true" >
   <instructions>instructions.html</instructions>
   <pre_startup name="Power Standby" timeout="30">../../scripts/power_board_standby.launch</pre_startup>
   <pre_startup name="Program MCB's" timeout="180">shoulder_prog.launch</pre_startup>

@@ -112,10 +112,7 @@ class SubTest(object):
     return self._timeout
 
   def get_name(self):
-    if self._name is not None:
-      return self._name
-
-    return '%s: %d' % (os.path.basename(self._test_script), self._key)
+    return self._name
 
 
 ##\brief Holds pre-startup/shutdown scripts for qual tests
@@ -171,7 +168,8 @@ class Test(object):
     self._instructions_file = None
     self.pre_startup_scripts = []
     self.subtests = []
-
+    
+    self._check_assembly = False
     self.debug_ok = False # If True, it can run outside of debug mode
 
   ##\brief Check that all prestartups, subtests, instructions, etc are real files
@@ -231,13 +229,13 @@ class Test(object):
     
     test_list = doc.getElementsByTagName('test')
     if len(test_list) != 1:
+      print >> sys.stderr, "More than one test found in XML: %s" % test_str
       return False
-    test_main = test_list[0]
 
-    # We pull name from the main file
-    #if not test_main.attributes.has_key('name'):
-    #  return False
-    #self._name = test_main.attributes['name'].value
+    test_main = test_list[0]
+    if test_main.attributes.has_key('check-assembly') and \
+          test_main.attributes['check-assembly'].value.lower() == "true":
+      self._check_assembly = True
 
     pre_startups = doc.getElementsByTagName('pre_startup')
     if (pre_startups != None and len(pre_startups) > 0):
@@ -294,7 +292,9 @@ class Test(object):
         timeout = -1
         
         if not st.attributes.has_key('name'):
+          print >> sys.stderr, "Subtest does not have name. XML: %s" % str(st)
           return False
+        name = st.attributes['name'].value
 
         if (st.attributes.has_key('post')):
           post = os.path.join(test_dir, st.attributes['post'].value)
@@ -303,7 +303,6 @@ class Test(object):
         if st.attributes.has_key('timeout'):
           timeout = int(st.attributes['timeout'].value)
 
-        name = st.attributes['name'].value
         
         key = key_count
         key_count += 1
@@ -333,4 +332,5 @@ class Test(object):
   def getInstructionsFile(self):
     return self._instructions_file
   
-  
+  @property
+  def check_assembly(self): return self._check_assembly
