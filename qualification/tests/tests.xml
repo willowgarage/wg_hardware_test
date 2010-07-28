@@ -14,7 +14,6 @@
 	file="torso_lift_test/test.xml" descrip="Torso Lift Test" />  
   <test serial="6804080" 
 	file="torso_lift_test/test_drive.xml" descrip="Torso Drivetrain Test" />  
-
   
   <!-- Head  -->
   <test serial="6804040" 
