@@ -361,6 +361,29 @@ class Invent(object):
 
     return ret
 
+  ##\brief Delete note for item. Debug only
+  ##
+  ## Soft-delete only. Will return True if note has already been deleted
+  ##\param noteid str : Note to delete
+  ##\return bool : True if successful
+  def delete_note(self, noteid):
+    self.login()
+    
+    url = self.site + "invent/api.py?Action.DeleteNote=1&noteid=%s" % (noteid)
+
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return False
+    
+    val = hdf.getValue("CGI.out", "")
+    return val.lower() == "true"
 
   ##\brief Set value of component's key
   ## Set key-value of component. Ex: setKV(my_ref, 'Test Status', 'PASS')
