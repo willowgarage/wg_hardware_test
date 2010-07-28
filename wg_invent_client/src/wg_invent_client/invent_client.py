@@ -480,6 +480,7 @@ class Invent(object):
   ## Get key-value of component. Ex: 'PASS' = getKV(my_ref, 'Test Status')
   ##@param reference str : Serial number of component
   ##@param key str : Key (name)
+  ##\return str : Value, or '' if key doesn't exist
   def getKV(self, reference, key):
     self.login()
 
@@ -591,6 +592,35 @@ class Invent(object):
       ret[o.getValue("aid", "")] = o.getValue("name", "")
     
     return ret
+
+  ##\brief Get attachment info. Debug only
+  ##
+  ##\param aid str : Attachment ID
+  ##\return ( str, str, str, str ) : reference, docname, username, note, date
+  def get_attachment_info(self, aid):
+    self.login()
+
+    aid = aid.strip()
+
+    url = self.site + "invent/api.py?Action.getAttachmentInfo=1&aid=%s" % (aid,)
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return ('', '', '', '')
+
+    ref = hdf.getValue("CGI.cur.reference", "")
+    docname = hdf.getValue("CGI.cur.attachment.name", "")
+    user =  hdf.getValue("CGI.cur.attachment.whom", "")
+    note = hdf.getValue("CGI.cur.attachment.note", "")
+    date = hdf.getValue("CGI.cur.attachment.date", "")
+
+    return (ref, docname, user, note, date)
 
   ##\brief Returns list of sub items (references) for a particular parent
   ##\param reference str : WG PN of component or assembly
