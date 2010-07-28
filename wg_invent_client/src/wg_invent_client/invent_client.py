@@ -421,6 +421,38 @@ class Invent(object):
 
     return True
 
+  ##\brief Delete key value for component. Debug only
+  ##
+  ## Delete key-value of component. 
+  ##@param reference str : Serial number of component
+  ##@param key str : Key (name)
+  ##@return True if deleted key properly
+  def deleteKV(self, reference, key):
+    self.login()
+
+    key = key.strip()
+
+    if not key:
+      print >> sys.stderr, "Unable to set empty key into inventory system. Reference: %s" % (reference)
+      return False
+
+    url = self.site + "invent/api.py?Action.deleteKeyValue=1&reference=%s&key=%s" % (reference, urllib2.quote(key))
+
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return False
+
+    val = hdf.getValue("CGI.cur.out", "")
+
+    return val.lower() == "true"
+
   ##\brief Returns True if part has 'Test Status'='PASS', False otherwise
   def get_test_status(self, reference):
     return self.getKV(reference, 'Test Status') == 'PASS'
