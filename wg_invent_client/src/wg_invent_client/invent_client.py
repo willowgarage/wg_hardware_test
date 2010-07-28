@@ -622,6 +622,30 @@ class Invent(object):
 
     return (ref, docname, user, note, date)
 
+  ##\brief Deletes attachment. Hard delete. Debug only
+  ##
+  ## Returns true if attachment is deleted, or not found.
+  ##\param aid str : Attachment ID
+  ##\return bool : True if deleted
+  def delete_attachment(self, aid):
+    self.login()
+    
+    url = self.site + "invent/api.py?Action.deleteAttachment=1&aid=%s" % (aid)
+
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return False
+    
+    val = hdf.getValue("CGI.out", "")
+    return val.lower() == "true"
+
   ##\brief Returns list of sub items (references) for a particular parent
   ##\param reference str : WG PN of component or assembly
   ##\param recursive bool [optional] : Sub-sub-...-sub-parts of reference
