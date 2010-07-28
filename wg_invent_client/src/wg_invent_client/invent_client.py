@@ -332,6 +332,36 @@ class Invent(object):
       return noteid
     return None
 
+  ##\brief Gets notes for an item. Debug only
+  ##
+  ##\param reference str : Serial number to check
+  ##\param deleted bool : Retrieve deleted notes in addition to non-deleted notes
+  ##\return { str : str } : Note ID to note text
+  def get_item_notes(self, reference, deleted = False):
+    self.login()
+
+    url = self.site + "invent/api.py?Action.GetItemNotes=1&reference=%s" % (reference)
+    if deleted:
+      url += "&deleted=1"
+    
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return {}
+
+    ret = {}
+    for k,o in hdfhelp.hdf_ko_iterator(hdf.getObj("CGI.cur.notes")):
+      ret[o.getValue("noteid", "")] = o.getValue("note", "")
+
+    return ret
+
+
   ##\brief Set value of component's key
   ## Set key-value of component. Ex: setKV(my_ref, 'Test Status', 'PASS')
   ##@param reference str : Serial number of component
