@@ -177,31 +177,7 @@ class Invent(object):
 
     return rv
 
-  ##\brief List all attachments for an item
-  ##
-  ##\return { str : str } : Attachment ID to filename
-  def get_attachments(self, key):
-    self.login()
 
-    key = key.strip()
-
-    url = self.site + "invent/api.py?Action.getAttachments=1&key=%s" % (key,)
-    fp = self.opener.open(url)
-    body = fp.read()
-    fp.close()
-
-    hdf = neo_util.HDF()
-    try:
-      hdf.readString(body)
-    except Exception, e:
-      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
-      return {}
-
-    ret = {}
-    for k,o in hdfhelp.hdf_ko_iterator(hdf.getObj("CGI.cur.attachments")):
-      ret[o.getValue("aid", "")] = o.getValue("name", "")
-    
-    return ret
     
 
   ## Return any references to an item. References are grouped by
@@ -513,6 +489,32 @@ class Invent(object):
       return id
     return None
 
+  ##\brief List all attachments for an item
+  ##
+  ##\return { str : str } : Attachment ID to filename
+  def get_attachments(self, key):
+    self.login()
+
+    key = key.strip()
+
+    url = self.site + "invent/api.py?Action.getAttachments=1&key=%s" % (key,)
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return {}
+
+    ret = {}
+    for k,o in hdfhelp.hdf_ko_iterator(hdf.getObj("CGI.cur.attachments")):
+      ret[o.getValue("aid", "")] = o.getValue("name", "")
+    
+    return ret
+
   ##\brief Returns list of sub items (references) for a particular parent
   ##\param reference str : WG PN of component or assembly
   ##\param recursive bool [optional] : Sub-sub-...-sub-parts of reference
@@ -544,8 +546,32 @@ class Invent(object):
 
     return ret
 
-  
-      
+  ##\brief Returns parent item (serial number) or location. Debug only
+  ##
+  ## Parent may be a location, such as "Recieving", instead of a serial number.
+  ##\param reference str : Serial number to check
+  ##\return str : Serial number of parent. None if no parent found
+  def get_parent_item(self, reference):
+    self.login()
+
+    url = self.site + "invent/api.py?Action.getParentItem=1&reference=%s" % (reference)
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return None
+
+    parent = hdf.getValue("CGI.cur.parent", "")
+    if not parent:
+      return None
+
+    return parent
+
 
 
 ## -------------------------------------------------------------
