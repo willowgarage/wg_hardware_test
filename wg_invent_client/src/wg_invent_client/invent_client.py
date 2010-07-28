@@ -385,6 +385,38 @@ class Invent(object):
     val = hdf.getValue("CGI.out", "")
     return val.lower() == "true"
 
+  ##\brief Get information about note. Debug only
+  ##
+  ## Returns tuple of note information as strings. Reference is serial number. 
+  ## Date is UTC format. "deleted" is "1" for deleted, "0" if not.
+  ##\param noteid str : Note ID
+  ##\return (reference, note, username, date, deleted) (str, str, str, str, str) : 
+  def get_note(self, noteid):
+    self.login()
+
+    url = self.site + "invent/api.py?Action.GetNote=1&noteid=%s" % (noteid)
+
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return ('', '', '', '', '')
+    
+    ref = hdf.getValue("CGI.cur.item.reference", "")
+    note = hdf.getValue("CGI.cur.note.note", "")
+    user = hdf.getValue("CGI.cur.note.whom", "")
+    date = hdf.getValue("CGI.cur.note.date", "")
+    deleted = hdf.getValue("CGI.cur.note.deleted", "")
+
+    return (ref, note, user, date, deleted)
+    
+
+
   ##\brief Set value of component's key
   ## Set key-value of component. Ex: setKV(my_ref, 'Test Status', 'PASS')
   ##@param reference str : Serial number of component
