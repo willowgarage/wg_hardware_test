@@ -1,4 +1,4 @@
-<test name="Wrist Test (Post-Burn)" > 
+<test name="Wrist Test (Post-Burn)" check-assembly="true" >
   <instructions>instructions_post_burn.html</instructions>
   <pre_startup name="Power On" timeout="30">../../scripts/power_cycle.launch</pre_startup>
   <startup>wrist.launch</startup>

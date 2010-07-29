@@ -68,6 +68,8 @@ class Invent(object):
     self.username = username
     self.password = password
 
+    self.debug = debug
+
     self.cj = cookielib.CookieJar()
     self.opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cj))
 
@@ -177,37 +179,10 @@ class Invent(object):
 
     return rv
 
-  ##\brief List all attachments for an item
-  ##
-  ##\return { str : str } : Attachment ID to filename
-  def get_attachments(self, key):
-    self.login()
-
-    key = key.strip()
-
-    url = self.site + "invent/api.py?Action.getAttachments=1&key=%s" % (key,)
-    fp = self.opener.open(url)
-    body = fp.read()
-    fp.close()
-
-    hdf = neo_util.HDF()
-    try:
-      hdf.readString(body)
-    except Exception, e:
-      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
-      return {}
-
-    ret = {}
-    for k,o in hdfhelp.hdf_ko_iterator(hdf.getObj("CGI.cur.attachments")):
-      ret[o.getValue("aid", "")] = o.getValue("name", "")
-    
-    return ret
-    
-
   ## Return any references to an item. References are grouped by
   ## name, and are stored as NAME:REFERENCE,... under each item.
   ##@param key str : Serial number of item
-  ##@return Dictionary of { name, reference }
+  ##@return { str : str } : { name, reference }
   def getItemReferences(self, key):
     self.login()
 
@@ -231,7 +206,7 @@ class Invent(object):
     
     return ret
 
-  ##@brief Remove reference from item. Debug only
+  ##@brief Remove reference from item. 
   ##
   ##@param key str : Serial number of item
   ##@param name str : Reference name
@@ -246,28 +221,24 @@ class Invent(object):
     body = fp.read()
     fp.close()
 
-    ##\todo Fix Invent to allow this type of return values
-    if False:
-      hdf = neo_util.HDF()
-      try:
-        hdf.readString(body)
-      except Exception, e:
-        print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
-        return False
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return False
       
-      val = hdf.getValue("CGI.out", "")
-      return val.lower() == "true"
+    val = hdf.getValue("CGI.out", "")
+    return val.lower() == "true"
 
     return True
-
-
 
   ##@brief Add reference to an item
   ##
   ##@param key str : Serial number of item
   ##@param name str : Reference name
   ##@param reference str : Reference value
-  ##@return bool : True if reference is valid (Debug mode only)
+  ##@return bool : True if reference is valid 
   def addItemReference(self, key, name, reference):
     self.login()
 
@@ -278,17 +249,15 @@ class Invent(object):
     body = fp.read()
     fp.close()
 
-    ##\todo Fix Invent to allow this type of return values
-    if False:
-      hdf = neo_util.HDF()
-      try:
-        hdf.readString(body)
-      except Exception, e:
-        print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
-        return False
-      
-      val = hdf.getValue("CGI.out", "")
-      return val.lower() == "true"
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return False
+    
+    val = hdf.getValue("CGI.out", "")
+    return val.lower() == "true"
 
     return True
 
@@ -332,7 +301,7 @@ class Invent(object):
       return noteid
     return None
 
-  ##\brief Gets notes for an item. Debug only
+  ##\brief Gets notes for an item.
   ##
   ##\param reference str : Serial number to check
   ##\param deleted bool : Retrieve deleted notes in addition to non-deleted notes
@@ -361,7 +330,7 @@ class Invent(object):
 
     return ret
 
-  ##\brief Delete note for item. Debug only
+  ##\brief Delete note for item. 
   ##
   ## Soft-delete only. Will return True if note has already been deleted
   ##\param noteid str : Note to delete
@@ -385,7 +354,31 @@ class Invent(object):
     val = hdf.getValue("CGI.out", "")
     return val.lower() == "true"
 
-  ##\brief Get information about note. Debug only
+  ##\brief Restore (un-delete) note for item. 
+  ##
+  ## Will return True if note has already been restored
+  ##\param noteid str : Note to delete
+  ##\return bool : True if successful
+  def restore_note(self, noteid):
+    self.login()
+    
+    url = self.site + "invent/api.py?Action.restoreNote=1&noteid=%s" % (noteid)
+
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return False
+    
+    val = hdf.getValue("CGI.out", "")
+    return val.lower() == "true"
+
+  ##\brief Get information about note. 
   ##
   ## Returns tuple of note information as strings. Reference is serial number. 
   ## Date is UTC format. "deleted" is "1" for deleted, "0" if not.
@@ -414,10 +407,9 @@ class Invent(object):
     deleted = hdf.getValue("CGI.cur.note.deleted", "")
 
     return (ref, note, user, date, deleted)
-    
-
 
   ##\brief Set value of component's key
+  ##
   ## Set key-value of component. Ex: setKV(my_ref, 'Test Status', 'PASS')
   ##@param reference str : Serial number of component
   ##@param key str : Key (name)
@@ -445,6 +437,38 @@ class Invent(object):
 
     return True
 
+  ##\brief Delete key value for component.
+  ##
+  ## Delete key-value of component. 
+  ##@param reference str : Serial number of component
+  ##@param key str : Key (name)
+  ##@return True if deleted key properly
+  def deleteKV(self, reference, key):
+    self.login()
+
+    key = key.strip()
+
+    if not key:
+      print >> sys.stderr, "Unable to set empty key into inventory system. Reference: %s" % (reference)
+      return False
+
+    url = self.site + "invent/api.py?Action.deleteKeyValue=1&reference=%s&key=%s" % (reference, urllib2.quote(key))
+
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return False
+
+    val = hdf.getValue("CGI.cur.out", "")
+
+    return val.lower() == "true"
+
   ##\brief Returns True if part has 'Test Status'='PASS', False otherwise
   def get_test_status(self, reference):
     return self.getKV(reference, 'Test Status') == 'PASS'
@@ -453,6 +477,7 @@ class Invent(object):
   ## Get key-value of component. Ex: 'PASS' = getKV(my_ref, 'Test Status')
   ##@param reference str : Serial number of component
   ##@param key str : Key (name)
+  ##\return str : Value, or '' if key doesn't exist
   def getKV(self, reference, key):
     self.login()
 
@@ -472,6 +497,32 @@ class Invent(object):
     
     return value
 
+  ##\brief List Key-Value pairs of component. 
+  ##
+  ##\param reference str : Serial number of component
+  ##\return { str : str } : Key values of component
+  def listKVs(self, reference):
+    self.login()
+
+    url = self.site + "invent/api.py?Action.listKeyValues=1&reference=%s" % (reference)
+
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return {}
+
+    ret = {}
+    for k,o in hdfhelp.hdf_ko_iterator(hdf.getObj("CGI.cur.kvs")):
+      ret[o.getValue("key", "")] = o.getValue("value", "")
+
+    return ret
+
   ##\brief Adds attachment to component
   ##
   ## Adds file as attachment to component. Attachment it encoded to unicode,
@@ -481,7 +532,10 @@ class Invent(object):
   ##@param name str : Attachment filename
   ##@param mimetype MIMEType : MIMEType of file
   ##@param attachment any : Attachement data
-  def add_attachment(self, reference, name, mimetype, attachment, note = None, id=None):
+  ##@param note str : Note to add with attachment (description)
+  ##@param aid str : Attachment ID. If set, attempts to overwrite attachment at ID
+  ##\return str : Attachment ID of set attachment 
+  def add_attachment(self, reference, name, mimetype, attachment, note = None, aid=None):
     self.login()
 
     if not name:
@@ -496,8 +550,8 @@ class Invent(object):
     fields.append(('name', name))
     if note is not None:
       fields.append(('note', note))
-    if id is not None:
-      fields.append(('aid', id))
+    if aid is not None:
+      fields.append(('aid', aid))
 
     files = []
     files.append(("attach", name, attachment))
@@ -509,9 +563,88 @@ class Invent(object):
     pat = re.compile("rowid=([0-9]+)")
     m = pat.search(response)
     if m is not None:
-      id = int(m.group(1))
-      return id
+      aid = int(m.group(1))
+      return aid
     return None
+
+  ##\brief List all attachments for an item
+  ##
+  ##\return { str : str } : Attachment ID to filename
+  def list_attachments(self, key):
+    self.login()
+
+    key = key.strip()
+
+    url = self.site + "invent/api.py?Action.getAttachments=1&key=%s" % (key,)
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return {}
+
+    ret = {}
+    for k,o in hdfhelp.hdf_ko_iterator(hdf.getObj("CGI.cur.attachments")):
+      ret[o.getValue("aid", "")] = o.getValue("name", "")
+    
+    return ret
+
+  ##\brief Get attachment info. 
+  ##
+  ##\param aid str : Attachment ID
+  ##\return ( str, str, str, str ) : reference, docname, username, note, date
+  def get_attachment_info(self, aid):
+    self.login()
+
+    aid = aid.strip()
+
+    url = self.site + "invent/api.py?Action.getAttachmentInfo=1&aid=%s" % (aid,)
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return ('', '', '', '')
+
+    ref = hdf.getValue("CGI.cur.reference", "")
+    docname = hdf.getValue("CGI.cur.attachment.name", "")
+    user =  hdf.getValue("CGI.cur.attachment.whom", "")
+    note = hdf.getValue("CGI.cur.attachment.note", "")
+    date = hdf.getValue("CGI.cur.attachment.date", "")
+
+    return (ref, docname, user, note, date)
+
+  ##\brief Deletes attachment. Hard delete. 
+  ##
+  ## Returns true if attachment is deleted, or not found.
+  ##\param aid str : Attachment ID
+  ##\return bool : True if deleted
+  def delete_attachment(self, aid):
+    self.login()
+    
+    url = self.site + "invent/api.py?Action.deleteAttachment=1&aid=%s" % (aid)
+
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return False
+    
+    val = hdf.getValue("CGI.out", "")
+    return val.lower() == "true"
 
   ##\brief Returns list of sub items (references) for a particular parent
   ##\param reference str : WG PN of component or assembly
@@ -544,8 +677,32 @@ class Invent(object):
 
     return ret
 
-  
-      
+  ##\brief Returns parent item (serial number) or location. 
+  ##
+  ## Parent may be a location, such as "Recieving", instead of a serial number.
+  ##\param reference str : Serial number to check
+  ##\return str : Serial number of parent. None if no parent found
+  def get_parent_item(self, reference):
+    self.login()
+
+    url = self.site + "invent/api.py?Action.getParentItem=1&reference=%s" % (reference)
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return None
+
+    parent = hdf.getValue("CGI.cur.parent", "")
+    if not parent:
+      return None
+
+    return parent
+
 
 
 ## -------------------------------------------------------------
@@ -558,8 +715,8 @@ def build_request(theurl, fields, files, txheaders=None):
   return urllib2.Request(theurl, body, txheaders)
 
 def encode_multipart_formdata(fields, files, BOUNDARY = '-----'+mimetools.choose_boundary()+'-----'):
-
-    """ Encodes fields and files for uploading.
+    """ 
+    Encodes fields and files for uploading.
 
     fields is a sequence of (name, value) elements for regular form fields - or a dictionary.
 

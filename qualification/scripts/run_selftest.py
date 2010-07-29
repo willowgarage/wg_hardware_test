@@ -47,8 +47,6 @@ import traceback
 
 from optparse import OptionParser
 
-
-
 node_name = 'node'
 node_id = 'NONE'
 extramsg = ""
@@ -67,9 +65,7 @@ def add_reference(reference):
         extramsg = '<p>Unable to login to invent to store item reference. Serial: %s. Reference: %s.</p>\n' % (serial, node_id)
         return False
     
-    iv.addItemReference(serial, '', reference)
-
-    return True
+    return iv.addItemReference(serial, '', reference)
 
 
 def get_error_result(msg):
