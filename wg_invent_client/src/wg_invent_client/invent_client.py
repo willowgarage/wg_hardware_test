@@ -68,6 +68,8 @@ class Invent(object):
     self.username = username
     self.password = password
 
+    self.debug = debug
+
     self.cj = cookielib.CookieJar()
     self.opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cj))
 
@@ -204,7 +206,7 @@ class Invent(object):
     
     return ret
 
-  ##@brief Remove reference from item. Debug only
+  ##@brief Remove reference from item. 
   ##
   ##@param key str : Serial number of item
   ##@param name str : Reference name
@@ -219,17 +221,15 @@ class Invent(object):
     body = fp.read()
     fp.close()
 
-    ##\todo Fix Invent to allow this type of return values
-    if False:
-      hdf = neo_util.HDF()
-      try:
-        hdf.readString(body)
-      except Exception, e:
-        print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
-        return False
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return False
       
-      val = hdf.getValue("CGI.out", "")
-      return val.lower() == "true"
+    val = hdf.getValue("CGI.out", "")
+    return val.lower() == "true"
 
     return True
 
@@ -238,7 +238,7 @@ class Invent(object):
   ##@param key str : Serial number of item
   ##@param name str : Reference name
   ##@param reference str : Reference value
-  ##@return bool : True if reference is valid (Debug mode only)
+  ##@return bool : True if reference is valid 
   def addItemReference(self, key, name, reference):
     self.login()
 
@@ -249,17 +249,15 @@ class Invent(object):
     body = fp.read()
     fp.close()
 
-    ##\todo Fix Invent to allow this type of return values
-    if False:
-      hdf = neo_util.HDF()
-      try:
-        hdf.readString(body)
-      except Exception, e:
-        print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
-        return False
-      
-      val = hdf.getValue("CGI.out", "")
-      return val.lower() == "true"
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return False
+    
+    val = hdf.getValue("CGI.out", "")
+    return val.lower() == "true"
 
     return True
 
@@ -303,7 +301,7 @@ class Invent(object):
       return noteid
     return None
 
-  ##\brief Gets notes for an item. Debug only
+  ##\brief Gets notes for an item.
   ##
   ##\param reference str : Serial number to check
   ##\param deleted bool : Retrieve deleted notes in addition to non-deleted notes
@@ -332,7 +330,7 @@ class Invent(object):
 
     return ret
 
-  ##\brief Delete note for item. Debug only
+  ##\brief Delete note for item. 
   ##
   ## Soft-delete only. Will return True if note has already been deleted
   ##\param noteid str : Note to delete
@@ -356,7 +354,7 @@ class Invent(object):
     val = hdf.getValue("CGI.out", "")
     return val.lower() == "true"
 
-  ##\brief Restore (un-delete) note for item. Debug only
+  ##\brief Restore (un-delete) note for item. 
   ##
   ## Will return True if note has already been restored
   ##\param noteid str : Note to delete
@@ -380,7 +378,7 @@ class Invent(object):
     val = hdf.getValue("CGI.out", "")
     return val.lower() == "true"
 
-  ##\brief Get information about note. Debug only
+  ##\brief Get information about note. 
   ##
   ## Returns tuple of note information as strings. Reference is serial number. 
   ## Date is UTC format. "deleted" is "1" for deleted, "0" if not.
@@ -409,10 +407,9 @@ class Invent(object):
     deleted = hdf.getValue("CGI.cur.note.deleted", "")
 
     return (ref, note, user, date, deleted)
-    
-
 
   ##\brief Set value of component's key
+  ##
   ## Set key-value of component. Ex: setKV(my_ref, 'Test Status', 'PASS')
   ##@param reference str : Serial number of component
   ##@param key str : Key (name)
@@ -440,7 +437,7 @@ class Invent(object):
 
     return True
 
-  ##\brief Delete key value for component. Debug only
+  ##\brief Delete key value for component.
   ##
   ## Delete key-value of component. 
   ##@param reference str : Serial number of component
@@ -500,7 +497,7 @@ class Invent(object):
     
     return value
 
-  ##\brief List Key-Value pairs of component. Debug only
+  ##\brief List Key-Value pairs of component. 
   ##
   ##\param reference str : Serial number of component
   ##\return { str : str } : Key values of component
@@ -596,7 +593,7 @@ class Invent(object):
     
     return ret
 
-  ##\brief Get attachment info. Debug only
+  ##\brief Get attachment info. 
   ##
   ##\param aid str : Attachment ID
   ##\return ( str, str, str, str ) : reference, docname, username, note, date
@@ -625,7 +622,7 @@ class Invent(object):
 
     return (ref, docname, user, note, date)
 
-  ##\brief Deletes attachment. Hard delete. Debug only
+  ##\brief Deletes attachment. Hard delete. 
   ##
   ## Returns true if attachment is deleted, or not found.
   ##\param aid str : Attachment ID
@@ -680,7 +677,7 @@ class Invent(object):
 
     return ret
 
-  ##\brief Returns parent item (serial number) or location. Debug only
+  ##\brief Returns parent item (serial number) or location. 
   ##
   ## Parent may be a location, such as "Recieving", instead of a serial number.
   ##\param reference str : Serial number to check
