@@ -1,4 +1,4 @@
-<test name="Upperarm Test (Pre-Burn)">
+<test name="Upperarm Test (Pre-Burn)" check-assembly="true" >
   <name>Upperarm Test (Initial)</name>
   <instructions>instructions.html</instructions>
   <pre_startup name="Power Standby" timeout="30">../../scripts/power_board_standby.launch</pre_startup>
