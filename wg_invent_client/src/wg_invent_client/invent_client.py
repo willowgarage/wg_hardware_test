@@ -107,6 +107,27 @@ class Invent(object):
     self._logged_time = time.time()
     return True
 
+  ##\brief Reload BoM from PR2 SCDS. Loads barcode association tables
+  ##
+  ##\return bool : True if serial is valid, False if not
+  def reload_pr2scds_bom(self):
+    self.login()
+
+    url = self.site + "invent/api.py?Action.reloadBom=1&" 
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+    
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return False
+
+    val = hdf.getValue("CGI.out", "")
+    return val.lower() == "true"
+
   ##\brief Check invent DB for serial, make sure it is valid
   ##
   ##\return bool : True if serial is valid, False if not
