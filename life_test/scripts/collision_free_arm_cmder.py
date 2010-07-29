@@ -34,44 +34,23 @@ PKG = 'life_test'
 import roslib; roslib.load_manifest(PKG)
 import rospy
 import actionlib
-import random
-random.seed()
+from life_test.commanders.arm_cmder import ArmCmder
 
-from pr2_controllers_msgs.msg import *
-from trajectory_msgs.msg import JointTrajectoryPoint
-from actionlib_msgs.msg import GoalStatus
+from pr2_controllers_msgs.msg import JointTrajectoryAction
 
-FAILED_OUT = 5
-
-ranges = {
+arm_ranges = {
     'r_shoulder_pan_joint': (-2.0, 0.4),
     'r_shoulder_lift_joint': (-0.4, 1.25),
     'r_upper_arm_roll_joint': (-3.5, 0.3),
     'r_elbow_flex_joint': (-2.0, -0.05) 
 }
 
-recovery = {
+recovery_positions = {
     'r_shoulder_pan_joint': -0.8,
     'r_shoulder_lift_joint': 0.3,
     'r_upper_arm_roll_joint': 0.0,
     'r_elbow_flex_joint': -0.2
 }
-
-##\brief Moves arms to 0 position using unsafe trajectory
-def get_recovery_goal():
-    point = JointTrajectoryPoint()
-    point.time_from_start = rospy.Duration.from_sec(5)    
-    
-    goal = JointTrajectoryGoal()
-    goal.trajectory.points.append(point)
-    goal.trajectory.header.stamp = rospy.get_rostime()
-
-    for joint, pos in recovery.iteritems():
-        goal.trajectory.joint_names.append(joint)
-        goal.trajectory.points[0].positions.append(pos)
-        goal.trajectory.points[0].velocities.append(0.0)
-
-    return goal
 
 if __name__ == '__main__':
     rospy.init_node('arm_cmder_client')
@@ -79,44 +58,15 @@ if __name__ == '__main__':
                                           JointTrajectoryAction)
     rospy.loginfo('Waiting for server for collision free arm commander')
     client.wait_for_server()
+    rospy.loginfo('Sending arm commands')
 
-    rospy.loginfo('Arm goals canceled')
     my_rate = rospy.Rate(1.0)
 
     recovery_client = actionlib.SimpleActionClient('r_arm_controller/joint_trajectory_action',
                                                 JointTrajectoryAction)
 
-    fail_count = 0
+    cmder = ArmCmder(client, arm_ranges, recovery_client, recovery_positions)
+
     while not rospy.is_shutdown():
-        goal = JointTrajectoryGoal()
-        point = JointTrajectoryPoint()
-        point.time_from_start = rospy.Duration.from_sec(0)
-
-        goal.trajectory.points.append(point)
-
-        for joint, rng in ranges.iteritems():
-            goal.trajectory.joint_names.append(joint)
-                        
-            goal.trajectory.points[0].positions.append(random.uniform(rng[0], rng[1]))
-            
-        rospy.logdebug('Sending goal to arm: %s' % str(point))
-        client.send_goal(goal)
-        client.wait_for_result(rospy.Duration.from_sec(5))
-        my_result = client.get_state()
-
-        if my_result == GoalStatus.SUCCEEDED:
-            fail_count = 0
-        else:
-            fail_count += 1
-
-        if fail_count > FAILED_OUT:
-            rospy.logwarn('Arm may be stuck. Sending recovery goal to free it')
-            fail_count = 0
-            client.cancel_goal()
-            recovery_goal = get_recovery_goal()
-            recovery_client.send_goal(recovery_goal)
-            recovery_client.wait_for_result(rospy.Duration.from_sec(10))
-            recovery_client.cancel_goal()
-
-            
+        cmder.send_cmd()
         my_rate.sleep()
