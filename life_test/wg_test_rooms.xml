@@ -4,7 +4,7 @@
     <bay name="testi" machine="testi" />
   </room>
 
-  <room hostname="apn" >
+  <room hostname="wgburn1.willowgarage.com" >
     <!-- Right side -->
     <!-- Top rack -->
     <bay name="testx" machine="testx" board="1002" breaker="2" />
@@ -54,8 +54,4 @@
   <room hostname="axb" >
     <bay name="axb" machine="axb" board="1012" breaker="2" />
   </room>
-
-  
-
-  
 </rooms>
