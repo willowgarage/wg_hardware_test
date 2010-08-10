@@ -202,7 +202,7 @@ class SerialPanel(wx.Panel):
 
     iv = self._manager.get_inventory_object()
     
-    return iv.check_assembled(serial)
+    return iv.check_assembled(serial, recursive = True)
 
   def on_test(self, event):
     serial = self._serial_text.GetValue()
