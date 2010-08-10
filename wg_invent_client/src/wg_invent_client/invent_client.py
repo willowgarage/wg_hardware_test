@@ -683,6 +683,8 @@ class Invent(object):
     return val.lower() == "true"
 
   ##\brief Returns list of sub items (references) for a particular parent
+  ##
+  ## In debug mode, Invent can return list of sub parts recursively
   ##\param reference str : WG PN of component or assembly
   ##\param recursive bool [optional] : Sub-sub-...-sub-parts of reference
   ##\return [ str ] : Serial number of sub-assemblies of component
@@ -692,6 +694,9 @@ class Invent(object):
     reference = reference.strip()
 
     url = self.site + "invent/api.py?Action.getSubparts=1&reference=%s" % (reference)
+    if recursive and self.debug:
+      url += "&recursive=1"
+
     fp = self.opener.open(url)
     body = fp.read()
     fp.close()
@@ -707,7 +712,7 @@ class Invent(object):
     for k,o in hdfhelp.hdf_ko_iterator(hdf.getObj("CGI.cur.items")):
       ret.append(o.getValue("reference", ""))
     
-    if recursive:
+    if recursive and not self.debug:
       for rt in ret:
         ret.extend(self.get_sub_items(rt, True))
 
