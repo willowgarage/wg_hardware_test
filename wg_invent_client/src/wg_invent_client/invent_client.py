@@ -153,8 +153,9 @@ class Invent(object):
   ## Checks that part is assembled against BoM. All sub-parts must be properly associated
   ## to the parent part. All sub-parts must have passed qualification.
   ##\param serial str : Serial number to check
+  ##\param recursive bool : Check all sub-assemblies for assembly 
   ##\return True if part is assembled
-  def check_assembled(self, serial):
+  def check_assembled(self, serial, recursive = False):
     self.login()
 
     url = self.site + "invent/api.py?Action.checkAssembled=1&reference=%s" % (serial,)
@@ -170,7 +171,21 @@ class Invent(object):
       return False
 
     val = hdf.getValue("CGI.out", "")
-    return val.lower() == "true"
+
+    if not recursive:
+      return val.lower() == "true"
+
+    # If top-level isn't assembled, abort
+    if not val.lower() == "true":
+      return False
+
+    subs = self.get_sub_items(serial)
+
+    for sub in subs:
+      if not self.check_assembled(sub, recursive):
+        return False
+
+    return True
 
 
   ##\brief Lookup item by a reference. 
