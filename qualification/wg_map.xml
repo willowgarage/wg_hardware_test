@@ -17,7 +17,8 @@
     <station gui="axg" host="axg" powerboard="1001" breaker0="False"
 	     breaker1="False" breaker2="False" />
 
-    <station gui="testl" host="testl" powerboard="1009" breaker0="True"
+    <station gui="qual2.willowgarage.com" host="qual2" 
+	     powerboard="1009" breaker0="True"
              breaker1="True" breaker2="True" />
 
     <station gui="qual1.willowgarage.com" host="qual1" 
