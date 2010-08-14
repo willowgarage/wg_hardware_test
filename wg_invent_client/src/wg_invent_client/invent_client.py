@@ -694,7 +694,7 @@ class Invent(object):
     reference = reference.strip()
 
     url = self.site + "invent/api.py?Action.getSubparts=1&reference=%s" % (reference)
-    if recursive and self.debug:
+    if recursive:
       url += "&recursive=1"
 
     fp = self.opener.open(url)
@@ -712,10 +712,6 @@ class Invent(object):
     for k,o in hdfhelp.hdf_ko_iterator(hdf.getObj("CGI.cur.items")):
       ret.append(o.getValue("reference", ""))
     
-    if recursive and not self.debug:
-      for rt in ret:
-        ret.extend(self.get_sub_items(rt, True))
-
     return ret
 
   ##\brief Returns parent item (serial number) or location. 
