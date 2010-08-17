@@ -130,7 +130,7 @@ class SerialPanel(wx.Panel):
 
     configs = {}
     try:
-      configs_ok = load_configs_from_map(self._configs)
+      configs_ok = load_configs_from_map(configs)
       if configs_ok:
         self._configs = configs
     except Exception, e:
