@@ -172,6 +172,8 @@ class Test(object):
     self._check_assembly = False
     self.debug_ok = False # If True, it can run outside of debug mode
 
+    self._id = None
+
   ##\brief Check that all prestartups, subtests, instructions, etc are real files
   ##
   ## This does not do any kind of parsing of the files themselves. It only
@@ -179,6 +181,10 @@ class Test(object):
   ## files must be ".html" files. Checks that test is named.
   ##\return True if Test is valid.
   def validate(self):
+    if not self._id:
+      print >> sys.stderr, 'Qualification tests must have ID'
+      return False
+
     if self._name is None:
       print >> sys.stderr, 'Qualification tests must be named.'
       return False
@@ -236,6 +242,12 @@ class Test(object):
     if test_main.attributes.has_key('check-assembly') and \
           test_main.attributes['check-assembly'].value.lower() == "true":
       self._check_assembly = True
+
+    if test_main.attributes.has_key('id'):
+      self._id = test_main.attributes['id'].value
+    else:
+      print >> sys.stderr, 'No \"id\" found. Unable to load test.'
+      return False
 
     pre_startups = doc.getElementsByTagName('pre_startup')
     if (pre_startups != None and len(pre_startups) > 0):
@@ -302,7 +314,6 @@ class Test(object):
           pre = os.path.join(test_dir, st.attributes['pre'].value)
         if st.attributes.has_key('timeout'):
           timeout = int(st.attributes['timeout'].value)
-
         
         key = key_count
         key_count += 1
@@ -315,22 +326,38 @@ class Test(object):
   ##\todo Change functions names to Python style or properties
   ##\brief Name or basename or startup script
   def getName(self):
+    print >> sys.stderr, "Using deprecated Test.getName()"
     return self._name
  
   def get_name(self):
     return self._name
+
+  @property
+  def name(self): return self._name
     
   ##\brief Full path to startup script
   def getStartupScript(self):
     return self._startup_script
+
+  @property
+  def startup_script(self): return self._startup_script
                                 
   ##\brief Full path to shutdown script
   def getShutdownScript(self):
     return self._shutdown_script
+  
+  @property
+  def shutdown_script(self): return self._shutdown_script
   
   ##\brief Full path to instructions file
   def getInstructionsFile(self):
     return self._instructions_file
   
   @property
+  def instructions_file(self): return self._instructions_file
+
+  @property
   def check_assembly(self): return self._check_assembly
+
+  @property
+  def testid(self): return self._id

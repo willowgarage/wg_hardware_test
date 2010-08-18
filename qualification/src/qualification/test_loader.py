@@ -158,7 +158,7 @@ def load_configs_from_map(config_files):
 
     # Generate test XML. If we need power board, add prestartup/shutdown
     # to turn on/off power
-    tst = ['<test name="%s">' % descrip]
+    tst = ['<test name="%s" id="%s" >' % (descrip, serial)]
     if powerboard:
       tst.append('<pre_startup name="Power On" timeout="30">scripts/power_cycle.launch</pre_startup>')
     tst.append('<pre_startup name="%s" timeout="%d">config/%s</pre_startup>' % (descrip, timeout, test_file))
