@@ -1,4 +1,4 @@
-<test name="Full Arm Test (Left)" >
+<test name="Full Arm Test (Left)" id="4204-l" >
   <instructions>instructions_left.html</instructions>
   <pre_startup name="Power On">../../scripts/power_on.launch</pre_startup>
   <pre_startup name="Configure Arm" timeout="180" >../../config/l_full_arm_conf.launch</pre_startup>
