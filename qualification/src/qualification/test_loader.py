@@ -152,16 +152,19 @@ def load_configs_from_map(config_files):
     if conf.attributes.has_key('powerboard'):
       powerboard = conf.attributes['powerboard'].value.lower() == "true"
       
+    timeout = 600
+    if conf.attributes.has_key('timeout'):
+      timeout = int(conf.attributes['timeout'].value)
 
     # Generate test XML. If we need power board, add prestartup/shutdown
     # to turn on/off power
     tst = ['<test name="%s">' % descrip]
     if powerboard:
-      tst.append('<pre_startup name="Power On">scripts/power_cycle.launch</pre_startup>')
-    tst.append('<pre_startup name="%s">config/%s</pre_startup>' % (descrip, test_file))
-    tst.append('<subtest name="%s Test">config/subtest_conf.launch</subtest>' % (descrip))
+      tst.append('<pre_startup name="Power On" timeout="30">scripts/power_cycle.launch</pre_startup>')
+    tst.append('<pre_startup name="%s" timeout="%d">config/%s</pre_startup>' % (descrip, timeout, test_file))
+    tst.append('<subtest name="%s Test" timeout="30">config/subtest_conf.launch</subtest>' % (descrip))
     if powerboard:
-      tst.append('<shutdown name="Shutdown">scripts/power_board_disable.launch</shutdown>')
+      tst.append('<shutdown name="Shutdown" timeout="30">scripts/power_board_disable.launch</shutdown>')
     tst.append('</test>')
 
     test_str = '\n'.join(tst)
