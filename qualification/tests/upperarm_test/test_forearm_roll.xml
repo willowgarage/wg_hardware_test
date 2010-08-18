@@ -1,4 +1,4 @@
-<test name="Forearm Roll/Slipring Test" >
+<test name="Forearm Roll/Slipring Test" id="3757-1" >
   <instructions>instructions_forearm_roll.html</instructions>
   <pre_startup name="Power Cable Check" >slip_ring_power_check.launch</pre_startup>
   <pre_startup name="Power Standby" timeout="30">../../scripts/power_board_standby.launch</pre_startup>

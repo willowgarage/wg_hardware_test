@@ -1,4 +1,4 @@
-<test name="Upperarm Test (Dummy FA)" >
+<test name="Upperarm Test (Dummy FA)" id="4139-2" >
   <instructions>instructions_dummy_fa.html</instructions>
   <pre_startup name="Power On" timeout="30">../../scripts/power_cycle.launch</pre_startup>
   <pre_startup name="Configure MCB's" timeout="180">../../config/r_upperarm_dummy_fa_conf.launch</pre_startup>

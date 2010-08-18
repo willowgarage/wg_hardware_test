@@ -1,4 +1,4 @@
-<test name="Ethernet Cable Test">
+<test name="Ethernet Cable Test" id="ethernet">
   <instructions>instructions.html</instructions>
   <subtest name="Eth1 Test" timeout="30">eth1.launch</subtest>
 </test>
