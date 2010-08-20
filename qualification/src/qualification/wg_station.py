@@ -39,7 +39,7 @@ import sys
 
 class WGTestStation(object):
     def __init__(self):
-        self._power_board = '0000'
+        self._power_board = None
         self._breaker0 = False
         self._breaker1 = False
         self._breaker2 = False
@@ -55,7 +55,10 @@ class WGTestStation(object):
 
     # Power system
     @property
-    def powerboard(self): return self._power_board
+    def powerboard(self): 
+        if self._power_board:
+            return self._power_board
+        return '0000'
     @property
     def breaker0(self): return self._breaker0
     @property
@@ -74,25 +77,20 @@ class WGTestStation(object):
             return False
         self._test_host = xmlDoc.attributes['host'].value
 
-        if not xmlDoc.attributes.has_key('powerboard'):
-            print >> sys.stderr, "Unable to find attribute \"powerboard\" in XML doc for test station. XML: %s" % str(xmlDoc)
-            return False
-        self._power_board = xmlDoc.attributes['powerboard'].value
+        if xmlDoc.attributes.has_key('powerboard'):
+            self._power_board = xmlDoc.attributes['powerboard'].value
+            if not len(self._power_board) == 4 and unicode(self._power_board).isnumeric():
+                print >> sys.stderr, "Power board entry is invalid. Must be four digits. Ex: \"1001\""
+                return False
 
-        if not xmlDoc.attributes.has_key('breaker0'):
-            print >> sys.stderr, "Unable to find attribute \"breaker0\" in XML doc for test station. XML: %s" % str(xmlDoc)
-            return False
-        self._breaker0 = xmlDoc.attributes['breaker0'].value.lower() == 'true'
+        if self._power_board and xmlDoc.attributes.has_key('breaker0'):
+            self._breaker0 = xmlDoc.attributes['breaker0'].value.lower() == 'true'
 
-        if not xmlDoc.attributes.has_key('breaker1'):
-            print >> sys.stderr, "Unable to find attribute \"breaker1\" in XML doc for test station. XML: %s" % str(xmlDoc)
-            return False
-        self._breaker1 = xmlDoc.attributes['breaker1'].value.lower() == 'true'
+        if self._power_board and xmlDoc.attributes.has_key('breaker1'):
+            self._breaker1 = xmlDoc.attributes['breaker1'].value.lower() == 'true'
 
-        if not xmlDoc.attributes.has_key('breaker2'):
-            print >> sys.stderr, "Unable to find attribute \"breaker2\" in XML doc for test station. XML: %s" % str(xmlDoc)
-            return False
-        self._breaker2 = xmlDoc.attributes['breaker2'].value.lower() == 'true'
+        if self._power_board and xmlDoc.attributes.has_key('breaker2'):
+            self._breaker2 = xmlDoc.attributes['breaker2'].value.lower() == 'true'
 
         return True
 
