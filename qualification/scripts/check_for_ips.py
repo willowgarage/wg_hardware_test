@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
     if fail:
         r.result = ScriptDoneRequest.RESULT_ERROR
-        r.failure_msg = "Required IPs missing"
+        r.failure_msg = "Required IPs missing. Required IP addresses: %s" % ', '.join(rospy.myargv()[1:])
     else:
         r.result = ScriptDoneRequest.RESULT_OK
         r.failure_msg = "Required IPs present"
