@@ -1,35 +1,24 @@
 <map>
   <station gui="wgburn2.willowgarage.com" host="testi" powerboard="1001" breaker0="True"
 	   breaker1="True" breaker2="True" />
-
-    <station gui="wgburn3.willowgarage.com" host="testp" powerboard="1011" breaker0="True"
+  
+  <station gui="wgburn3.willowgarage.com" host="testp" powerboard="1011" breaker0="True"
 	   breaker1="False" breaker2="False" />
-
-    <station gui="nsf" host="nsf" powerboard="1001" breaker0="False"
-	     breaker1="False" breaker2="False" />
-
-    <station gui="ckb" host="ckb" powerboard="1001" breaker0="False"
-	     breaker1="False" breaker2="False" />
-
-    <station gui="aus" host="aus" powerboard="1001" breaker0="False"
-	     breaker1="False" breaker2="False" />
-
-    <station gui="axg" host="axg" powerboard="1001" breaker0="False"
-	     breaker1="False" breaker2="False" />
-
-    <station gui="qual2.willowgarage.com" host="qual2" 
-	     powerboard="1009" breaker0="True"
-             breaker1="True" breaker2="True" />
-
-    <station gui="qual1.willowgarage.com" host="qual1" 
-	     powerboard="1007" breaker0="True"
-             breaker1="True" breaker2="True" />
-
-    <station gui="testo" host="testo" powerboard="1012" breaker0="True"
-             breaker1="True" breaker2="True" />
-    
-    <station gui="qual3.willowgarage.com" host="qual3.willowgarage.com" 
-	     powerboard="1012" breaker0="True"
-	     breaker1="True" breaker2="True" />
-    
+  
+  <station gui="ckb" host="ckb" powerboard="1001" breaker0="False"
+	   breaker1="False" breaker2="False" />
+  
+  <station gui="qual1.willowgarage.com" host="qual1" 
+	   powerboard="1007" breaker0="True"
+           breaker1="True" breaker2="True" />
+  
+  <station gui="qual2.willowgarage.com" host="qual2" 
+	   powerboard="1009" breaker0="True"
+           breaker1="True" breaker2="True" />
+  
+  <station gui="qual3.willowgarage.com" host="qual3.willowgarage.com" 
+	   powerboard="1012" breaker0="True"
+	   breaker1="True" breaker2="True" />
+  
+  <station gui="qual4.willowgarage.com" host="qual4" />
 </map>
