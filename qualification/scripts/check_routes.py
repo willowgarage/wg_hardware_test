@@ -71,7 +71,7 @@ if __name__ == "__main__":
         r.failure_msg = "Routes correct"
     else:
         r.result = ScriptDoneRequest.RESULT_ERROR
-        r.failure_msg = "Routes Wrong"
+        r.failure_msg = "Routes Wrong. Run \"sudo ip route add %s via %s\"" % (ip, via)
     
     # block until the test_result service is available
     rospy.wait_for_service('prestartup_done')
