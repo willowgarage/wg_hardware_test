@@ -44,7 +44,6 @@ NAME = 'check_routes'
 
 import os
 import sys
-from StringIO import StringIO
 import subprocess
 import re
 

@@ -44,7 +44,6 @@ NAME = 'check_for_ips'
 
 import os
 import sys
-from StringIO import StringIO
 import subprocess
 
 if __name__ == "__main__":
