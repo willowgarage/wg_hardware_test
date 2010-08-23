@@ -227,7 +227,7 @@ class SerialPanel(wx.Panel):
       return 
 
     if my_test.check_assembly and not self._check_assembly(serial):
-      wx.MessageBox('Component is not properly assembled in Invent. Use the "Assemble" page in Invent to verify component assebly.',
+      wx.MessageBox('Component is not properly assembled in Invent. Use the "Assemble" page in Invent to verify component assembly.',
                     'Component Not Assembled', wx.OK|wx.ICON_ERROR, self)
       return
       
