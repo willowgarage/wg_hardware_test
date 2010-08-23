@@ -1,6 +1,6 @@
 <rooms>
-  <room hostname="nsf" >
-    <bay name="NSF" machine="nsf"  />
+  <room hostname="ckb" >
+    <bay name="ckb" machine="ckb"  />
     <bay name="testi" machine="testi" />
   </room>
 
