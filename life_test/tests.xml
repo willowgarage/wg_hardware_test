@@ -1,6 +1,7 @@
 <!-- Stores data on every test that can run through Test Manager -->
 <tests>
   <test serial="faketes" name="Simple Test" 
+        id="fake-burn"
 	short="Fake" duration="40"
 	desc="Test to test life GUI"
 	script="simple_test/test.launch" power="false"
@@ -16,7 +17,7 @@
 	   val="A" rate="false" />
   </test>
 
-  <test serial="6804015" name="Gripper Test"
+  <test serial="6804015" name="Gripper Test" id="grip-burn"
         short="Gripper" duration="1"
         desc="Test gripper moving in and out. Place dog toy within grasping range of gripper for first 1 hour. Test should run for 40 hours.\nPlace dog toy in gripper jaws AFTER gripper is calibrated"
         script="gripper_test/test_gui.launch" power="true"
@@ -26,7 +27,7 @@
            rate="true" val="0.1" />
   </test>
 
-    <test serial="6802478" name="Torso Test"
+    <test serial="6802478" name="Torso Test" id="torso-burn"
         short="Torso" duration="6"
         desc="Test torso moving up and down."
         script="torso_test/test_gui.launch" power="true"
@@ -36,7 +37,7 @@
            rate="true" val="0.03" />
   </test>
 
-  <test serial="6804108" name="Caster Test"
+  <test serial="6804108" name="Caster Test" id="caster-burn"
         short="Caster" duration="40"
         desc="Caster jerks around under pressure. Put pressure on caster BEFORE turning this test on."
         script="caster_test/test_gui.launch" power="true"
@@ -47,7 +48,7 @@
   </test>
 
   
-  <test serial="6804213" name="Wrist Test" 
+  <test serial="6804213" name="Wrist Test"  id="wrist-burn"
 	short="Wrist" duration="40"
 	desc="Test of wrist and dummy gripper."
 	script="wrist_test/test_gui.launch" 
@@ -60,7 +61,7 @@
 	   val="4.0" rate="false" />
   </test>
 
-  <test serial="6804040" name="Head Life Test" 
+  <test serial="6804040" name="Head Life Test" id="head-burn"
 	short="Head" duration="40"
 	desc="Tests head on test cart, moving between [-0.4, 1.4] tilt, [-2.7, 2.7] pan."
 	script="head_test/test_gui.launch"
@@ -70,14 +71,14 @@
 	   val="2.0" rate="true" />
   </test>
 
-  <test serial="6804001" name="Laser Tilt Life Test" 
+  <test serial="6804001" name="Laser Tilt Life Test" id="laser-burn"
 	short="Sled" duration="40"
 	desc="Tests laser tilt with Hokuyo wire connection."
 	script="laser_tilt_test/test_gui.launch"
 	type="Life Test" power="true" >
   </test>
   
-  <test serial="6803757" name="Forearm/Slip Ring Test"
+  <test serial="6803757" name="Forearm/Slip Ring Test" id="slip-ring-burn"
 	short="Slip Ring" duration="40"
 	desc="Tests forearm roll and slip ring packet drop"
 	rate="1.0" script="slip_ring_test/test_gui.launch"
@@ -87,7 +88,7 @@
 	   val="true" rate="false" />
   </test>
 
-  <test serial="6804204" name="Shoulder Test"
+  <test serial="6804204" name="Shoulder Test" id="shoulder-burn"
 	short="Shoulder" duration="30"
 	desc="Tests shoulder with dummy UA."
 	rate="1.0" script="shoulder_test/test_gui.launch"
@@ -97,20 +98,7 @@
 	   val="0.5" rate="true" />
   </test>
 
-  <!-- Tests the shoulder with lift low only. Experimental -->
-<!--
-  <test serial="6804204" name="Low Shoulder Test (Experimental)"
-        short="Low Shoulder" trac="400"
-        desc="Tests shoulder with dummy UA. Uses low range of lift only."
-        rate="3.0" script="shoulder_test/test_lower.launch"
-        type="Burn-in Test" power="true" >
-    <param name="Cycle Rate" param_name="cycle_rate"
-           desc="Rate"
-           val="0.5" rate="true" />
-  </test>
--->  
-  
-  <test serial="6804139" name="Shoulder/UA Right Test"
+  <test serial="6804139" name="Shoulder/UA Right Test" id="shoulder-ua-right-burn"
 	short="Shoulder/UA" duration="15"
 	desc="Tests shoulder, upper arm and dummy FA, configured as right arm. (Shoulder is used as test fixture)"
 	rate="1.0" script="shoulder_ua_test/test_gui.launch"
@@ -119,7 +107,7 @@
 	   desc="Rate"
 	   val="1.0" rate="true" />
   </test>
-  <test serial="6804139" name="Shoulder/UA Left Test"
+  <test serial="6804139" name="Shoulder/UA Left Test" id="shoulder-ua-left-burn"
 	short="Shoulder/UA Left" duration="15"
 	desc="Tests shoulder, upper arm and dummy FA, configured as left arm.  (Shoulder is used as test fixture)"
 	rate="1.0" script="shoulder_ua_test/test_left_gui.launch"
