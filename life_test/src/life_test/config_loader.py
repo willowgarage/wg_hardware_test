@@ -85,6 +85,7 @@ def load_tests_from_file(test_xml_path = os.path.join(roslib.packages.get_pkg_di
         for test in tests:
             serial = test.attributes['serial'].value # Short serial only
             name = test.attributes['name'].value
+            testid = test.attributes['id'].value
             desc = test.attributes['desc'].value
             script = test.attributes['script'].value
             type = test.attributes['type'].value
@@ -114,7 +115,7 @@ def load_tests_from_file(test_xml_path = os.path.join(roslib.packages.get_pkg_di
                                              p_desc, p_val, p_rate))
 
                 
-            life_test = LifeTest(serial, name, short, duration, 
+            life_test = LifeTest(serial, testid, name, short, duration, 
                                  desc, type, script, power, test_params)
 
             my_tests.setdefault(serial, []).append(life_test)
