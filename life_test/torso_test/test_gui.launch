@@ -13,8 +13,8 @@
   <!-- Controller -->
    <rosparam command="load" file="$(find pr2_controller_configuration)/pr2_joint_velocity_controllers.yaml" />
   <node pkg="pr2_controller_manager" type="spawner"
-        args="torso_lift_velocity_controller" name="torso_vel_spawner"
-        output="screen" />
+        args="--wait-for=calibrated torso_lift_velocity_controller" 
+	name="torso_vel_spawner" output="screen" />
 
   <!-- Commander -->
   <node pkg="life_test" type="torso_cmder.py"
