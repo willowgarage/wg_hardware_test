@@ -51,6 +51,14 @@
     <bay name="testn" machine="testn" board="1011" breaker="2" />
   </room>
 
+  <room hostname="qual1.willowgarage.com" >
+    <bay name="qual1" machine="qual1" board="1007" breaker="0" />
+  </room>
+
+  <room hostname="qual2.willowgarage.com" >
+    <bay name="qual2" machine="qual2" board="1009" breaker="1" />
+  </room>
+
   <room hostname="axb" >
     <bay name="axb" machine="axb" board="1012" breaker="2" />
   </room>
