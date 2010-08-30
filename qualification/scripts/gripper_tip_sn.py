@@ -85,9 +85,7 @@ def add_reference(reference):
     if not iv.login() or serial == None:
         return False
     
-    iv.addItemReference(serial, 'PPS', reference)
-
-    return True
+    return iv.addItemReference(serial, 'PPS', 'pps' + reference)
     
     
 if __name__ == '__main__':
@@ -104,11 +102,11 @@ if __name__ == '__main__':
         sys.exit()
 
     if not add_reference(code):
-        done_srv.call(result = ScriptDoneRequest.RESULT_FAIL, failure_msg = "Unable to load PPS code %s into inventory system." % code)
+        done_srv.call(result = ScriptDoneRequest.RESULT_ERROR, failure_msg = "Unable to load PPS code pps%s into inventory system. May have incorrect serial number." % code)
         rospy.spin()
         sys.exit()
 
-    done_srv.call(result = ScriptDoneRequest.RESULT_OK, failure_msg = "Loaded PPS code %s into invent" % code)
+    done_srv.call(result = ScriptDoneRequest.RESULT_OK, failure_msg = "Loaded PPS code pps%s into invent" % code)
 
     rospy.spin()
     
