@@ -48,10 +48,6 @@
   <config serial="6804001" 
 	  file="laser_tilt_conf.launch" descrip="Laser Tilt" />
   
-  <!-- Torso Lift motor -->
-  <config serial="torsoli" 
-	  file="torso_conf.launch" descrip="Torso Lift" />
-
   <!-- Forearm Camera -->
   <config serial="6805018" powerboard="false"
     file="wge100_camera/set_name_forearm_camera_r.launch" descrip="Make Into Right Forearm" />
@@ -99,7 +95,7 @@
           file="wge100_camera/set_name_forearm_camera_l.launch" descrip="Make Into Left Forearm" />
 
   <!-- Test configuration -->
-  <config serial="faketes" powerboard="false"
+  <config serial="faketes" powerboard="false" debug="true"
     file="fake_config.launch" descrip="Fake Config" />
 </configs>
 
