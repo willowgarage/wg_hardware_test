@@ -1,7 +1,7 @@
 <!-- Stores data on every test that can run through Test Manager -->
 <tests>
   <test serial="faketes" name="Simple Test" 
-        id="fake-burn"
+        id="fake-burn" debug="true"
 	short="Fake" duration="40"
 	desc="Test to test life GUI"
 	script="simple_test/test.launch" power="false"
@@ -17,7 +17,7 @@
 	   val="A" rate="false" />
   </test>
 
-  <test serial="6804015" name="Gripper Test" id="grip-burn"
+  <test serial="6804015" name="Gripper Test" id="gripper-burn"
         short="Gripper" duration="1"
         desc="Test gripper moving in and out. Place dog toy within grasping range of gripper for first 1 hour. Test should run for 40 hours.\nPlace dog toy in gripper jaws AFTER gripper is calibrated"
         script="gripper_test/test_gui.launch" power="true"
