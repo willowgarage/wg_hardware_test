@@ -1,4 +1,4 @@
-<test name="Gripper Tip Sensor Test" id="3840-1" >
+<test name="Gripper Tip Sensor Test" id="gripper-tip-test" >
   <instructions>instructions_tips.html</instructions>
   <pre_startup name="Tip ID Entry">gripper_tip_sn.launch</pre_startup>
   <pre_startup timeout="30" name="Power Cycle">../../scripts/power_cycle.launch</pre_startup>

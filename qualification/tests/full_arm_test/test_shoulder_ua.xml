@@ -1,4 +1,4 @@
-<test name="Shoulder/UA Test - Right" id="4139-3" >
+<test name="Shoulder/UA Test - Right" id="shoulder-ua-right-test" >
   <instructions>instructions_shoulder_ua.html</instructions>
   <pre_startup name="Find Shoulder SN">add_shoulder_sn.launch</pre_startup>
   <pre_startup name="Power On">../../scripts/power_on.launch</pre_startup>

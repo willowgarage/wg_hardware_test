@@ -1,4 +1,4 @@
-<test name="Caster Test Post-Burn" check-assembly="true" id="4108-2" >
+<test name="Caster Test Post-Burn" check-assembly="true" id="caster-post" >
   <instructions>instructions_post_burn.html</instructions>
   <pre_startup name="Power Standby" timeout="30"
                >../../scripts/power_board_standby.launch</pre_startup>
