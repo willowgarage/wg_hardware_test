@@ -161,8 +161,9 @@ class TestScript(object):
 ##
 ##Holds instructions, subtests, pre_startup scripts, etc.
 class Test(object):
-  def __init__(self, name):
+  def __init__(self, name, part = ''):
     self._name = name
+    self._part = part
     self._startup_script = None
     self._shutdown_script = None
     self._instructions_file = None
@@ -187,6 +188,14 @@ class Test(object):
 
     if self._name is None:
       print >> sys.stderr, 'Qualification tests must be named.'
+      return False
+
+    if not self._part:
+      print >> sys.stderr, 'Qualification test %s does not have a part number' % self._name
+      return False
+
+    if not self.debug_ok and (not unicode(self._part).isnumeric() or len(self._part) != 4):
+      print >> sys.stderr, 'Qualification test %s does not have a numeric part number. Part: %s' % (self._name, self._part)
       return False
 
     if len(self.subtests) == 0 and len(self.pre_startup_scripts) == 0:
@@ -361,3 +370,6 @@ class Test(object):
 
   @property
   def testid(self): return self._id
+
+  @property
+  def part_number(self): return self._part

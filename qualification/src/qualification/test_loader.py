@@ -97,9 +97,15 @@ def load_tests_from_map(tests, debugs = []):
     test_dir = os.path.dirname(test_path)
     test_str = open(test_path).read()
 
-    my_test = Test(descrip)
-    if not my_test.load(test_str, test_dir):
+    my_test = Test(descrip, serial[3:7])
+    try:
+      if not my_test.load(test_str, test_dir):
+        print >> sys.stderr, "Unable to load test %s" % descrip
+        return False
+    except Exception, e:
       print >> sys.stderr, "Unable to load test %s" % descrip
+      import traceback
+      traceback.print_exc()
       return False
 
     my_test.debug_ok = debug_test
@@ -169,12 +175,14 @@ def load_configs_from_map(config_files):
 
     test_str = '\n'.join(tst)
 
-    my_conf = Test(descrip)
+    my_conf = Test(descrip, serial[3:7])
     if not my_conf.load(test_str, QUAL_DIR):
       print >> sys.stderr, "Unable to load test %s" % descrip
       print >> sys.stderr, "Test XML: %s" % tst
       return False
-    
+  
+    my_conf.debug_ok = conf.attributes.has_key('debug') and conf.attributes['debug'].value.lower() == "true"
+  
     config_files.setdefault(serial, []).append(my_conf)
 
   return True
