@@ -205,8 +205,6 @@ class TestManagerFrame(wx.Frame):
         # Add panel to notebook
         panel = wx.Panel(self._tab_ctrl, wx.ID_ANY)
 
-        index = len(self._active_serials) + 1
-
         self._tab_ctrl.AddPage(panel, test.get_title(serial), True)
 
         test_panel = TestMonitorPanel(panel, self, test, serial)
