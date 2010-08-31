@@ -118,6 +118,9 @@ def load_tests_from_file(test_xml_path = os.path.join(roslib.packages.get_pkg_di
             life_test = LifeTest(serial, testid, name, short, duration, 
                                  desc, type, script, power, test_params)
 
+            life_test.debug_ok = test.attributes.has_key('debug') and test.attributes['debug'].value.lower() == "true"
+
+
             my_tests.setdefault(serial, []).append(life_test)
                 
         return my_tests
