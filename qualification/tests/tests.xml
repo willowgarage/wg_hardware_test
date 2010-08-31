@@ -117,9 +117,9 @@
         file="ectest/test.xml" descrip="ECAT Chain test"/>
   
   <!-- Instruments and devices -->
-  <test serial="6801024" 
+  <test serial="6803134" 
 	file="hokuyo_test/test_self_only.xml" descrip="Hokuyo Self-Test Only" />
-  <test serial="6801024" 
+  <test serial="6803134" 
 	file="hokuyo_test/test.xml" descrip="Hokuyo Test" />
   <test serial="6803504"
         file="serial_test/test.xml" descrip="USB to Serial Test" />

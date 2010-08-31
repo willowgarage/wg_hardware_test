@@ -1,4 +1,4 @@
-<test name="Head/LED Projector Test" id="4040-3" >
+<test name="Head/LED Projector Test" id="head-projector-test" >
   <instructions>instructions_projector.html</instructions>
   <pre_startup name="Power Standby" timeout="30">../../scripts/power_board_standby.launch</pre_startup>
   <pre_startup name="Program MCB's" timeout="180">led_projector_prog.launch</pre_startup>
