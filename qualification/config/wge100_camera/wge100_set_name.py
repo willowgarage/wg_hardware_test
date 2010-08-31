@@ -94,7 +94,7 @@ try:
     
     # Get camera url
     try:
-        camera_url = i.getItemReferences(barcode)["camera_url"]
+        camera_url = i.get_item_references(barcode)["camera_url"]
         if camera_url == '':
             raise KeyError
     except KeyError:

@@ -17,7 +17,7 @@
     <remap from="image" to="wge100_board_config/image_color"/>
   </node>
 
-  <!--node name="wge100_board_config_graph" pkg="camera_focus" type="focus" respawn="false" output="screen">
+  <!--node name="wge100_board_config_graph" pkg="pr2_camera_focus" type="focus" respawn="false" output="screen">
     <remap from="image" to="wge100_board_config/image_raw"/>
     <param name="startx" type="int" value="160"/>
     <param name="starty" type="int" value="120"/>
