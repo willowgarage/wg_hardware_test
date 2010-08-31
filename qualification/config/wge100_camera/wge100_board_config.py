@@ -88,7 +88,7 @@ if not i.login():
 # Was this camera already put on invent with a different serial?
 # Write camera serial number to invent if it is not already there
 try:
-    prevserial = i.getItemReferences(barcode)["camera_url"]
+    prevserial = i.get_item_references(barcode)["camera_url"]
     if not prevserial in [ url, '']:
         print "This part was already stored in invent with a different serial '%s'. This should never happen."%prevserial
         exit(-1)
@@ -104,7 +104,7 @@ else:
 
 # Get MAC address from invent.
 i.generateWGMacaddr(barcode, "lan0")
-refs = i.getItemReferences(barcode)
+refs = i.get_item_references(barcode)
 macstr = refs["lan0"]
 print "Camera MAC is:", macstr
 mac = []
