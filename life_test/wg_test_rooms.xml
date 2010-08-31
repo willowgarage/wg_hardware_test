@@ -17,20 +17,20 @@
     <bay name="testv" machine="testv" board="1006" breaker="0" />
 
     <!-- Third rack -->
-    <bay name="testu" machine="testu" board="1010" breaker="2" />
+    <bay name="testu" machine="testu" board="1010" breaker="0" />
     <bay name="testt" machine="testt" board="1010" breaker="1" />
-    <bay name="testr" machine="testr" board="1010" breaker="0" />
+    <bay name="testr" machine="testr" board="1010" breaker="2" />
 
     <!-- Left side -->
     <!-- Fourth from top -->
-    <bay name="testh" machine="testh" board="1008" breaker="2" />
+    <bay name="testh" machine="testh" board="1008" breaker="0" />
     <bay name="testd" machine="testd" board="1008" breaker="1" />
-    <bay name="teste" machine="teste" board="1008" breaker="0" />
+    <bay name="teste" machine="teste" board="1008" breaker="2" />
 
     <!-- Fifth rack -->
     <bay name="testb" machine="testb" board="1013" breaker="0" />
-    <bay name="testaa" machine="testaa" board="1013" breaker="1" />
-    <bay name="testa" machine="testa" board="1013" breaker="2" />
+    <bay name="testaa" machine="testaa" board="1013" breaker="2" />
+    <bay name="testa" machine="testa" board="1013" breaker="1" />
 
     <!-- Bottom rack -->
     <bay name="testf" machine="testf" board="1005" breaker="0" />
