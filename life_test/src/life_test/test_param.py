@@ -60,6 +60,8 @@ class LifeTest(object):
 
         self.need_power = need_power
 
+        self.debug_ok = False
+
     @property
     def short(self):
         return self._short
