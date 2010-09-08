@@ -35,7 +35,7 @@
 ##\author Kevin Watts
 ##\brief Records data from LifeTest into a CSV file
 
-from __future__ import with_statement
+from __future__ import with_statement, division
 
 PKG = 'life_test'
 import roslib
@@ -58,6 +58,7 @@ from email import Encoders
 
 import tempfile, tarfile
 
+import wg_invent_client
 
 LOG_UPDATE = 7200 # Update log if no entries before this time
 INVENT_TIMEOUT = 600
@@ -121,9 +122,12 @@ class LogEntry(object):
 
         return lst
 
-        
+    
+def _get_hrs(seconds):
+    hrsx10 = seconds % 360
+    return hrsx10 / 10.
 
-class TestRecord:
+class TestRecord(object):
     """
     Updates CSV record with state changes for a test    
     
@@ -180,11 +184,21 @@ class TestRecord:
             log_csv = csv.writer(f)
             log_csv.writerow(_get_csv_header_lst(self._test.params))
 
+        self._has_checked_invent = False
+        self._invent_hrs_base = 0.0
+
+
     def get_elapsed(self):
+        """
+        Time since test was started, in seconds.
+        """
         elapsed = rospy.get_time() - self._start_time
         return elapsed
 
     def get_cum_time(self):
+        """
+        Time that test has been running, in seconds.
+        """
         return self._cum_seconds
 
     def get_active_str(self):
@@ -195,7 +209,7 @@ class TestRecord:
             
     def update(self, launched, running, stale, note, monitor_msg):
         """
-        \brief Updates test record with current state
+        Updates test record with current state
         
         Looks at current, previous state to record data and send alerts
         \param launched bool : Test launched
@@ -269,9 +283,10 @@ class TestRecord:
 
         return (alert, msg)
 
-
-    ##\brief Writes data to CSV, and to log entries
     def _write_csv_entry(self, entry):
+        """
+        Writes data to CSV, and to log entries
+        """
         with open(self.log_file, 'ab') as f:
             log_csv = csv.writer(f)
              
@@ -293,7 +308,7 @@ class TestRecord:
         
     def make_email_message(self, level, alert_msg = ''):
         """
-        @brief Called during unit testing and operator notificaton
+        Called during unit testing and operator notificaton
         """
         msg = MIMEMultipart('alternative')
         msg['Subject'] = self._email_subject(level, alert_msg)
@@ -492,6 +507,8 @@ em { font-style:normal; font-weight: bold; }\
         """
         Writes CSV, HTML summary into tar file.
         Unit testing and loading attachments
+        
+        ##\return Named temporary file. ".close()" will delete file
         """
         html_logfile = tempfile.NamedTemporaryFile()
         f = open(html_logfile.name, 'w')
@@ -513,6 +530,34 @@ em { font-style:normal; font-weight: bold; }\
 
         return tar_filename
 
+    @property
+    def result(self): 
+        if self._test_complete: return 'Pass'
+        return 'Not Finished'
+
+    def _check_invent_hours(self, iv):
+        """
+        Checks Invent for  the number of hours that the test has run, 
+        from Invent. Invent stores this data as a Key-Value for the item.
+        """
+        if self._has_checked_invent:
+            return
+
+        if not iv.login():
+            return 0.0
+
+        hrs_str = iv.getKV(self._serial, self._test.name + ' Hours')
+        if not hrs_str:
+            self._has_checked_invent = True
+            return
+
+        try:
+            self._invent_hrs_base = float(hrs_str)
+        except ValueError, e:
+            print >> sys.stderr, "Unable to recover Invent hours from %s, got %s" % (self._serial, hrs_str)
+            self._has_checked_invent = True
+
+
     def _load_attachments(self, iv):
         hrs_str = self.get_active_str()
         note = "%s finished. Total active time: %s." % (self._test.name, hrs_str)
@@ -524,19 +569,25 @@ em { font-style:normal; font-weight: bold; }\
 
         archive_name = self._serial + '_' + self._test.name.replace(' ', '_').replace('/', '-') + '.tar'
 
-        iv.add_attachment(self._serial, archive_name,
-                          'application/tar', tr, note)
+        my_data = wg_invent_client.TestData(self._test.id, self._test.name, self._start_time, self._serial, self.result)
+
+        my_data.set_note(note)
+        my_data.set_attachment('application/tar', archive_name)
+
+        rv = wg_invent_client.submit_log(iv, my_data, tr)
 
         tfile.close() # Deletes tar file
 
-        return True
+        return rv
         
         
     def load_attachments(self, iv):
         """
         Load attachment into inventory system as a tarfile
+        Loads data as "test".
 
         @param iv Invent : Invent client, to load 
+        \return bool : True if loaded successfully
         """
         try:
             if self.get_cum_time() == 0:
@@ -550,9 +601,21 @@ em { font-style:normal; font-weight: bold; }\
             rospy.logerr('Unable to submit to invent. %s' % traceback.format_exc())
             return False
 
+    def _get_total_hours(self):
+        """
+        Returns string of total hours that this device has run under this
+        test. Hours from previous tests are pulled from Invent. 
+
+        \return str : Hours, to 0.1 hour precision. Ex: "10.2"
+        """
+        self._check_invent_hours()
+        return str(_get_hrs(self._cum_seconds + self._invent_hrs_base * 3600.))
+        
+
     def update_invent(self, iv):
         """
-        Update inventory system note with status.
+        Update inventory system note with status, and update Key-Value
+        with cumulative hours.
 
         @param iv Invent : Invent client, to load note
         """
@@ -564,6 +627,9 @@ em { font-style:normal; font-weight: bold; }\
             return
 
         self._last_invent_time = rospy.get_time()
+
+        iv.setKV(self._serial, self._test.name + ' Hours', 
+                 self._get_total_hours())
 
         hrs_str = self.get_active_str()
 

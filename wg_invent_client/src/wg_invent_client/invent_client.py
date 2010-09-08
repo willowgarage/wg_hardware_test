@@ -36,7 +36,7 @@
 ##\brief Client for WG inventory system
 
 
-import os, sys, string, time, getopt, re
+import os, sys, string, time, re
 
 import urllib2, cookielib
 
@@ -45,6 +45,7 @@ import mimetools
 
 import neo_cgi, neo_util
 import simple_hdfhelp as hdfhelp
+import attachment_help
 
 ##\brief Checks if given serial number is a valid WG SN
 def _is_serial_valid(reference):
@@ -567,7 +568,7 @@ class Invent(object):
   ##@param reference str : Serial number of component
   ##@param name str : Attachment filename
   ##@param mimetype MIMEType : MIMEType of file
-  ##@param attachment any : Attachement data
+  ##@param attachment any : Attachment data
   ##@param note str : Note to add with attachment (description)
   ##@param aid str : Attachment ID. If set, attempts to overwrite attachment at ID
   ##\return str : Attachment ID of set attachment 
@@ -592,7 +593,7 @@ class Invent(object):
     files = []
     files.append(("attach", name, attachment))
 
-    input = build_request(theURL, fields, files)
+    input = attachment_help.build_request(theURL, fields, files)
 
     response = self.opener.open(input).read()
 
@@ -742,60 +743,6 @@ class Invent(object):
 
 
 
-## -------------------------------------------------------------
 
-def build_request(theurl, fields, files, txheaders=None):
-  content_type, body = encode_multipart_formdata(fields, files)
-  if not txheaders: txheaders = {}
-  txheaders['Content-type'] = content_type
-  txheaders['Content-length'] = str(len(body))
-  return urllib2.Request(theurl, body, txheaders)
-
-def encode_multipart_formdata(fields, files, BOUNDARY = '-----'+mimetools.choose_boundary()+'-----'):
-    """ 
-    Encodes fields and files for uploading.
-
-    fields is a sequence of (name, value) elements for regular form fields - or a dictionary.
-
-    files is a sequence of (name, filename, value) elements for data to be uploaded as files.
-
-    Return (content_type, body) ready for urllib2.Request instance
-
-    You can optionally pass in a boundary string to use or we'll let mimetools provide one.
-
-    """    
-
-    CRLF = '\r\n'
-
-    L = []
-
-    if isinstance(fields, dict):
-        fields = fields.items()
-
-    for (key, value) in fields:
-        L.append('--' + BOUNDARY)
-        L.append('Content-Disposition: form-data; name="%s"' % key)
-        L.append('')
-        L.append(value)
-
-    for (key, filename, value) in files:
-        #encoded = value.encode('base64')
-        encoded = value
-        filetype = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
-        L.append('--' + BOUNDARY)
-        L.append('Content-Disposition: form-data; name="%s"; filename="%s"' % (key, filename))
-        L.append('Content-Length: %s' % len(encoded))
-        L.append('Content-Type: %s' % filetype)
-        L.append('Content-Transfer-Encoding: binary')
-        L.append('')
-        L.append(encoded)
-
-    L.append('--' + BOUNDARY + '--')
-    L.append('')
-    body = CRLF.join([str(l) for l in L])
-
-    content_type = 'multipart/form-data; boundary=%s' % BOUNDARY        # XXX what if no files are encoded
-
-    return content_type, body
 
 
