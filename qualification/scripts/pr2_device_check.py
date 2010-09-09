@@ -152,6 +152,28 @@ def get_mcb_serials():
 
     return serials
 
+def get_wan0_mac():
+    p = subprocess.Popen(['ifconfig', 'wan0'], stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+
+    (o, e) = p.communicate()
+    if p.returncode != 0:
+        raise GetIDException("Unable to recover wan0 mac address")
+
+    lines = o.split('\n')
+    first = lines[0]
+
+    words = first.split()
+    if len(words) < 5 or not words[3].strip() == 'HWaddr':
+        raise GetIDException("Unable to parse mac address output: %s. Got: %s. Length: %d" % (first, words[3], len(words)))
+    mac = words[4].replace(':', '').lower()
+
+    if not len(mac) == 12:
+        raise GetIDException("Unable to parse mac address output: %s. Recovered: %s" % (first, mac))
+    
+    return mac
+    
+
 if __name__ == '__main__':
     parser = OptionParser(usage="%prog -u USERNAME -r ROBOT\nMust be run on c1 of PR2")
     parser.add_option('-u', '--username', action="store", dest="username",
@@ -182,6 +204,10 @@ if __name__ == '__main__':
         parser.error("Robot serial number %s is invalid" % options.robot)
 
     print 'Pulling devices from robot'
+
+    ok = True
+
+    wan0_mac = get_wan0_mac()
     imu_id = get_imu_ref()
     prosilica = get_prosilica_ref()
     hks = get_hk_refs()
@@ -191,7 +217,11 @@ if __name__ == '__main__':
     print 'Getting parts from Invent'
     my_parts = iv.get_sub_items(robot, True)
 
-    ok = True
+    # Check wan0 mac address
+    mac_serials = iv.lookup_by_reference(wan0_mac)
+    if not len(mac_serials) == 1 and mac_serials[0] == robot:
+        print >> sys.stderr, "Mac address for wan0 doesn't match robot. Mac address: %s" % wan0_mac
+        ok = False
 
     # Check IMU
     serials = iv.lookup_by_reference(imu_id)
