@@ -72,7 +72,7 @@ class QualificationTestParser(unittest.TestCase):
 
      ##\brief All config files must load successfully
     def test_check_configs_parsed(self):
-        self.assert_(self.configs_ok, "Configs failed to load (tests.xml)")
+        self.assert_(self.configs_ok, "Configs failed to load (configs.xml)")
         self.assert_(self.config_files is not None, "Configs list is None, nothing to load")
         self.assert_(len(self.config_files.items()) > 0, "No config scripts loaded")
 

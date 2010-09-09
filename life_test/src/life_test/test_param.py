@@ -45,9 +45,10 @@ from writing_core import *
 ##\brief Holds parameters, info for each life test
 ##\todo Make some of these parameters optional, initXml
 class LifeTest(object):
-    def __init__(self, short_serial, test_name, short_name, 
+    def __init__(self, short_serial, testid, test_name, short_name, 
                  duration, desc, test_type, launch_file, need_power, params):
         self._short_serial = short_serial
+        self._id = testid
         self._name = test_name
         self._short = short_name
         self._duration = duration
@@ -58,6 +59,8 @@ class LifeTest(object):
         self._params = params
 
         self.need_power = need_power
+
+        self.debug_ok = False
 
     @property
     def short(self):
@@ -78,6 +81,9 @@ class LifeTest(object):
 
     @property
     def name(self): return self._name
+
+    @property
+    def id(self): return self._id
 
     @property
     def type(self): return self._test_type

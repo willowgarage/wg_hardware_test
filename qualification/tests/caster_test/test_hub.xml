@@ -1,4 +1,4 @@
-<test name="Caster Hub Test">
+<test name="Caster Hub Test" id="2966-2">
   <instructions>instructions_hub.html</instructions>
   <pre_startup name="Power On" timeout="30"
                >../../scripts/power_cycle.launch</pre_startup>

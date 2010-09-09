@@ -130,7 +130,7 @@ class SerialPanel(wx.Panel):
 
     configs = {}
     try:
-      configs_ok = load_configs_from_map(self._configs)
+      configs_ok = load_configs_from_map(configs)
       if configs_ok:
         self._configs = configs
     except Exception, e:
@@ -202,7 +202,7 @@ class SerialPanel(wx.Panel):
 
     iv = self._manager.get_inventory_object()
     
-    return iv.check_assembled(serial)
+    return iv.check_assembled(serial, recursive = True)
 
   def on_test(self, event):
     serial = self._serial_text.GetValue()
@@ -227,7 +227,7 @@ class SerialPanel(wx.Panel):
       return 
 
     if my_test.check_assembly and not self._check_assembly(serial):
-      wx.MessageBox('Component is not properly assembled in Invent. Use the "Assemble" page in Invent to verify component assebly.',
+      wx.MessageBox('Component is not properly assembled in Invent. Use the "Assemble" page in Invent to verify component assembly.',
                     'Component Not Assembled', wx.OK|wx.ICON_ERROR, self)
       return
       

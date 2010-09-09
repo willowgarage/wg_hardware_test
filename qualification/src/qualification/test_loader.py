@@ -97,9 +97,15 @@ def load_tests_from_map(tests, debugs = []):
     test_dir = os.path.dirname(test_path)
     test_str = open(test_path).read()
 
-    my_test = Test(descrip)
-    if not my_test.load(test_str, test_dir):
+    my_test = Test(descrip, serial[3:7])
+    try:
+      if not my_test.load(test_str, test_dir):
+        print >> sys.stderr, "Unable to load test %s" % descrip
+        return False
+    except Exception, e:
       print >> sys.stderr, "Unable to load test %s" % descrip
+      import traceback
+      traceback.print_exc()
       return False
 
     my_test.debug_ok = debug_test
@@ -152,26 +158,31 @@ def load_configs_from_map(config_files):
     if conf.attributes.has_key('powerboard'):
       powerboard = conf.attributes['powerboard'].value.lower() == "true"
       
+    timeout = 600
+    if conf.attributes.has_key('timeout'):
+      timeout = int(conf.attributes['timeout'].value)
 
     # Generate test XML. If we need power board, add prestartup/shutdown
     # to turn on/off power
-    tst = ['<test name="%s">' % descrip]
+    tst = ['<test name="%s" id="%s" >' % (descrip, serial)]
     if powerboard:
-      tst.append('<pre_startup name="Power On">scripts/power_cycle.launch</pre_startup>')
-    tst.append('<pre_startup name="%s">config/%s</pre_startup>' % (descrip, test_file))
-    tst.append('<subtest name="%s Test">config/subtest_conf.launch</subtest>' % (descrip))
+      tst.append('<pre_startup name="Power On" timeout="30">scripts/power_cycle.launch</pre_startup>')
+    tst.append('<pre_startup name="%s" timeout="%d">config/%s</pre_startup>' % (descrip, timeout, test_file))
+    tst.append('<subtest name="%s Test" timeout="30">config/subtest_conf.launch</subtest>' % (descrip))
     if powerboard:
-      tst.append('<shutdown name="Shutdown">scripts/power_board_disable.launch</shutdown>')
+      tst.append('<shutdown name="Shutdown" timeout="30">scripts/power_board_disable.launch</shutdown>')
     tst.append('</test>')
 
     test_str = '\n'.join(tst)
 
-    my_conf = Test(descrip)
+    my_conf = Test(descrip, serial[3:7])
     if not my_conf.load(test_str, QUAL_DIR):
       print >> sys.stderr, "Unable to load test %s" % descrip
       print >> sys.stderr, "Test XML: %s" % tst
       return False
-    
+  
+    my_conf.debug_ok = conf.attributes.has_key('debug') and conf.attributes['debug'].value.lower() == "true"
+  
     config_files.setdefault(serial, []).append(my_conf)
 
   return True

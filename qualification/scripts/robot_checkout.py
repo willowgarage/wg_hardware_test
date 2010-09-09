@@ -85,28 +85,6 @@ def _write_diag_summary(error_names, num_error, num_warn, num_stale):
 
     return 'Diagnostics FAIL: %s errors, %s warnings, %s stale items. ' % (num_error, num_warn, num_stale)
 
-def reset_motors():
-    """Resets motors on startup. Motors can halt for a watchdog timeout on startup. #4578 """
-
-    # Call immediately to see if we can avoid motors halted for too long
-    try:
-        proxy = rospy.ServiceProxy('pr2_etherCAT/reset_motors', Empty)
-        proxy()
-        return True
-    except Exception, e:
-        pass
-
-    # Call after waiting a few seconds
-    try:
-        rospy.wait_for_service('pr2_etherCAT/reset_motors', 3)
-        proxy = rospy.ServiceProxy('pr2_etherCAT/reset_motors', Empty)
-        proxy()
-        return True
-    except Exception, e:
-        print >> sys.stderr, "Exception resetting motors!"
-        traceback.print_exc()
-        return False
-
 class DiagnosticItem(object):
     def __init__(self, name, level, message):
         self._name = name
@@ -168,6 +146,7 @@ class RobotCheckout(object):
 
         self._expected_actuators = rospy.get_param('~motors', None)
 
+        self._has_reset = False
         self._motors_halted = True
         self._last_motors_time = 0
         self.motors_topic = rospy.Subscriber("pr2_etherCAT/motors_halted", Bool, self.on_motor_cb)
@@ -177,10 +156,24 @@ class RobotCheckout(object):
 
         self.diagnostics = rospy.Subscriber('diagnostics', DiagnosticArray, self.on_diagnostic_msg)
         self.visual_srv = rospy.Service('visual_check', ScriptDone, self.on_visual_check)
+
+    def _reset_motors(self):
+        if self._has_reset:
+            return
         
+        try:
+            proxy = rospy.ServiceProxy('pr2_etherCAT/reset_motors', Empty)
+            proxy()
+            self._has_reset = True
+        except Exception, e:
+            pass
+    
     def on_motor_cb(self, msg):
         self._motors_halted = msg.data
         self._last_motors_time = rospy.get_time()
+
+        if self._motors_halted:
+            self._reset_motors()
 
     def send_failure_call(self, caller = 'No caller', except_str = ''):
         if self.has_sent_result:
@@ -367,7 +360,10 @@ class RobotCheckout(object):
                 html += '<p>Time to complete check: %.3fs.</p>\n' % self._check_time
 
             if not self._is_ok:
-                summary += diag_sum
+                if not self._joints_ok:
+                    summary += 'Joints not OK. Check calibration status'
+                else:
+                    summary += diag_sum
             else:
                 summary += 'Data: ' + diag_sum + self._visual_sum + self._joint_sum + self._act_sum 
             
@@ -523,7 +519,6 @@ if __name__ == '__main__':
     try:
         checkout = RobotCheckout()
         sleep(1)
-        reset_motors()
         checkout.wait_for_data()
         rospy.spin()
     except KeyboardInterrupt:

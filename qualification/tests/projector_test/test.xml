@@ -1,7 +1,8 @@
-<test name="LED Projector Test" >
+<test name="LED Projector Test" id="projector-test" >
   <instructions>instructions.html</instructions>
 
   <pre_startup timeout="30" name="Power On">../../scripts/power_on.launch</pre_startup>
+  <pre_startup timeout="30" name="Check DMM">check_dmm.launch</pre_startup>
   <startup timeout="30" name="Projector">projector.launch</startup>
 
   <subtest name="Low Power Projector Test" timeout="60">projector_low_power_test.launch</subtest>

@@ -39,11 +39,13 @@
   <!-- Arm Tests -->
   <test serial="6804204" 
         file="full_arm_test/test_right.xml" descrip="Full Arm Test (Right)" />
-    <test serial="6804204" 
+  <test serial="6804204" 
         file="full_arm_test/test_left.xml" descrip="Full Arm Test (Left)" />
+
+  <!-- Shoulder / UA Tests -->
   <test serial="6804139" 
         file="full_arm_test/test_shoulder_ua.xml" descrip="Shoulder/UA Test Right" />
-    <test serial="6804139" 
+  <test serial="6804139" 
         file="full_arm_test/test_shoulder_ua_left.xml" descrip="Shoulder/UA Test Left" />
 
   <!-- Shoulder Tests -->
@@ -115,9 +117,9 @@
         file="ectest/test.xml" descrip="ECAT Chain test"/>
   
   <!-- Instruments and devices -->
-  <test serial="6801024" 
+  <test serial="6803134" 
 	file="hokuyo_test/test_self_only.xml" descrip="Hokuyo Self-Test Only" />
-  <test serial="6801024" 
+  <test serial="6803134" 
 	file="hokuyo_test/test.xml" descrip="Hokuyo Test" />
   <test serial="6803504"
         file="serial_test/test.xml" descrip="USB to Serial Test" />
@@ -125,7 +127,7 @@
 	file="imu_test/test.xml" descrip="IMU Test" />
   <test serial="6802409"
         file="prosilica_test/test.xml" descrip="Prosilica Test" />
-  <test serial="etherne"
+  <test serial="etherne" debug="true"
         file="ethernet_test/test.xml" descrip="Ethernet Test" />
   <test serial="6802354"
         file="ctr350_test/test.xml" descrip="CTR350 Test" />

@@ -49,7 +49,7 @@ from wg_invent_client import Invent
 class GetIDException(Exception): pass
 
 # Document part numbers do not have to be associated to PR2
-DOC_PNS = ['6803642', '6803643', '6803708', '6805005' ]
+DOC_PNS = ['6803642', '6803643', '6803708' ]
 
 def _ignore_pn(pn):
     for doc in DOC_PNS:
