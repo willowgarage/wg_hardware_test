@@ -954,7 +954,7 @@ em { font-style: normal; font-weight: bold; }\
         return True, 'Logged reconfiguration in inventory system.'        
              
     # Make invent results pretty, HTML links work
-    ##\todo Add timeout to invent, warn if problem
+    ##\todo Add timeout to invent
     def log_results(self, invent):
         # Write results to results dir, with local links
         self.write_results_to_file(False, True)
@@ -976,16 +976,9 @@ em { font-style: normal; font-weight: bold; }\
         my_tar_data = f.read()
         f.close()
         
-        ##\todo change to start time
-        my_data = wg_invent_client.TestData(self._qual_test.testid, self._qual_test.get_name(), time.time(), 
-                                            self._serial, self.get_test_result_str_invent())
-        my_data.set_attachment('application/tar', os.path.basename(self._tar_filename))
-        my_data.set_note(self._note)
+        my_data = self.export_data()
 
         try:
-            for st in (self.get_subresults() + self.get_retrys()):
-                my_data.add_subtest(st.export_data())
-                
             ok = wg_invent_client.submit_log(invent, my_data, my_tar_data)
             msg = 'Wrote tar file, uploaded to inventory system.'
             if not ok:
@@ -996,6 +989,27 @@ em { font-style: normal; font-weight: bold; }\
             import traceback
             self.log('Caught exception uploading test parameters to invent.\n%s' % traceback.format_exc())
             return False, 'Caught exception loading tar file to inventory.\n%s' % traceback.format_exc()
+
+    def export_data(self):
+        """
+        Exports result data to wg_invent_client.TestData
+
+        Unit testing and Invent logging only.
+
+        \return wg_invent_client.TestData : Data for test
+        """
+        ##\todo change to start time
+        my_data = wg_invent_client.TestData(self._qual_test.testid, self._qual_test.get_name(), 
+                                            time.time(), 
+                                            self._serial, self.get_test_result_str_invent())
+
+        my_data.set_attachment('application/tar', os.path.basename(self._tar_filename))
+        my_data.set_note(self._note)
+
+        for st in (self.get_subresults() + self.get_retrys()):
+            my_data.add_subtest(st.export_data())
+
+        return my_data
 
     def get_qual_team(self):
         if socket.gethostname() == 'nsf': # Debug on NSF HACK!!!!
