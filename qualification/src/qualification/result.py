@@ -1003,7 +1003,9 @@ em { font-style: normal; font-weight: bold; }\
                                             time.time(), 
                                             self._serial, self.get_test_result_str_invent())
 
-        my_data.set_attachment('application/tar', os.path.basename(self._tar_filename))
+        if self._tar_filename and os.path.exists(self._tar_filename):
+            my_data.set_attachment('application/tar', os.path.basename(self._tar_filename))
+
         my_data.set_note(self._note)
 
         for st in (self.get_subresults() + self.get_retrys()):
