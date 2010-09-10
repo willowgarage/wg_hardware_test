@@ -217,8 +217,7 @@ class TestMonitor:
         
         if len(self._listeners) == 0:
             level = TestStatus.STALE
-            errors = [ 'No listeners' ]
-            return level, array
+            return level, 'No listeners', array
 
         if not self._listeners_ok:
             level = TestStatus.ERROR
