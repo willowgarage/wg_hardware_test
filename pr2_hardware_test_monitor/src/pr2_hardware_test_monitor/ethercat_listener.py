@@ -43,6 +43,7 @@ import roslib; roslib.load_manifest(PKG)
 
 from std_msgs.msg import Bool
 from std_srvs.srv import *
+from diagnostic_msgs.msg import DiagnosticArray
 
 import rospy
 
@@ -75,9 +76,14 @@ class EthercatListener(PR2HWListenerBase):
         # Make this persistent in case the master goes down
         self._halt_motors2 = rospy.ServiceProxy('pr2_etherCAT/halt_motors', Empty, persistent = True)
 
-        self._diag_sub = rospy.Subscriber('pr2_etherCAT/motors_halted', Bool, self._motors_cb)
+        self._ecat_sub = rospy.Subscriber('pr2_etherCAT/motors_halted', Bool, self._motors_cb)
 
         self._cal_sub = rospy.Subscriber('calibrated', Bool, self._cal_cb)
+
+        self._diag_sub = rospy.Subscriber('/diagnostics', DiagnosticArray, self._diag_cb)
+
+        self._dropped_cnt = 0
+        self._last_drop_time = 0 # Use rospy.get_time()
 
         return True
 
@@ -104,6 +110,25 @@ class EthercatListener(PR2HWListenerBase):
         except Exception, e:
             rospy.logerr('Unable to reset motors. pr2_etherCAT may have died')
 
+    def _diag_cb(self, msg):
+        with self._mutex:
+            for stat in msg.status:
+                if stat.name == 'EtherCAT Master':
+                    for kv in stat.values:
+                        if kv.key == 'Dropped Packets':
+                            if not unicode(kv.value).isnumeric():
+                                self._last_drop_time = rospy.get_time()
+                                rospy.logwarn('Unable to convert %s into integer. Unable to count dropped packets' % kv.value)
+                                break
+
+                            curr_drops = int(kv.value)
+                            if curr_drops > self._dropped_cnt:
+                                self._last_drop_time = rospy.get_time()
+                                
+                            self._dropped_cnt = curr_drops
+                            break
+
+
     def _cal_cb(self, msg):
         with self._mutex:
             self._cal = msg.data
@@ -121,6 +146,11 @@ class EthercatListener(PR2HWListenerBase):
                 stat = 1
                 msg = 'Uncalibrated'
 
+            # Warn if we've had a dropped packets in the last three seconds
+            if rospy.get_time() - self._last_drop_time < 3:
+                stat = 1
+                msg = 'Dropping Packets'
+
             if not self._ok:
                 stat = 2
                 msg = 'Motors Halted'
@@ -131,5 +161,5 @@ class EthercatListener(PR2HWListenerBase):
                 if self._update_time == -1:
                     msg = 'No EtherCAT Data'
         
-        return stat, msg, None
+        return stat, msg, []
     

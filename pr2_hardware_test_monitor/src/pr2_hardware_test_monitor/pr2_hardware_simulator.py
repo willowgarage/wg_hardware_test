@@ -169,6 +169,7 @@ class PR2HardwareSimulator:
             stat.level = 2
         stat.name = 'EtherCAT Master'
         stat.message = 'OK'
+        stat.values.append(KeyValue('Dropped Packets', '0'))
 
         # Test camera listener
         stat_cam = DiagnosticStatus()
