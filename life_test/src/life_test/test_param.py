@@ -42,25 +42,82 @@ import rospy
 
 from writing_core import *
 
-##\brief Holds parameters, info for each life test
-##\todo Make some of these parameters optional, initXml
+
 class LifeTest(object):
-    def __init__(self, short_serial, testid, test_name, short_name, 
-                 duration, desc, test_type, launch_file, need_power, params):
-        self._short_serial = short_serial
+    """
+    Holds parameters, info for each life test
+    """
+    def __init__(self, short = '', testid = '', name = '', desc = '', serial = '',
+                 duration = 0, launch_script = '', test_type = '', power = False, params = []):
+        """
+        Use **kwargs in constructor. Preferred option is to initialize from XML
+        """
+        self._short_serial = serial
         self._id = testid
-        self._name = test_name
-        self._short = short_name
+        self._name = name
+        self._short = short
         self._duration = duration
         self._desc = desc
-        self._launch_script = launch_file
+        self._launch_script = launch_script
         self._test_type = test_type
+        self._power = power
 
         self._params = params
 
-        self.need_power = need_power
+        self._debug_ok = False
+        
+        self._has_init = self._short_serial != '' and self._id != '' and self._name != '' \
+            and self._launch_script != ''
 
-        self.debug_ok = False
+
+    def init_xml(self, xml):
+        """
+        Initialize LifeTest from XML value. 
+        
+        Required tags:
+        serial - Short value only
+        name - Full name of test
+        desc - Description
+        script - Path to launch script
+        type - Ex: 'Burn In'
+        power - Needs power or not (bool)
+        
+        Optional:
+        debug - "true" if can run outside debug mode
+        duration - Default: 0
+
+        TestParam's are initialized using nested XML nodes
+        """
+        self._short_serial = xml.attributes['serial'].value # Short serial only
+        self._name = xml.attributes['name'].value
+        self._id = xml.attributes['id'].value
+        self._desc = xml.attributes['desc'].value
+        self._launch_script = xml.attributes['script'].value
+        self._test_type = xml.attributes['type'].value
+        self._short = xml.attributes['short'].value
+        self._power = xml.attributes['power'].value != 'false'
+
+        self._debug_ok = xml.attributes.has_key('debug') and \
+            xml.attributes['debug'].value.lower() == "true"
+        
+        if xml.attributes.has_key('duration'):
+            self._duration = int(xml.attributes['duration'].value)
+
+        params_xml = xml.getElementsByTagName('param')
+        for param_xml in params_xml:
+            my_param = TestParam()
+            my_param.init_xml(param_xml)
+
+            self._params.append(my_param)
+
+        self._has_init = True
+        return True
+    
+    @property
+    def debug_ok(self): return self._debug_ok
+
+    @property
+    def need_power(self): return self._power
 
     @property
     def short(self):
@@ -121,6 +178,9 @@ class LifeTest(object):
         ##\brief Called during unit testing only. Checks all files exist, are valid
 
         """
+        if not self._has_init:
+            return False
+
         import os, sys
 
         full_path = os.path.join(roslib.packages.get_pkg_dir(PKG), self._launch_script)
@@ -155,17 +215,36 @@ class LifeTest(object):
 ## Examples: cycle rate, joint torque, roll on/off
 ## Allows changes in test setup or implementation to be logged automatically
 class TestParam(object):
-    def __init__(self, name, param_name, desc, val, rate):
-        self._value = val
-        self._desc = desc
+    def __init__(self):
+        self._value = ''
+        self._desc = ''
 
-        self._cumulative = rate
-        self._param_name = param_name
-        self._name = name
+        self._cumulative = ''
+        self._param_name = ''
+        self._name = ''
         self._namespace = ''
 
+    def init_xml(self, param_xml):
+        """
+        Initialize from XML
+
+        Required elements:
+        name - Name of param
+        param_name - ROS name of param
+        desc - Description
+        value - Value of param
+        rate = "true" if parameters is cumulative, or a rate
+        """
+        self._name = param_xml.attributes['name'].value
+        self._param_name = param_xml.attributes['param_name'].value
+        self._desc = param_xml.attributes['desc'].value
+        self._value = param_xml.attributes['val'].value
+        self._cumulative = param_xml.attributes['rate'].value == 'true'
  
     def set_namespace(self, ns):
+        """
+        Set parameter's value in appropriate namespace
+        """
         self._namespace = ns
         rospy.set_param('/' + self._namespace + '/' + self._param_name, self._value)
 
@@ -183,5 +262,4 @@ class TestParam(object):
     @property
     def rate(self):
         return self._cumulative
-
 
