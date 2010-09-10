@@ -41,7 +41,7 @@ roslib.load_manifest(PKG)
 
 from xml.dom import minidom
 
-import os
+import os, sys
 import rospy
 
 from test_param import *
@@ -82,46 +82,16 @@ def load_tests_from_file(test_xml_path = os.path.join(roslib.packages.get_pkg_di
 
     try:
         tests = doc.getElementsByTagName('test')
-        for test in tests:
-            serial = test.attributes['serial'].value # Short serial only
-            name = test.attributes['name'].value
-            testid = test.attributes['id'].value
-            desc = test.attributes['desc'].value
-            script = test.attributes['script'].value
-            type = test.attributes['type'].value
-            short = test.attributes['short'].value
-            power = test.attributes['power'].value != 'false'
+        for test_xml in tests:
+            serial = test_xml.attributes['serial'].value
             
-            if test.attributes.has_key('duration'):
-                duration = int(test.attributes['duration'].value)
-            else:
-                duration = 0
-            
-            # Add test parameters
-            # Make param from XML element
-            # Append to list, add to test
-            test_params = []
-            params_xml = test.getElementsByTagName('param')
-            for param_xml in params_xml:
-                p_name = param_xml.attributes['name'].value
-                p_param_name = param_xml.attributes['param_name'].value
-                p_desc = param_xml.attributes['desc'].value
-                p_val = param_xml.attributes['val'].value
-                
-                p_rate = param_xml.attributes['rate'].value == 'true'
+            my_tst = LifeTest()
 
+            if not my_tst.init_xml(test_xml):
+                print >> sys.stderr, "Unable to load test: %s" % str(test_xml)
+                return {}
 
-                test_params.append(TestParam(p_name, p_param_name, 
-                                             p_desc, p_val, p_rate))
-
-                
-            life_test = LifeTest(serial, testid, name, short, duration, 
-                                 desc, type, script, power, test_params)
-
-            life_test.debug_ok = test.attributes.has_key('debug') and test.attributes['debug'].value.lower() == "true"
-
-
-            my_tests.setdefault(serial, []).append(life_test)
+            my_tests.setdefault(serial, []).append(my_tst)
                 
         return my_tests
     except:
