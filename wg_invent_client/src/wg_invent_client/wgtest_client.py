@@ -38,7 +38,7 @@ def py2hdf(k, v, hdf=None):
 
     hdf.setValue(k, v)
   elif type(v) == types.NoneType:
-    print 'Key %s has None value' % k
+    pass
   elif type(v) == unicode:
     hdf.setValue(k, str(v))
   elif type(v) in (int, float, long):

@@ -39,3 +39,6 @@ rosbuild_add_rostest(test/launch/no_heartbeat_test.launch)
 rosbuild_add_rostest(test/launch/cam_stale_test.launch)
 rosbuild_add_rostest(test/launch/cam_many_warn_test.launch)
 rosbuild_add_rostest(test/launch/cam_warn_test.launch)
+
+# Test for dropped packets 
+rosbuild_add_rostest(test/launch/dropped_packet_test.launch)

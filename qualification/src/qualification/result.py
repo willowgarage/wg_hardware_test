@@ -218,6 +218,16 @@ class SubTestResult(object):
 
         self._temp_image_files = []
 
+    def export_data(self):
+        data = wg_invent_client.SubtestData(self.get_name(), self.get_result())
+        data.set_note(self.get_note())
+        for p in self.get_params():
+            data.set_parameter(p.key, p.value)
+        for m in self.get_values():
+            data.set_measurement(m.key, m.value, m.min, m.max)
+
+        return data
+
     def close(self):
         for file in self._temp_image_files:
             file.close()
@@ -944,7 +954,7 @@ em { font-style: normal; font-weight: bold; }\
         return True, 'Logged reconfiguration in inventory system.'        
              
     # Make invent results pretty, HTML links work
-    ##\todo Add timeout to invent, warn if problem
+    ##\todo Add timeout to invent
     def log_results(self, invent):
         # Write results to results dir, with local links
         self.write_results_to_file(False, True)
@@ -963,37 +973,45 @@ em { font-style: normal; font-weight: bold; }\
 
         # Need to get tar to bit stream
         f = open(self._tar_filename, "rb")
-        my_tar = f.read()
+        my_tar_data = f.read()
         f.close()
         
-        ##\todo change to start time
-        my_data = wg_invent_client.TestData(self._qual_test.testid, self._qual_test.get_name(), time.time(), 
-                                            self._serial, self.get_test_result_str_invent())
-        my_data.set_attachment('application/tar', os.path.basename(self._tar_filename))
-        my_data.set_note(self.line_summary())
+        my_data = self.export_data()
 
         try:
-            for st in (self.get_subresults() + self.get_retrys()):
-                ##\todo Change Subtest to have .exportData() method
-                td = wg_invent_client.SubtestData(st.get_name(), st.get_result())
-                td.set_note(st.get_note())
-                for param in st.get_params():
-                    td.set_parameter(param.key, param.value)
-                for value in st.get_values():
-                    td.set_measurement(value.key, value.value, value.min, value.max)
-
-                my_data.add_subtest(td)
-                
-            ok = wg_invent_client.submit_log(invent, my_data, my_tar)
+            ok = wg_invent_client.submit_log(invent, my_data, my_tar_data)
             msg = 'Wrote tar file, uploaded to inventory system.'
             if not ok:
-                msg = 'Unable to upload to Invent. Check console output'
+                msg = 'Unable to upload to Invent. Check console output for details.'
             
             return ok, msg
         except Exception, e:
             import traceback
             self.log('Caught exception uploading test parameters to invent.\n%s' % traceback.format_exc())
             return False, 'Caught exception loading tar file to inventory.\n%s' % traceback.format_exc()
+
+    def export_data(self):
+        """
+        Exports result data to wg_invent_client.TestData
+
+        Unit testing and Invent logging only.
+
+        \return wg_invent_client.TestData : Data for test
+        """
+        ##\todo change to start time
+        my_data = wg_invent_client.TestData(self._qual_test.testid, self._qual_test.get_name(), 
+                                            time.time(), 
+                                            self._serial, self.get_test_result_str_invent())
+
+        if self._tar_filename and os.path.exists(self._tar_filename):
+            my_data.set_attachment('application/tar', os.path.basename(self._tar_filename))
+
+        my_data.set_note(self._note)
+
+        for st in (self.get_subresults() + self.get_retrys()):
+            my_data.add_subtest(st.export_data())
+
+        return my_data
 
     def get_qual_team(self):
         if socket.gethostname() == 'nsf': # Debug on NSF HACK!!!!

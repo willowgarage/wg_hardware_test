@@ -40,6 +40,7 @@ import roslib; roslib.load_manifest(PKG)
 from life_test.config_loader import *
 
 import rostest, unittest
+import sys
 
 class TestManagerConfigCheck(unittest.TestCase):
     def test_rooms_config(self):
@@ -55,4 +56,11 @@ class TestManagerConfigCheck(unittest.TestCase):
                 self.assert_(tst.validate(), "Test %s failed to validated. Launch file may be invalid." % tst.name)
 
 if __name__ == '__main__':
-    rostest.unitrun(PKG, 'check_config_files', TestManagerConfigCheck)
+    if len(sys.argv) > 1 and sys.argv[1] == '-v':
+        suite = unittest.TestSuite()
+        suite.addTest(TestManagerConfigCheck('test_rooms_config'))
+        suite.addTest(TestManagerConfigCheck('test_tests_config'))
+
+        unittest.TextTestRunner(verbosity = 2).run(suite)
+    else:
+        rostest.unitrun(PKG, 'check_config_files', TestManagerConfigCheck)
