@@ -96,15 +96,21 @@
 
   <!-- Old color Forearm camera tests -->
   <test serial="6805018"
-  file="wge100_camera_test/test.xml" descrip="Forearm Camera Test" />
+  file="wge100_camera_test/test.xml" descrip="WGE100 Test, full test." />
+  <test serial="6805018"
+  file="wge100_camera_test/test-reduced.xml" descrip="WGE100 Test, reduced test. " />
 
   <!-- New color Forearm camera tests -->
   <test serial="6805030"
-  file="wge100_camera_test/test.xml" descrip="Forearm Camera Test" />
+  file="wge100_camera_test/test.xml" descrip="WGE100 Test, full test." />
+  <test serial="6805030"
+  file="wge100_camera_test/test-reduced.xml" descrip="WGE100 Test, reduced test. " />
 
   <!-- New B&W Forearm camera tests -->
   <test serial="6805027"
-  file="wge100_camera_test/test.xml" descrip="Forearm Camera Test" />
+  file="wge100_camera_test/test.xml" descrip="WGE100 Test, full test." />
+  <test serial="6805027"
+  file="wge100_camera_test/test-reduced.xml" descrip="WGE100 Test, reduced test. " />
 
   <!-- Special tests -->
   <test serial="faketes" debug="true"

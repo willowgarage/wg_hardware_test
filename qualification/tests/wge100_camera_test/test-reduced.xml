@@ -1,0 +1,7 @@
+<test name="WGE100 Camera Test" id="wge100-test" >
+  <instructions>instructions.html</instructions>
+  <!--startup>ethercat.launch</startup-->
+  <subtest name="Program Flash" timeout="75">program_firmware_ether.launch</subtest>
+  <subtest name="Untriggered Self-Test" timeout="40">self_test_untriggered.launch</subtest>
+  <shutdown name="Shutdown">shutdown.launch</shutdown>
+</test>
