@@ -1,13 +1,11 @@
 <launch>
   
   <!-- Camera -->
-  <group ns="wge100_camera">
+  <node name="wge100_camera" pkg="wge100_camera" type="wge100_camera_node" respawn="false" output="screen"/>
     <param name="camera_url" type="str" value="any://@192.168.202.2#lan0"/>
-    <param name="video_mode" type="str" value="640x480x30"/>
     <param name="ext_trig" type="bool" value="False"/>
-    <param name="exit_on_fault" type="bool" value="true"/>
-  </group>
-  <node name="wge100_camera" pkg="wge100_camera" type="forearm_node" respawn="false" output="screen"/>
+    <param name="trig_rate" type="double" value="29.412" />
+  </node>
 
   <!-- Self Test -->
   <node pkg="qualification" type="run_selftest.py"
