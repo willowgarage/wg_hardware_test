@@ -1,6 +1,7 @@
 <test name="Wrist Test (Post-Burn)" check-assembly="true" id="wrist-post" >
   <instructions>instructions_post_burn.html</instructions>
   <pre_startup name="Power On" timeout="30">../../scripts/power_cycle.launch</pre_startup>
+  <pre_startup name="Configure MCB's" timeout="180">../../config/r_wrist_conf.launch</pre_startup>
   <startup>wrist.launch</startup>
   <subtest name="Wrist Checkout">wrist_checkout.launch</subtest>
   <subtest name="Wrist Diff Check" timeout="60">wrist_diff_check_post_burn.launch</subtest>
