@@ -3,13 +3,17 @@
   
   <!-- Spwns the controllers -->
   <node name="led_trig_spawner" pkg="pr2_controller_manager" type="spawner" output="screen" args="trig_controller led_controller" />
-  <group ns="trig_controller">
-    <param name="type" type="string" value="ethercat_trigger_controllers/TriggerController" />
-    <param name="actuator" type="string" value="wge100_camera_qual_trig" />
-  </group>
   <group ns="led_controller">
     <param name="type" type="string" value="ethercat_trigger_controllers/TriggerController" />
     <param name="actuator" type="string" value="wge100_camera_qual_led" />
+  </group>
+  <group ns="trig_controller">
+    <param name="type" type="string" value="ethercat_trigger_controllers/MultiTriggerController" />
+    <param name="digital_output" type="string" value="l_wrist_l_motor" />
+    <param name="period" type="double" value="0.034" />
+    <param name="times" type="string" value="0 0.01" />
+    <param name="topics" type="string" value="image_trigger_stamp -" />
+    <param name="values" type="string" value="1 0" />
   </group>
   
   <!-- Loads realtime machine and PR2_etherCAT -->
