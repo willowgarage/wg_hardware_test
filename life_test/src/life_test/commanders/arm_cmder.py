@@ -90,9 +90,10 @@ class ArmCmder(object):
         self._recovery_client.send_goal(recovery_goal)
         rospy.loginfo('Sent recovery goal')
         self._recovery_client.wait_for_result(rospy.Duration.from_sec(10))
-        rospy.loginfo('Got recovery result')
 
         rv = self._recovery_client.get_state()
+        rospy.loginfo('Got recovery result: %d' % rv)
+
         self._recovery_client.cancel_goal()
 
         return rv
