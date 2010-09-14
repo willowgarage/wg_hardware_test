@@ -57,7 +57,7 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import Encoders
 
-from wg_invent_client.wgtest_client import TestData
+import wg_invent_client
 
 from datetime import datetime
 
@@ -218,9 +218,22 @@ class SubTestResult(object):
 
         self._temp_image_files = []
 
+    def export_data(self):
+        data = wg_invent_client.SubtestData(self.get_name(), self.get_result())
+        data.set_note(self.get_note())
+        for p in self.get_params():
+            data.set_parameter(p.key, p.value)
+        for m in self.get_values():
+            data.set_measurement(m.key, m.value, m.min, m.max)
+
+        return data
+
     def close(self):
         for file in self._temp_image_files:
             file.close()
+
+    def get_result(self):
+        return self._result.get_msg()
 
     def get_params(self):
         return self._params
@@ -462,7 +475,7 @@ class QualTestResult(object):
         try:
             config = qual_item._config
             self._config_only = True
-        except:
+        except Exception, e:
             self._config_only = False
 
         self._tar_filename = None
@@ -931,9 +944,17 @@ em { font-style: normal; font-weight: bold; }\
             tar.add(fullname, arcname=filename)
         tar.close()
 
+    def _log_config_result(self, invent):
+        sub = self.get_subresult(0) # Only subresult of configuration
+        if not sub:
+            return True, 'No subresult found!'
+        ##\todo Check attachment ID of return value
+        invent.add_attachment(self._serial, sub.filename_base() + '.html', 'text/html', 
+                              sub.make_result_page(), self.line_summary())
+        return True, 'Logged reconfiguration in inventory system.'        
              
     # Make invent results pretty, HTML links work
-    ##\todo Add timeout to invent, warn if problem
+    ##\todo Add timeout to invent
     def log_results(self, invent):
         # Write results to results dir, with local links
         self.write_results_to_file(False, True)
@@ -946,67 +967,51 @@ em { font-style: normal; font-weight: bold; }\
         prefix = self._start_time_filestr + "_" # Put prefix first so images sorted by date
         
         if self._config_only:
-            sub = self.get_subresult(0) # Only subresult of configuration
-            if not sub:
-                return True, 'No subresult found!'
-            ##\todo Check attachment ID of return value
-            invent.add_attachment(self._serial, sub.filename_base() + '.html', 'text/html', 
-                                  sub.make_result_page(), self.line_summary())
-            return True, 'Logged reconfiguration in inventory system.'
+            return self._log_config_result(invent)
 
         invent.setKV(self._serial, "Test Status", self.get_test_result_str_invent())
+
+        # Need to get tar to bit stream
+        f = open(self._tar_filename, "rb")
+        my_tar_data = f.read()
+        f.close()
         
+        my_data = self.export_data()
+
         try:
-            # Need to get tar to bit stream
-            f = open(self._tar_filename, "rb")
-            tar = f.read()
-            f.close()
-            invent.add_attachment(self._serial,
-                                  os.path.basename(self._tar_filename),
-                                  'application/tar', tar, self.line_summary())
+            ok = wg_invent_client.submit_log(invent, my_data, my_tar_data)
+            msg = 'Wrote tar file, uploaded to inventory system.'
+            if not ok:
+                msg = 'Unable to upload to Invent. Check console output for details.'
+            
+            return ok, msg
         except Exception, e:
             import traceback
-            self.log('Caught exception uploading tar file. %s' % traceback.format_exc())
-            return False, 'Caught exception loading tar file to inventory. %s' % str(e)
-         
-        test_data_ok = True
-        try:
-            for st in (self.get_retrys() + self.get_subresults()):
-                ##\todo change to start time
-                my_name = '/'.join(['Qualification', self._qual_test.get_name(), st.get_name()])
-                td = TestData(my_name, time.time(), self._serial)
-                td.set_note(st.get_note())
-                for param in st.get_params():
-                    td.set_parameter(param.key, param.value)
-                for value in st.get_values():
-                    td.set_measurement(value.key, value.value, value.min, value.max)
-
-                # Add tarfile attachment
-                st_tarfile = None
-                try:
-                    st_tarfile = write_temp_tar_file(os.path.join(self._results_dir, st.filename_base()))
-                    # Can't add attachment to temp files, gums up inventory
-                    # Need to make sure this is added to table
-                    #td.set_attachment('application/tar', st_tarfile.name)
-                    if not td.submit(invent):
-                        test_data_ok = False
-
-                except:
-                    import traceback
-                    traceback.print_exc()
-                    self.log(traceback.format_exc())
-                finally:
-                    if st_tarfile:
-                        st_tarfile.close() # Delete temp tarfile
-                
-            if not test_data_ok:
-                return False, 'Unable to record TestData to inventory system!'
-
-            return True, 'Wrote tar file, uploaded to inventory system.'
-        except:
-            import traceback
             self.log('Caught exception uploading test parameters to invent.\n%s' % traceback.format_exc())
-            return False, 'Caught exception loading tar file to inventory.'
+            return False, 'Caught exception loading tar file to inventory.\n%s' % traceback.format_exc()
+
+    def export_data(self):
+        """
+        Exports result data to wg_invent_client.TestData
+
+        Unit testing and Invent logging only.
+
+        \return wg_invent_client.TestData : Data for test
+        """
+        ##\todo change to start time
+        my_data = wg_invent_client.TestData(self._qual_test.testid, self._qual_test.get_name(), 
+                                            time.time(), 
+                                            self._serial, self.get_test_result_str_invent())
+
+        if self._tar_filename and os.path.exists(self._tar_filename):
+            my_data.set_attachment('application/tar', os.path.basename(self._tar_filename))
+
+        my_data.set_note(self._note)
+
+        for st in (self.get_subresults() + self.get_retrys()):
+            my_data.add_subtest(st.export_data())
+
+        return my_data
 
     def get_qual_team(self):
         if socket.gethostname() == 'nsf': # Debug on NSF HACK!!!!

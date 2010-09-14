@@ -1,6 +1,6 @@
 <rooms>
-  <room hostname="nsf" >
-    <bay name="NSF" machine="nsf"  />
+  <room hostname="ckb" >
+    <bay name="ckb" machine="ckb"  />
     <bay name="testi" machine="testi" />
   </room>
 
@@ -17,20 +17,20 @@
     <bay name="testv" machine="testv" board="1006" breaker="0" />
 
     <!-- Third rack -->
-    <bay name="testu" machine="testu" board="1010" breaker="2" />
+    <bay name="testu" machine="testu" board="1010" breaker="0" />
     <bay name="testt" machine="testt" board="1010" breaker="1" />
-    <bay name="testr" machine="testr" board="1010" breaker="0" />
+    <bay name="testr" machine="testr" board="1010" breaker="2" />
 
     <!-- Left side -->
     <!-- Fourth from top -->
-    <bay name="testh" machine="testh" board="1008" breaker="2" />
+    <bay name="testh" machine="testh" board="1008" breaker="0" />
     <bay name="testd" machine="testd" board="1008" breaker="1" />
-    <bay name="teste" machine="teste" board="1008" breaker="0" />
+    <bay name="teste" machine="teste" board="1008" breaker="2" />
 
     <!-- Fifth rack -->
     <bay name="testb" machine="testb" board="1013" breaker="0" />
-    <bay name="testaa" machine="testaa" board="1013" breaker="1" />
-    <bay name="testa" machine="testa" board="1013" breaker="2" />
+    <bay name="testaa" machine="testaa" board="1013" breaker="2" />
+    <bay name="testa" machine="testa" board="1013" breaker="1" />
 
     <!-- Bottom rack -->
     <bay name="testf" machine="testf" board="1005" breaker="0" />
@@ -49,6 +49,14 @@
     <bay name="testp" machine="testp" board="1011" breaker="0" />
     <bay name="testc" machine="testc" board="1011" breaker="1" />
     <bay name="testn" machine="testn" board="1011" breaker="2" />
+  </room>
+
+  <room hostname="qual1.willowgarage.com" >
+    <bay name="qual1" machine="qual1" board="1007" breaker="0" />
+  </room>
+
+  <room hostname="qual2.willowgarage.com" >
+    <bay name="qual2" machine="qual2" board="1009" breaker="1" />
   </room>
 
   <room hostname="axb" >

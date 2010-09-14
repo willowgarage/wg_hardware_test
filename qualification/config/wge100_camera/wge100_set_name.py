@@ -38,8 +38,6 @@ roslib.load_manifest('qualification')
 import sys
 import rospy
 from std_srvs.srv import *
-from qualification.srv import *
-import qualification.msg
 import std_msgs
 import subprocess
 import os
@@ -47,7 +45,7 @@ import os.path
 import traceback
 import time
 from wg_invent_client import Invent
-from qualification.srv import ScriptDone, ScriptDoneRequest
+from pr2_self_test_msgs.srv import ScriptDone, ScriptDoneRequest
 
 rospy.init_node("wge100_camera_set_name")
 
@@ -96,7 +94,7 @@ try:
     
     # Get camera url
     try:
-        camera_url = i.getItemReferences(barcode)["camera_url"]
+        camera_url = i.get_item_references(barcode)["camera_url"]
         if camera_url == '':
             raise KeyError
     except KeyError:

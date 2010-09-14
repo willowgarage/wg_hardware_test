@@ -157,7 +157,7 @@ if __name__ == "__main__":
         r.html_result =  r.html_result + "<pre>%s</pre>"%o
     else:
         r.html_result =  r.html_result + "<p>Upgrading firmware...</p>\n"
-        wrt610n_firmware_cmd = ['wrt610n','--force','-i',ip,'-w', '--nowait', 'firmware','/usr/lib/wrt610n/dd-wrt.v24-13000_big-wrt610n.bin']
+        wrt610n_firmware_cmd = ['wrt610n','--force','-i',ip,'-w', 'firmware','/usr/lib/wrt610n/dd-wrt.v24-13000_big-wrt610n.bin']
         wrt610n_firmware = subprocess.Popen(wrt610n_firmware_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (o,e) = wrt610n_firmware.communicate()
 

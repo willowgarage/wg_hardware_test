@@ -87,7 +87,6 @@ class Statistic:
             return "%s : average=%f, min=%f, max=%f" %(name, self.get_avg(), self.get_min(), self.get_max())
 
 
-
 class TemperatureMonitor:
     def __init__(self):
         self._mutex = threading.Lock()
@@ -99,6 +98,8 @@ class TemperatureMonitor:
 
         self._update_time = 0
         self._ok = True
+        self._done = False
+        self._temperature_rise = None
         self._summary = "No temperature data..."
         self._html = "No temperature data..."
 
@@ -108,10 +109,10 @@ class TemperatureMonitor:
         self._dmm_address = rospy.get_param("~dmm_address")
         self._max_acceptable_temperature = rospy.get_param("~max_acceptable_temperature")
         self._max_temperature_rise = rospy.get_param("~max_temperature_rise")
+        self._temperature_rise_time = rospy.get_param("~temperature_rise_time")
 
         thread.start_new_thread(self._temperature_thread_func, ())
         self._mutex.release()
-
 
     def _read_line(self, sock):
         msg = ""
@@ -146,7 +147,7 @@ class TemperatureMonitor:
             self._mutex.acquire()        
             print "Socket error"
             self._ok = False
-            self._html = "Error getting connection to DMM"
+            self._html = "Error getting connection to DMM. Address %s" % dmm_address
             self._mutex.release()
             return
         
@@ -181,11 +182,19 @@ class TemperatureMonitor:
                             print "Overtemp"
                             if self._ok:
                                 self._ok = False
-                                self._html = "Measured temperture of %f celcius is higher than limit of %f celcius." % (temp, max_acceptable_temperature)
-                        if (temp-self._start_temp) > max_temperature_rise:
-                            if self._ok:
-                                self._ok = False
-                                self._html = "Temperature has risen too much. Started at %f C. Now at %f C." % (self._start_temp, temp)
+                                self._html = "Measured temperature of %f celcius is higher than limit of %f celcius." % (temp, max_acceptable_temperature)
+                        if not self._done:
+                            if (self._update_time-self._start_time) > self._temperature_rise_time:
+                                # Got temperature rise over duration, now that test is complete.  
+                                # However, keep montioring temperature, to make sure temperature stays < max temperature
+                                self._done = True
+                                self._temperature_rise = temp-self._start_temp;
+                            elif (temp-self._start_temp) > max_temperature_rise:
+                                if self._ok:
+                                    self._ok = False
+                                    self._html =  "Temperature has risen too much. \n"
+                                    self._html += "Temperature started at %f C and increased to %f C after %f seconds. \n" % (self._start_temp, temp, (self._update_time-self._start_time))
+                                    self._html += "Expected temperature to increase by less than %f C after %f seconds of operation. \n" % (max_temperature_rise, self._temperature_rise_time)
                 except ValueError:
                     if self._ok :
                         self._html = "Couldn't convert value returned by DMM : %s" % (response)
@@ -209,7 +218,7 @@ class TemperatureMonitor:
                 if self._connected:
                     self._html = "DMM has not produced any temperature data."
                 else:
-                    self._html = "Could not connect to DMM."
+                    self._html = "Could not connect to DMM : %s ." % (self._dmm_address)
                 self._ok = False
                 
             # Fail if data has stopped coming in
@@ -223,18 +232,27 @@ class TemperatureMonitor:
 
 
     def is_done(self):
-        # This is done as soon as we want
-        return True
+        self._mutex.acquire()
+        done = self._done
+        self._mutex.release()
+        return done
 
     def collect_result(self, r):
         self._mutex.acquire()  
 
-        if self._ok and (self._update_time == 0):
-            self._html = "Test was stopped before any temperature data was collected."
-            self._ok = False
+        if self._ok:
+            if self._update_time == 0:
+                self._html = "Test was stopped before any temperature data was collected."
+                self._ok = False
+            elif not self._done:
+                self._html = "Test was stopped before temperature rise was determined."
+                self._ok = False
 
         if self._ok:
             self._html= "PASS"
+
+        if self._done:
+            self._html+="<br>\n Temperature increased by %f C in %f seconds" % (self._temperature_rise, self._temperature_rise_time)
 
         self._html += "<br>\n %s" % self._temp_stat.summary("LED Temperature (Celcius)")
                     

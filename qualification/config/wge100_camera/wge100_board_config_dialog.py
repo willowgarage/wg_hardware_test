@@ -38,7 +38,7 @@ import wx
 import sys
 import os
 
-from qualification.srv import *
+from pr2_self_test_msgs.srv import ScriptDone, ScriptDoneRequest
 
 import rospy
 

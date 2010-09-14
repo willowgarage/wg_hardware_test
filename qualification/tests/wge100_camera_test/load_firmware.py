@@ -39,7 +39,6 @@ import sys
 import rospy
 from std_srvs.srv import *
 from pr2_self_test_msgs.srv import *
-import qualification.msg
 import std_msgs
 import rospy
 import subprocess

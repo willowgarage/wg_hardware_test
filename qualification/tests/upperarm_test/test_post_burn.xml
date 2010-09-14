@@ -1,4 +1,4 @@
-<test name="Upperarm Test (Post-Burn)" check-assembly="true" >
+<test name="Upperarm Test (Post-Burn)" check-assembly="true" id="ua-post-test" >
   <instructions>instructions.html</instructions>
   <pre_startup name="Power Standby" timeout="30">../../scripts/power_board_standby.launch</pre_startup>
   <pre_startup name="Program MCB's" timeout="180">upperarm_prog.launch</pre_startup>

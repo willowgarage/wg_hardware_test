@@ -1,4 +1,4 @@
-<test name="WGE100 Camera Test" >
+<test name="WGE100 Camera Test" id="wge100-test" >
   <instructions>instructions.html</instructions>
   <!--startup>ethercat.launch</startup-->
   <subtest name="Program FPGA" timeout="15">program_firmware_ram.launch</subtest>
