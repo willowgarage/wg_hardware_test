@@ -962,7 +962,7 @@ em { font-style: normal; font-weight: bold; }\
         if invent == None:
             return False, "Attempted to log results to inventory, but no invent client found."
         if self.is_prestart_error():
-            return False, "Test recorded internal error, not submitting to inventory system."
+            return True, "Test recorded internal error, not submitting to inventory system."
         
         prefix = self._start_time_filestr + "_" # Put prefix first so images sorted by date
         
