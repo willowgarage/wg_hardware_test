@@ -138,6 +138,9 @@ if __name__ == "__main__":
 
     r.html_result =  "<p>Checking firmware version...</p>\n"
 
+    # Sometimes takes a little while to boot
+    time.sleep(30)
+
     wrt610n_version_cmd = ['wrt610n','version','-i',ip]
     wrt610n_version = subprocess.Popen(wrt610n_version_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (o,e) = wrt610n_version.communicate()
@@ -157,7 +160,7 @@ if __name__ == "__main__":
         r.html_result =  r.html_result + "<pre>%s</pre>"%o
     else:
         r.html_result =  r.html_result + "<p>Upgrading firmware...</p>\n"
-        wrt610n_firmware_cmd = ['wrt610n','--force','-i',ip,'-w', 'firmware','/usr/lib/wrt610n/dd-wrt.v24-13000_big-wrt610n.bin']
+        wrt610n_firmware_cmd = ['wrt610n','--force','-i',ip,'firmware','/usr/lib/wrt610n/dd-wrt.v24-13000_big-wrt610n.bin']
         wrt610n_firmware = subprocess.Popen(wrt610n_firmware_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (o,e) = wrt610n_firmware.communicate()
 
@@ -166,7 +169,6 @@ if __name__ == "__main__":
             r.text_summary = "Utility failed"
             r.result = TestResultRequest.RESULT_FAIL
         else:
-            # We just wait here for a while to be safe
             time.sleep(200)
 
         # We don't wait for boot anymore
