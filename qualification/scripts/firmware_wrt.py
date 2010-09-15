@@ -161,25 +161,24 @@ if __name__ == "__main__":
         wrt610n_firmware = subprocess.Popen(wrt610n_firmware_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (o,e) = wrt610n_firmware.communicate()
 
-
         if wrt610n_firmware.returncode != 0:
             r.html_result = r.html_result + "<p>Invocation of %s failed with: %s</p>\n"%(wrt610n_firmware_cmd,e)
             r.text_summary = "Utility failed"
             r.result = TestResultRequest.RESULT_FAIL
+        else:
+            # We just wait here for a while to be safe
+            time.sleep(200)
+
         # We don't wait for boot anymore
         #elif "Router has resumed successfully on: 192.168.1.1 with firmare: 'DD-WRT v24-sp2 (09/30/09) big - build 13000M NEWD-2 Eko'" not in o:
         #    r.html_result =  r.html_result + "<pre>%s</pre>"%o
         #    r.text_summary = "Resume failed"
         #    r.result = TestResultRequest.RESULT_FAIL
 
-
     if r.result != TestResultRequest.RESULT_FAIL:
         ip = "192.168.1.1"
 
         r.html_result =  r.html_result + "<p>Requesting Hard Reset</p>\n"
-
-        # We just wait here for a while to be safe
-        time.sleep(200)
 
         print 'Starting reset dialog'
         dlgthread = DlgThread(instructions_file)
@@ -192,8 +191,6 @@ if __name__ == "__main__":
             r.result = TestResultRequest.RESULT_FAIL
             r.text_summary = 'Failed to restart WRT610n using reset button.'
             
-
-        
     if r.result != TestResultRequest.RESULT_FAIL:
         wrt610n_version_cmd = ['wrt610n','-w','version','-i',ip]
         wrt610n_version = subprocess.Popen(wrt610n_version_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
