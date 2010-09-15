@@ -168,8 +168,6 @@ if __name__ == "__main__":
             r.html_result = r.html_result + "<p>Invocation of %s failed with: %s</p>\n"%(wrt610n_firmware_cmd,e)
             r.text_summary = "Utility failed"
             r.result = TestResultRequest.RESULT_FAIL
-        else:
-            time.sleep(200)
 
         # We don't wait for boot anymore
         #elif "Router has resumed successfully on: 192.168.1.1 with firmare: 'DD-WRT v24-sp2 (09/30/09) big - build 13000M NEWD-2 Eko'" not in o:
