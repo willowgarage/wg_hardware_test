@@ -48,7 +48,7 @@ class LifeTest(object):
     Holds parameters, info for each life test
     """
     def __init__(self, short = '', testid = '', name = '', desc = '', serial = '',
-                 duration = 0, launch_script = '', test_type = '', power = False, params = []):
+                 duration = 0, launch_script = '', test_type = '', power = False, params = None):
         """
         Use **kwargs in constructor. Preferred option is to initialize from XML
         """
@@ -62,7 +62,7 @@ class LifeTest(object):
         self._test_type = test_type
         self._power = power
 
-        self._params = params
+        self._params = params if params else []
 
         self._debug_ok = False
         
@@ -107,6 +107,10 @@ class LifeTest(object):
         for param_xml in params_xml:
             my_param = TestParam()
             my_param.init_xml(param_xml)
+
+            names = [ p.name for p in self._params ]
+            if my_param.name in names:
+                raise Exception("Param %s already exists in param list! XML: %s" % (my_param.name, xml.toprettyxml()))
 
             self._params.append(my_param)
 
