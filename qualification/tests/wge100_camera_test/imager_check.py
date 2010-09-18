@@ -36,6 +36,8 @@
 ##\brief Checks that the imager model and color filter on a wge100 camera
 ##match its serial number.
 
+from __future__ import with_statement
+
 PKG = 'qualification'
 import roslib
 roslib.load_manifest(PKG)
@@ -53,9 +55,10 @@ import wx
 import time
 
 class BayerDetector:
-  def __init__(self, done_cb):
+  def __init__(self, done_cb, red_source):
     self.status = "Waiting for first image."
     self.done_cb = done_cb
+    self.red_source = red_source
     self.bridge = CvBridge()
     self.maxdim = -1
     self.bw_scaling = cv.CreateMat(2, 2, cv.CV_32FC1)
@@ -64,14 +67,23 @@ class BayerDetector:
     self.bw_scaling[1,0] = 1
     self.bw_scaling[1,1] = 1
     self.col_scaling = cv.CreateMat(2, 2, cv.CV_32FC1)
-    self.col_scaling[0,0] = .82
-    self.col_scaling[0,1] = .91
-    self.col_scaling[1,0] = .91
-    self.col_scaling[1,1] = 1.36
+    if red_source:
+        self.col_scaling[0,0] = .50
+        self.col_scaling[0,1] = 1.04
+        self.col_scaling[1,0] = 1.04
+        self.col_scaling[1,1] = 1.40
+    else:
+        self.col_scaling[0,0] = .82
+        self.col_scaling[0,1] = .91
+        self.col_scaling[1,0] = .91
+        self.col_scaling[1,1] = 1.36
     self.detected = False
     self.image_sub = rospy.Subscriber("camera/image_raw", Image, self.process_image)
 
   def process_image(self, image):
+        wx.CallAfter(self.process_image_main_thread, image)
+
+  def process_image_main_thread(self, image):
     try:
       image.encoding = "mono8" # Don't trust what the driver is telling us.
       cv_image = self.bridge.imgmsg_to_cv(image, "mono8")
@@ -144,7 +156,10 @@ class BayerDetector:
           self.status = "Match!"
           return True
       else:
-          self.status = "Point camera at white target."
+          if self.red_source:
+              self.status = "Camera should be pointing at the red LED."
+          else:
+              self.status = "Point camera at white target."
       return False
 
 class ModelDetector:
@@ -155,6 +170,9 @@ class ModelDetector:
         rospy.Subscriber('/diagnostics', DiagnosticArray, self.msg_cb)
 
     def msg_cb(self, msg):
+        wx.CallAfter(self.msg_cb_main_thread, msg)
+
+    def msg_cb_main_thread(self, msg):
         for s in msg.status:
             if s.name == 'wge100_camera: Driver Status':
                 for kv in s.values:
@@ -217,9 +235,10 @@ def main(args):
       frame.barcode_text.SetValue(barcode_prefix)
   
   def done_cb():
+      global app
       if result_sent:
           return
-
+ 
       update_ui()
       
       if not bd:
@@ -228,7 +247,7 @@ def main(args):
           return
       if not md.model:
           return
-
+ 
       r = TestResultRequest()
       if (barcode_prefix, bd.detected_type, md.model) in acceptable_combinations:
           r.text_summary = "Found acceptable imager."
@@ -252,15 +271,16 @@ def main(args):
       result_service.call(r)
       result_sent.append(None)
       time.sleep(1) # Just so the user has time to see the UI.
-      wx.Exit()
+      rospy.on_shutdown(app.AddPendingEvent(wx.ID_EXIT))
+      app.Exit()
       print "Exit requested"
   
   rospy.init_node('imager_checker')
   app = wx.PySimpleApp()
-  rospy.on_shutdown(wx.Exit)
+  rospy.on_shutdown(app.Exit)
   barcode_prefix = str(rospy.get_param('qual_item/serial'))[0:7]
   frame = MainWindow()
-  bd = BayerDetector(done_cb)
+  bd = BayerDetector(done_cb, rospy.get_param('~red_source'))
   md = ModelDetector(done_cb)
   update_ui()
   try:

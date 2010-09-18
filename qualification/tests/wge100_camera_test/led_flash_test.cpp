@@ -49,6 +49,7 @@ private:
   sensor_msgs::CvBridge img_bridge_;
   std::string window_name_;
   ros::NodeHandle &node_handle_;
+  ros::NodeHandle private_node_handle_;
   double rate_;
   std::string led_set_waveform_;
   controller::trigger_configuration led_config_;
@@ -63,7 +64,7 @@ private:
   ros::Subscriber img_sub_;
 
 public:
-  LedFlashTest(ros::NodeHandle &n) : node_handle_(n)
+  LedFlashTest(ros::NodeHandle &n) : node_handle_(n), private_node_handle_("~")
   {
     // Open the output file.
 
@@ -76,7 +77,7 @@ public:
 
     // Initialize waveform generators.
     
-    node_handle_.param("~rate", rate_, 0.);
+    private_node_handle_.param("rate", rate_, 0.);
     
     led_config_.running = 1;
     led_config_.rep_rate = rate_;
@@ -91,8 +92,8 @@ public:
     img_sub_ = node_handle_.subscribe("image", 10, &LedFlashTest::image_cb, this);
   
     // Other parameters.
-    node_handle_.param("~skip", skip_frames_, 10);
-    node_handle_.param("~frames", keep_frames_, 100);
+    private_node_handle_.param("skip", skip_frames_, 10);
+    private_node_handle_.param("frames", keep_frames_, 100);
     frame_ = 0;
   }
 
@@ -117,7 +118,8 @@ public:
       return;
     
     // Compute image intensity.
-
+    
+    boost::const_pointer_cast<sensor_msgs::Image>(img_msg)->encoding = "mono8";
     img_bridge_.fromImage(*img_msg);
     CvScalar mean = cvAvg(img_bridge_.toIpl());
     double intensity = mean.val[0];
@@ -138,11 +140,11 @@ public:
       double thresh_high = (2 * max_i + min_i) / 3;
       double thresh_low = (max_i + 2 * min_i) / 3;
       double max_high, min_high, max_low, min_low;
-      node_handle_.param("~max_high", max_high, 0.);
-      node_handle_.param("~min_high", min_high, 0.);
-      node_handle_.param("~max_low", max_low, 0.);
-      node_handle_.param("~min_low", min_low, 0.);
-      node_handle_.param("~tolerance", tolerance_, 0);
+      private_node_handle_.param("max_high", max_high, 0.);
+      private_node_handle_.param("min_high", min_high, 0.);
+      private_node_handle_.param("max_low", max_low, 0.);
+      private_node_handle_.param("min_low", min_low, 0.);
+      private_node_handle_.param("tolerance", tolerance_, 0);
       
       //ROS_INFO("high: %f low: %f frame: %i size: %i", thresh_high; thresh_low, );
 
@@ -152,10 +154,11 @@ public:
       for (int i = 0; i < keep_frames_; i++)
       {
         double delta = led_time_[i] - exp_time_[i];
-        bool matched = false;
+
+        int matched = 0;
         if (delta <= max_high && delta >= min_high)
         {
-          matched = true;
+          matched = 1;
           if (intensities_[i] <= thresh_high)
           {
             ROS_ERROR("Frame %i: Not high intensity at %f, between %f and %f.", i, delta, min_high, max_high);
@@ -165,7 +168,7 @@ public:
         }
         if (delta <= max_low && delta >= min_low)
         {
-          matched = true;
+          matched = -1;
           if (intensities_[i] >= thresh_low)
           {
             ROS_ERROR("Frame %i: Not low intensity at %f between %f and %f.", i, delta, min_low, max_low);
@@ -179,6 +182,8 @@ public:
           nomatch++;
           //ROS_INFO("Frame %i, state %i at %f, does not match a rule.", i, intensities_[i] > thresh, delta);
         }
+        
+        ROS_DEBUG("Plot: delta: %f intensity: %f desired: %i", delta, intensities_[i], matched);
       }
     
       if (nomatch > keep_frames_ / 3)

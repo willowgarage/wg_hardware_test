@@ -67,14 +67,14 @@ except:
 else:
     try:
         os.chdir(impactdir);
-        p = subprocess.Popen(['rosrun', 'wge100_camera', 'upload_mcs', 'default.mcs', url], stdout=subprocess.PIPE)
+        p = subprocess.Popen(['rosrun', 'wge100_camera', 'upload_mcs', 'default.mcs', url], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         upload_mcs_out = p.communicate()[0]
     except Exception, e:
         upload_mcs_out = str(e)
    
     upload_mcs_out = upload_mcs_out.replace('\n','<br>')
 
-    if '''Success!''' in upload_mcs_out:
+    if not p.returncode:
         r.text_summary = "Firmware download succeeded."
         r.html_result = "<p>Test passed.</p><p>"+upload_mcs_out+"</p>" 
         r.result = TestResultRequest.RESULT_PASS

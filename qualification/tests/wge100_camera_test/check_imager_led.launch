@@ -1,0 +1,6 @@
+<launch>
+  <include file="$(find qualification)/tests/wge100_camera_test/check_imager.launch" />
+
+  <param name="imager_check/red_source" type="bool" value="True"/>
+</launch>
+
