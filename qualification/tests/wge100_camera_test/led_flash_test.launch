@@ -1,10 +1,10 @@
 <launch>
   <include file="$(find qualification)/tests/wge100_camera_test/ethercat.launch" />
   
-  <node name="wge100_camera_node" pkg="wge100_camera" type="wge100_camera_node" respawn="false" output="screen">
-    <param name="camera_url" type="str" value="any://@192.168.202.2#lan0"/>
+  <node name="wge100_camera" pkg="wge100_camera" type="wge100_camera_node" respawn="false" output="screen">
+    <param name="camera_url" type="str" value="any://@10.68.0.11#lan0"/>
     <param name="ext_trig" type="bool" value="True"/>
-    <param name="trig_timestamp_topic" type="string" value="image_trigger_stamp"/>
+    <param name="trig_timestamp_topic" type="string" value="trig_controller/image_trigger_stamp"/>
     <param name="trig_rate" type="double" value="29.412" />
     <param name="gain" type="int" value="64" />
     <param name="auto_gain" type="bool" value="False" />
@@ -14,7 +14,7 @@
 
   <node name="led_flash_test" pkg="qualification" type="led_flash_test" respawn="false" output="screen">
     <param name="rate" type="double" value="23.13"/>
-    <param name="min_low" type="double" value="-0.030"/>
+    <param name="min_low" type="double" value="-0.045"/>
     <param name="max_low" type="double" value="-0.013"/>
     <param name="min_high" type="double" value="-0.009"/>
     <param name="max_high" type="double" value="-0.004"/>

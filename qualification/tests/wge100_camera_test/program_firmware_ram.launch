@@ -1,5 +1,5 @@
 <launch>
-  <node pkg="qualification" type="load_firmware_ram.py"> 
+  <node name="load_firmware_ram" pkg="qualification" type="load_firmware_ram.py" output="screen"> 
     <param name="impactdir" value="$(find qualification)/tests/wge100_camera_test/impact"/>
   </node>
 </launch>

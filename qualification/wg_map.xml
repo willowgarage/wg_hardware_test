@@ -21,4 +21,6 @@
 	   breaker1="True" breaker2="True" />
   
   <station gui="qual4.willowgarage.com" host="qual4" />
+  
+  <station gui="mfv" host="mfv" />
 </map>
