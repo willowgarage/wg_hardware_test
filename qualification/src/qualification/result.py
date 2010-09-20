@@ -478,7 +478,7 @@ class QualTestResult(object):
         except Exception, e:
             self._config_only = False
 
-        self._tar_filename = None
+        self._tar_filename = ''
 
         self._results_name = '%s_%s' % (self._serial, self._start_time_filestr)
 
@@ -504,6 +504,9 @@ class QualTestResult(object):
 
     @property
     def results_dir(self): return self._results_dir
+
+    @property
+    def tar_name(self):  return self._tar_filename 
 
     def set_results_dir(self, path):
         if not path.endswith('/'):
@@ -957,7 +960,7 @@ em { font-style: normal; font-weight: bold; }\
     ##\todo Add timeout to invent
     def log_results(self, invent):
         # Write results to results dir, with local links
-        self.write_results_to_file(False, True)
+        self.write_results_to_file(temp = False, local_link = True)
 
         if invent == None:
             return False, "Attempted to log results to inventory, but no invent client found."
