@@ -33,11 +33,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 ##\author Kevin Watts
-##\brief Container class for WG test station configuration to operate qual system
 
-import sys
+import sys, os
 
 class WGTestStation(object):
+    """
+    Container class for WG test station configuration to operate qual system
+    """
     def __init__(self):
         self._power_board = None
         self._breaker0 = False
@@ -46,6 +48,15 @@ class WGTestStation(object):
 
         self._gui_host = None
         self._test_host = None
+
+        self._envs = {}
+
+    def set_envs(self):
+        """
+        Set any environment variables specific to machine.
+        """
+        for k, v in self._envs.iteritems():
+            os.environ[k] = v
 
     # Machine
     @property
@@ -67,6 +78,18 @@ class WGTestStation(object):
     def breaker2(self): return self._breaker2
 
     def xmlLoad(self, xmlDoc):
+        """
+        Load machine configuration from XML. 
+        Required parameters: 
+          "gui" - GUI machine. Must be full machine name
+          "host" - Remote host name
+        Optional:
+          "powerboard" - SN of power board
+          "breaker[0-2]" - Bool, to enable power breaker
+          "env" - Tag <env name="FOO" value="bar" />
+
+        @param xmlDoc XML : 
+        """
         if not xmlDoc.attributes.has_key('gui'):
             print >> sys.stderr, "Unable to find attribute \"gui\" in XML doc for test station. XML: %s" % str(xmlDoc)
             return False
@@ -91,6 +114,13 @@ class WGTestStation(object):
 
         if self._power_board and xmlDoc.attributes.has_key('breaker2'):
             self._breaker2 = xmlDoc.attributes['breaker2'].value.lower() == 'true'
+
+        envs_xml = xmlDoc.getElementsByTagName('env')
+        for env_xml in envs_xml:
+            name = env_xml.attributes['name'].value
+            value = env_xml.attributs['value'].value
+
+            self._envs[name] = value
 
         return True
 

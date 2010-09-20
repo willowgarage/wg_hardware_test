@@ -493,6 +493,8 @@ class ComponentQualFrame(QualificationFrame):
     rospy.set_param('/qualification/powerboard/1', my_station.breaker1)
     rospy.set_param('/qualification/powerboard/2', my_station.breaker2)
 
+    my_station.set_envs()
+
     try:
       machine_addr = socket.gethostbyname(my_station.test_host)
       os.environ['ROS_TEST_HOST'] = my_station.test_host
