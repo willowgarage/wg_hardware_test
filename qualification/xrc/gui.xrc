@@ -267,143 +267,6 @@
 			</object>
 		</object>
 	</object>
-	<object class="wxPanel" name="pr2_qual_panel">
-		<style>wxTAB_TRAVERSAL</style>
-		<size>700,840</size>
-		<object class="wxBoxSizer">
-			<orient>wxVERTICAL</orient>
-			<object class="sizeritem">
-				<option>1</option>
-				<flag>wxEXPAND</flag>
-				<border>5</border>
-				<object class="wxBoxSizer">
-					<orient>wxHORIZONTAL</orient>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxEXPAND|wxALIGN_CENTER_VERTICAL</flag>
-						<border>5</border>
-						<object class="wxBoxSizer">
-							<orient>wxVERTICAL</orient>
-							<object class="sizeritem">
-								<option>1</option>
-								<flag>wxEXPAND</flag>
-								<border>5</border>
-								<object class="wxBoxSizer">
-									<orient>wxVERTICAL</orient>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALL</flag>
-										<border>5</border>
-										<object class="wxStaticText" name="m_staticText16">
-											<font>
-												<size>11</size>
-												<family>swiss</family>
-												<style>normal</style>
-												<weight>bold</weight>
-												<underlined>0</underlined>
-												<face>Sans</face>
-											</font>
-											<label>Select Robot</label>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALL|wxALIGN_CENTER_HORIZONTAL</flag>
-										<border>5</border>
-										<object class="wxListBox" name="robot_list_box">
-											<style>wxLB_SINGLE</style>
-											<size>85,180</size>
-											<font>
-												<size>10</size>
-												<family>swiss</family>
-												<style>normal</style>
-												<weight>normal</weight>
-												<underlined>0</underlined>
-												<face>Sans</face>
-											</font>
-											<content />
-										</object>
-									</object>
-								</object>
-							</object>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>1</option>
-						<flag>wxEXPAND|wxALIGN_CENTER_HORIZONTAL</flag>
-						<border>5</border>
-						<object class="wxBoxSizer">
-							<orient>wxVERTICAL</orient>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxALL|wxALIGN_CENTER_HORIZONTAL</flag>
-								<border>5</border>
-								<object class="wxStaticText" name="m_staticText14">
-									<font>
-										<size>11</size>
-										<family>swiss</family>
-										<style>normal</style>
-										<weight>bold</weight>
-										<underlined>0</underlined>
-										<face>Sans</face>
-									</font>
-									<label>PR2 Qualification Tests</label>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxALL|wxALIGN_CENTER_HORIZONTAL</flag>
-								<border>5</border>
-								<object class="wxTreeCtrl" name="test_tree_ctrl">
-									<style>wxTR_DEFAULT_STYLE|wxTR_HAS_BUTTONS|wxTR_MULTIPLE</style>
-									<size>450,500</size>
-									<font>
-										<size>10</size>
-										<family>swiss</family>
-										<style>normal</style>
-										<weight>normal</weight>
-										<underlined>0</underlined>
-										<face>Sans</face>
-									</font>
-								</object>
-							</object>
-						</object>
-					</object>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxEXPAND|wxALIGN_CENTER_HORIZONTAL</flag>
-				<border>5</border>
-				<object class="wxBoxSizer">
-					<orient>wxVERTICAL</orient>
-					<object class="spacer">
-						<option>1</option>
-						<flag>wxEXPAND|wxALIGN_CENTER_HORIZONTAL</flag>
-						<border>5</border>
-						<size>0,0</size>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALL|wxALIGN_CENTER_HORIZONTAL</flag>
-						<border>5</border>
-						<object class="wxButton" name="robot_qual_button">
-							<font>
-								<size>12</size>
-								<family>swiss</family>
-								<style>normal</style>
-								<weight>bold</weight>
-								<underlined>0</underlined>
-								<face>Sans</face>
-							</font>
-							<label>Start</label>
-							<default>0</default>
-						</object>
-					</object>
-				</object>
-			</object>
-		</object>
-	</object>
 	<object class="wxPanel" name="instructions_panel">
 		<style>wxTAB_TRAVERSAL</style>
 		<size>700,850</size>
@@ -876,6 +739,154 @@
 						<border>5</border>
 						<object class="wxButton" name="wxID_CANCEL">
 							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+	<object class="wxPanel" name="continuous_test_panel">
+		<style>wxTAB_TRAVERSAL</style>
+		<size>215,155</size>
+		<object class="wxFlexGridSizer">
+			<rows>2</rows>
+			<cols>1</cols>
+			<vgap>0</vgap>
+			<hgap>0</hgap>
+			<growablecols></growablecols>
+			<growablerows></growablerows>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="submit_box">
+							<label>Submit Logs</label>
+							<checked>0</checked>
+						</object>
+					</object>
+					<object class="spacer">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="abort_button">
+							<label>Abort</label>
+							<default>0</default>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="m_staticText12">
+									<label>Tests Completed</label>
+								</object>
+							</object>
+							<object class="spacer">
+								<option>1</option>
+								<flag>wxEXPAND</flag>
+								<border>5</border>
+								<size>0,0</size>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="completed_text">
+									<style>wxTE_READONLY</style>
+									<value></value>
+									<maxlength>0</maxlength>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="m_staticText13">
+									<label>Tests Passed</label>
+								</object>
+							</object>
+							<object class="spacer">
+								<option>1</option>
+								<flag>wxEXPAND</flag>
+								<border>5</border>
+								<size>0,0</size>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="passed_text">
+									<style>wxTE_READONLY</style>
+									<value></value>
+									<maxlength>0</maxlength>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="m_staticText14">
+									<label>Last Result</label>
+								</object>
+							</object>
+							<object class="spacer">
+								<option>1</option>
+								<flag>wxEXPAND</flag>
+								<border>5</border>
+								<size>0,0</size>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="last_result_text">
+									<style>wxTE_READONLY</style>
+									<value></value>
+									<maxlength>0</maxlength>
+								</object>
+							</object>
 						</object>
 					</object>
 				</object>
