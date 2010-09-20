@@ -59,6 +59,7 @@ from pr2_self_test_msgs.srv import TestResult, TestResultRequest, TestResultResp
 
 from qualification.test import *
 from qualification.result import *
+import cont_frame
 
 import traceback
 
@@ -80,6 +81,7 @@ class QualOptions(object):
   def __init__(self):
     self.debug = False
     self.always_show_results = False
+    self.continuous = False
 
 ##\brief Loads instructions for operator. Displays instructions in HTML window.
 class InstructionsPanel(wx.Panel):
@@ -309,6 +311,7 @@ class QualificationFrame(wx.Frame):
     self._log = xrc.XRCCTRL(self._log_panel, 'log')
 
     self._results = None
+    self._cont_frame = None
     
     self._startup_launch = None
     self._shutdown_launch = None
@@ -374,6 +377,9 @@ class QualificationFrame(wx.Frame):
       self._plots_panel.close()
     self._plots_panel = None
 
+    self._current_test = None
+    self._subtest_index = 0
+
     self.reset_params()
   
   ##\brief Resets parameters of qualification node to starting state
@@ -404,7 +410,7 @@ class QualificationFrame(wx.Frame):
     rospy.set_param('/qual_item/serial', self._current_item.serial)
     rospy.set_param('/qual_item/name', self._current_item.name)
     
-    if (self._current_test.getInstructionsFile() != None):
+    if (self._current_test.getInstructionsFile()) and not self.options.continuous:
       self.set_top_panel(InstructionsPanel(self._top_panel, self._res, self, self._current_test.getInstructionsFile()))
     else:
       self.start_qualification()
@@ -602,7 +608,12 @@ class QualificationFrame(wx.Frame):
     
     sub_result = self._results.add_sub_result(self._subtest_index, msg)
 
-    if self.options.always_show_results:
+    if self.options.continuous: # Continue without human intervention
+      if (msg.result == TestResultRequest.RESULT_PASS):
+        self.subtest_result(True, '')
+      else:
+        self.subtest_result(False, '')
+    elif self.options.always_show_results:
       self.show_plots(sub_result)
     else:
       if (msg.result == TestResultRequest.RESULT_PASS):
@@ -862,14 +873,44 @@ class QualificationFrame(wx.Frame):
   def test_cleanup(self):
     self.stop_launches()
     
-    # Should this be in self.reset?
-    self._current_test = None
-    self._subtest_index = 0
+
 
     self.show_results()
 
+  def start_continuous_testing(self):
+    """
+    Start continuous testing. Runs tests continuous until aborted.
+    """
+    if self._cont_frame:
+      self._cont_frame.Raise()
+      return
+    
+    self.options.continuous = True
+    self._cont_frame = cont_frame.ContinuousTestFrame(self)
+    self._cont_frame.Show()
+    
+  def stop_continuous_testing(self):
+    """
+    Stop continuous testing. 
+    """
+    self.options.continuous = False  
+
+    self._cont_frame.Close()
+    self._cont_frame = None
+
+  def _handle_continuous_results(self):
+    invent = self.get_inventory_object()
+    self._cont_frame.new_results(self._results, invent)
+    self.reset_params()
+    self.begin_test(self._current_test, self._current_item)
+
   ##\brief Shows final results of qualification test
   def show_results(self):
+    if self.options.continuous:
+      self._handle_continuous_results()
+
+      return
+
     panel = ResultsPanel(self._top_panel, self._res, self)
     self.set_top_panel(panel)
     

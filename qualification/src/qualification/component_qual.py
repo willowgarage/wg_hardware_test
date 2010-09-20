@@ -43,7 +43,7 @@ import os
 import sys
 import socket
 import wx
-import time
+#import time
 from wx import xrc
 from wx import html
 
@@ -65,6 +65,7 @@ class ConfigObject(QualTestObject):
 class ComponentQualOptions(QualOptions):
   def __init__(self):
     QualOptions.__init__(self)
+
 
 ## Allows user to choose which component to test and which test to run
 class SerialPanel(wx.Panel):
@@ -351,6 +352,7 @@ class ComponentQualFrame(QualificationFrame):
     if self.options.debug:
       self._debug_menu = wx.Menu()
       self._debug_menu.Append(5005, "Abort Subtest")
+      self._debug_menu.Append(5001, "Continuous Testing")
       menubar.Append(self._debug_menu, "Debug Mode")
 
     self.SetMenuBar(menubar)
@@ -417,6 +419,10 @@ class ComponentQualFrame(QualificationFrame):
     if (event.GetEventObject() == self._debug_menu):
       if (event.GetId() == 5005):
         self.abort_active_test(True)
+      if (event.GetId() == 5001):
+        self.start_continuous_testing()
+
+
 
   def abort_active_test(self, can_veto):
     if can_veto:
