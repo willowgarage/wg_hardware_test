@@ -107,12 +107,15 @@ class ContinuousTestFrame(wx.Frame):
 
     def new_results(self, results, invent):
         self._total_tests += 1
+        failed_test = "Pass"
         if results.get_pass_bool():
             self._passed_tests += 1
+        else:
+            failed_test = "Failed test %i"%(len(results.get_subresults()))
         self._last_result = results.get_test_result_str()
 
         # Get tar filename, write to summary file
-        self._results.write_results_to_file() # Write to temp dir   
+        results.write_results_to_file() # Write to temp dir   
         tar_name = results.tar_name
 
         submit_stat = 'N/A'
@@ -125,7 +128,7 @@ class ContinuousTestFrame(wx.Frame):
 
         with open(self._log, 'ab') as f:
             log_csv = csv.writer(f)
-            log_csv.writerow([datetime.now().strftime("%m/%d/%Y %H:%M:%S"), self._last_result, tar_name, submit_stat])
+            log_csv.writerow([datetime.now().strftime("%m/%d/%Y %H:%M:%S"), self._last_result, tar_name, submit_stat, failed_test])
 
                                        
         self._complete_text.SetValue(str(self._total_tests))
