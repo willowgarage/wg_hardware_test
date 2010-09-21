@@ -1,5 +1,6 @@
 <launch>
-  <node name="load_firmware_ram" pkg="qualification" type="load_firmware_ram.py" output="screen"> 
-    <param name="impactdir" value="$(find qualification)/tests/wge100_camera_test/impact"/>
+  <node name="load_firmware_ram" pkg="qualification" type="test_caller.py" args="rosrun qualification load_firmware_ram.py" output="screen"> 
+    <env name="IMPACTDIR" value="$(find qualification)/tests/wge100_camera_test/impact"/>
+    <param name="post_delay" type="double" value="5" />
   </node>
 </launch>

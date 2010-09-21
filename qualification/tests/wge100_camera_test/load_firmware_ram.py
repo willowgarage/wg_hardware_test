@@ -32,59 +32,16 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import roslib
-roslib.load_manifest('qualification')
-
 import sys
-import rospy
-from std_srvs.srv import *
-from pr2_self_test_msgs.srv import *
-import std_msgs
-import rospy
-import subprocess
 import os
-import os.path
-import wx
-
-rospy.init_node("load_firmware_ram", anonymous=True)
-
-r = TestResultRequest()
-r.plots = []
 
 try:
-    impactdir=rospy.get_param("~impactdir")
+    impactdir = os.environ['IMPACTDIR']
 except:
     import traceback
     traceback.print_exc()
-    print >> sys.stderr, 'impactdir option must indicate impact project directory';
-    r.html_result = "<p>Bad arguments to load_firmware.py.</p>"
-    r.text_summary = "Error in test."
-    r.result = TestResultRequest.RESULT_FAIL
-    print "error"
+    print >> sys.stderr, 'IMPACTDIR environment variable must indicate impact project directory';
+    raise
 else:
     os.chdir(impactdir);
-    p = subprocess.Popen(['./startimpact', '-batch', 'load_firmware_ram.cmd'], stderr=subprocess.PIPE)
-    impactout = p.communicate()[1]
-
-    impactout = impactout.replace('\n','<br>')
-
-    if '''INFO:iMPACT - '1': Programing completed successfully.''' in impactout:
-	r.text_summary = "Firmware download succeeded."
-        r.html_result = "<p>Test passed.</p><p>"+impactout+"</p>" 
-        r.result = TestResultRequest.RESULT_PASS
-        print "pass"
-    else:
-        r.text_summary = "Firmware download failed."
-        r.result = TestResultRequest.RESULT_FAIL
-        r.html_result = "<p>Test Failed.</p><p>"+impactout+"</p>"
-        print "fail"
-        print impactout
-    
-result_service = rospy.ServiceProxy('test_result', TestResult)
-
-rospy.sleep(2);
-
-# block until the test_result service is available
-rospy.wait_for_service('test_result')
-result_service.call(r)
-
+    os.execl('./startimpact', "startimpact", '-batch', 'load_firmware_ram.cmd')
