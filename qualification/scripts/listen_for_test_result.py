@@ -57,8 +57,9 @@ def result_cb(req):
     out("Summary: %s"%req.text_summary)
     out("")
     txt = "Detailed results:\n"+req.html_result
-    txt = re.sub("<p>", "", txt)
-    txt = re.sub("</p>", "\n", txt)
+    txt = txt.replace("<p>", "")
+    txt = txt.replace("</p>", "\n")
+    txt = txt.replace("<br>", "\n")
     out(txt)
     global done
     done = True
