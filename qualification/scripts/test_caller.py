@@ -40,6 +40,13 @@ import rospy
 from pr2_self_test_msgs.srv import *
 import subprocess
 import select
+import fcntl
+import os
+
+def make_nonblock(file):
+    fd = file.fileno()
+    fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+    fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
 if __name__ == '__main__':
     rospy.init_node("test_caller", anonymous=True)
@@ -58,10 +65,12 @@ if __name__ == '__main__':
 
         fdmap = {p.stdout:sys.stdout, p.stderr:sys.stderr}
         output = ""
+        for fd in fdmap.iterkeys():
+            make_nonblock(fd)
         while fdmap and not rospy.is_shutdown():
             fdl = select.select(fdmap.keys(), [], [])
             for fd in fdl[0]:
-                read = fd.read(1)
+                read = fd.read()
                 if read:
                     fdmap[fd].write(read)
                 else:
