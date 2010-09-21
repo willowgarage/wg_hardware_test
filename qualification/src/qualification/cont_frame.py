@@ -111,7 +111,12 @@ class ContinuousTestFrame(wx.Frame):
         if results.get_pass_bool():
             self._passed_tests += 1
         else:
-            failed_test = "Failed test %i"%(len(results.get_subresults()))
+            failed_test_num = len(results.get_subresults())
+            if not failed_test_num:
+                failed_test = "Pretest failed."
+            else:
+                failed_test_str = results.get_subresult(failed_test_num - 1)._summary
+                failed_test = "Failed test %i: %s"%(failed_test_num, failed_test_str)
         self._last_result = results.get_test_result_str()
 
         # Get tar filename, write to summary file
