@@ -59,8 +59,11 @@ if __name__ == '__main__':
         if len(args) < 3:
             raise Exception('Usage: ./test_caller.py <program> <args>')
         
-        popen_args = args[1:]
+        if not rospy.is_shutdown():
+            rospy.sleep(rospy.Duration(rospy.get_param("~pre_delay", 0)))
 
+        popen_args = args[1:]
+        
         p = subprocess.Popen(popen_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         fdmap = {p.stdout:sys.stdout, p.stderr:sys.stderr}
@@ -84,6 +87,8 @@ if __name__ == '__main__':
     else:
         p.wait()
         retcode = p.returncode
+
+        rospy.sleep(rospy.Duration(rospy.get_param("~post_delay", 0)))
         
         output = output.replace('\n','<br>')
     
