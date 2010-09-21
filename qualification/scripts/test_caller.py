@@ -57,9 +57,9 @@ if __name__ == '__main__':
     
     try:
         if len(args) < 3:
-            raise Exception('Usage: ./test_caller.py <pkg> <program> <args>')
+            raise Exception('Usage: ./test_caller.py <program> <args>')
         
-        popen_args = ['rosrun']+args[1:]
+        popen_args = args[1:]
 
         p = subprocess.Popen(popen_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
