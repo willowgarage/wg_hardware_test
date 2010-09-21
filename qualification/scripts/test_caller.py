@@ -88,7 +88,6 @@ if __name__ == '__main__':
             r.result = TestResultRequest.RESULT_FAIL
             r.html_result = "<p>Test Failed.</p><p>"+output+"</p>"
             print "fail"
-            print output
     finally:
         try:
             p.kill()
