@@ -98,7 +98,7 @@ if __name__ == '__main__':
             r.result = TestResultRequest.RESULT_PASS
             print "pass"
         else:
-            r.text_summary = "Completion of args[0] with error code %i."%retcode
+            r.text_summary = "Completion of %s with error code %i."%(args[0], retcode)
             r.result = TestResultRequest.RESULT_FAIL
             r.html_result = "<p>Test Failed.</p><p>"+output+"</p>"
             print "fail"
