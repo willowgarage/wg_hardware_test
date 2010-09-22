@@ -93,7 +93,7 @@ if __name__ == '__main__':
         output = output.replace('\n','<br>')
     
         if not p.returncode:
-            r.text_summary = "Successful completion of args[0]."
+            r.text_summary = "Successful completion of %s"%args[0]
             r.html_result = "<p>Test passed.</p><p>"+output+"</p>" 
             r.result = TestResultRequest.RESULT_PASS
             print "pass"
