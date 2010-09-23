@@ -2,5 +2,5 @@
   <instructions>instructions-reduced.html</instructions>
   <subtest name="Program Flash" timeout="120">program_firmware_ether.launch</subtest>
   <subtest name="Imager Model Check" timeout="60">check_imager.launch</subtest>
-  <subtest name="Untriggered Self-Test" timeout="20">self_test_untriggered.launch</subtest>
+  <subtest name="Untriggered Self-Test" timeout="40">self_test_untriggered.launch</subtest>
 </test>
