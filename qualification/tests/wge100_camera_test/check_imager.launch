@@ -7,7 +7,7 @@
     <param name="trig_rate" type="double" value="29.412" />
     <param name="auto_gain" type="bool" value="True" />
     <param name="auto_exposure" type="bool" value="True" />
-    <param name="brightness" type="double" value="32" />
+    <param name="brightness" type="double" value="48" />
   </node>
 
   <!-- Test -->

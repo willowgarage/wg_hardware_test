@@ -2,7 +2,7 @@
   <include file="$(find qualification)/tests/wge100_camera_test/ethercat.launch" />
   
   <!-- Camera -->
-  <node name="wge100_camera" pkg="wge100_camera" type="wge100_camera_node" respawn="false" output="screen">
+  <node name="wge100_camera" pkg="wge100_camera" type="wge100_camera_node" respawn="true" output="screen">
     <param name="camera_url" type="str" value="any://@10.68.0.11#lan0"/>
     <param name="ext_trig" type="bool" value="True"/>
     <param name="trig_timestamp_topic" type="string" value="trig_controller/image_trigger_stamp"/>
@@ -11,7 +11,7 @@
 
   <!-- Self Test -->
   <node pkg="qualification" type="run_selftest.py"
-        name="selftester" args="--add_ref" >
+        name="selftester" args="--add_ref" output="screen">
         <remap from="node_name" to="wge100_camera"/>
   </node>
 
