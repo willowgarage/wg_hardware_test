@@ -91,7 +91,7 @@ class ContinuousTestFrame(wx.Frame):
         self._log = os.path.join(result_dir.RESULTS_DIR, basename.replace(' ', ''))
         with open(self._log, 'wb') as f:
             log_csv = csv.writer(f)
-            log_csv.writerow(['Time', 'Result', 'Tar Name', 'Submit OK'])
+            log_csv.writerow(['Time', 'Cycle#', 'Successes', 'Result', 'Tar Name', 'Submit OK', 'Summary'])
 
 
     def abort(self, event):
@@ -133,9 +133,20 @@ class ContinuousTestFrame(wx.Frame):
 
         with open(self._log, 'ab') as f:
             log_csv = csv.writer(f)
-            log_csv.writerow([datetime.now().strftime("%m/%d/%Y %H:%M:%S"), self._last_result, tar_name, submit_stat, failed_test])
+            log_csv.writerow([datetime.now().strftime("%m/%d/%Y %H:%M:%S"), self._total_tests, self._passed_tests, self._last_result, tar_name, submit_stat, failed_test])
 
                                        
         self._complete_text.SetValue(str(self._total_tests))
         self._passed_text.SetValue(str(self._passed_tests))
         self._last_result_text.SetValue(str(self._last_result))
+
+        success_rate = float(self._passed_tests) / self._total_tests
+        sys.stdout.flush()
+        sys.stderr.flush()
+        print "Completed test %i: %s"%(self._total_tests, failed_test)
+        print "Successes %i -> %.1f %% success rate."%(self._passed_tests, success_rate*100)
+        print
+        print
+        print
+        sys.stdout.flush()
+        sys.stderr.flush()
