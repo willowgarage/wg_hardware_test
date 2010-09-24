@@ -35,6 +35,7 @@
 ##\author Kevin Watts
 ##\brief Simulates PR2 hardware by publishing data like diagnostics and mechanism_state
 
+from __future__ import with_statement
 PKG = 'pr2_hardware_test_monitor'
 import roslib; roslib.load_manifest(PKG)
 
@@ -79,23 +80,22 @@ class PR2HardwareSimulator:
         self._total_sent = 0
 
     def on_halt(self, srv):
-        self._mutex.acquire()
-        self._ok = True
+        with self._mutex:
+            self._ok = True
         self.motors_pub.publish(Bool(True))
-        self._mutex.release()
+        return EmptyResponse()
 
     def on_reset(self, srv):
-        self._mutex.acquire()
-        self._ok = False
+        with self._mutex:
+            self._ok = False
         self.motors_pub.publish(Bool(False))
-        self._mutex.release()
+        return EmptyResponse()
 
     def _publish_mech_stats(self):
         ok = False
-        self._mutex.acquire()
-        ok = self._ok
-        self._mutex.release()
-
+        with self._mutex:
+            ok = self._ok
+ 
         # Joint state is a sine, period 1s, Amplitude 2,
         trig_arg = rospy.get_time() - self._start_time
 
@@ -155,9 +155,8 @@ class PR2HardwareSimulator:
 
     def _publish_diag(self):
         ok = False
-        self._mutex.acquire()
-        ok = self._ok
-        self._mutex.release()
+        with self._mutex:
+            ok = self._ok
 
         msg = DiagnosticArray()
         stat = DiagnosticStatus()
