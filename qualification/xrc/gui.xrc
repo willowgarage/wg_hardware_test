@@ -747,7 +747,7 @@
 	</object>
 	<object class="wxPanel" name="continuous_test_panel">
 		<style>wxTAB_TRAVERSAL</style>
-		<size>215,155</size>
+		<size>291,192</size>
 		<object class="wxFlexGridSizer">
 			<rows>2</rows>
 			<cols>1</cols>
@@ -883,6 +883,32 @@
 								<border>5</border>
 								<object class="wxTextCtrl" name="last_result_text">
 									<style>wxTE_READONLY</style>
+									<value></value>
+									<maxlength>0</maxlength>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="m_staticText131">
+									<label>Log File</label>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="log_file_text">
+									<size>220,-1</size>
 									<value></value>
 									<maxlength>0</maxlength>
 								</object>

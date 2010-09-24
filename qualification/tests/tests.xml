@@ -115,7 +115,7 @@
   <!-- Special tests -->
   <test serial="faketes" debug="true"
 	file="simple_example/test.xml" descrip="Simple Example" />
-    <test serial="faketes" debug="true"
+    <test serial="conttes" debug="true" 
 	file="simple_example/test_continuous.xml" descrip="Simple Example - Random" />
   <test serial="faketes" debug="true"
 	file="simple_example/test_timeout.xml" descrip="Test Timeout" />
