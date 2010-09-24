@@ -130,6 +130,8 @@ class ContinuousTestFrame(wx.Frame):
                 submit_stat = 'FAIL: %s' % msg
             else:
                 submit_stat = 'OK'
+        else:
+            results.write_results_to_file(temp = False, local_link = True)
 
         with open(self._log, 'ab') as f:
             log_csv = csv.writer(f)

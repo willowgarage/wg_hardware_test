@@ -460,7 +460,7 @@ class QualTestResult(object):
         self._shutdown_result = None
 
         self._start_time = start_time
-        self._start_time_filestr = self._start_time.strftime("%Y%m%d_%H%M")
+        self._start_time_filestr = self._start_time.strftime("%Y%m%d_%H%M%S")
         self._start_time_name = self._start_time.strftime("%Y/%m/%d %I:%M%p")
 
         self._item = qual_item
@@ -1036,7 +1036,9 @@ em { font-style: normal; font-weight: bold; }\
         # Add results as tar file
         if self._tar_filename is not None and self._tar_filename != '':
             part = MIMEBase('application', 'octet-stream')
-            part.set_payload( open(self._tar_filename, 'rb').read())
+            with open(self._tar_filename, 'rb') as f:
+                data = f.read()
+            part.set_payload( data )
             Encoders.encode_base64(part)
             part.add_header('Content-Disposition', 'attachment; filename="%s"' 
                             % os.path.basename(self._tar_filename))
