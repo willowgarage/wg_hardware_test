@@ -74,6 +74,7 @@ class ContinuousTestFrame(wx.Frame):
 
         # Input
         self._submit_box = xrc.XRCCTRL(self._cont_panel, 'submit_box')
+        self._pause_on_fail_box = xrc.XRCCTRL(self._cont_panel, 'pause_on_fail_box')
         self._abort_button = xrc.XRCCTRL(self._cont_panel, 'abort_button')
         self._abort_button.Bind(wx.EVT_BUTTON, self.abort)
 
@@ -96,6 +97,9 @@ class ContinuousTestFrame(wx.Frame):
         self._log_file_text.SetValue(basename)
 
         self.Bind(wx.EVT_CLOSE, self.on_close)
+
+    @property
+    def pause_on_fail(self): return self._pause_on_fail_box.IsChecked()
 
     def on_close(self, event):
         if event.CanVeto():
