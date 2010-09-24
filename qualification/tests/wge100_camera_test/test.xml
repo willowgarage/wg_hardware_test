@@ -1,6 +1,6 @@
 <test name="WGE100 Camera Test" id="wge100-test" >
   <instructions>instructions.html</instructions>
-  <subtest name="Program FPGA" timeout="15">program_firmware_ram.launch</subtest>
+  <subtest name="Program FPGA" timeout="25">program_firmware_ram.launch</subtest>
   <subtest name="Program Flash" timeout="120">program_firmware_ether.launch</subtest>
   <subtest name="Imager Model Check" timeout="15">check_imager_led.launch</subtest>
   <subtest name="Untriggered Self-Test" timeout="40">self_test_untriggered.launch</subtest>
