@@ -242,7 +242,7 @@ class ResultsPanel(wx.Panel):
     self._results_window.Freeze()
     self._results_window.SetPage(results.make_summary_page())
     self._results_window.Thaw()
-    self._dir_picker.SetPath(results._results_dir)
+    self._dir_picker.SetPath(results.results_dir)
 
   def on_submit(self, event):
     self._manager.submit_results(self._notesbox.GetValue(), self._dir_picker.GetPath())
@@ -690,10 +690,9 @@ class QualificationFrame(wx.Frame):
   ##\todo Move out of class, don't need class variables
   ##\brief Uses roslaunch_caller to launch file
   ##@param file str : Full path of launch script
-  def launch_file(self, file):
-    f = open(file, 'r')
-    launch_xml = f.read()
-    f.close()
+  def launch_file(self, filename):
+    with open(filename, 'r') as f:
+      launch_xml = f.read()
     
     return self.launch_script(launch_xml)
 
