@@ -611,6 +611,8 @@ class QualificationFrame(wx.Frame):
     if self.options.continuous: # Continue without human intervention
       if (msg.result == TestResultRequest.RESULT_PASS):
         self.subtest_result(True, '')
+      elif self._cont_frame.pause_on_fail: 
+        self.show_plots(sub_result)
       else:
         self.subtest_result(False, '')
     elif self.options.always_show_results:
@@ -633,7 +635,7 @@ class QualificationFrame(wx.Frame):
   ##\brief Records final result of subtest. 
   ##@param pass_bool bool : Operator passed or failed subtest
   ##@param operator_notes str : Notes operator gave about subtest
-  def subtest_result(self, pass_bool, operator_notes):
+  def subtest_result(self, pass_bool, operator_notes = ''):
     self.log('Subtest "%s" result: %s'%(self._current_test.subtests[self._subtest_index].get_name(), pass_bool))
     
     sub_result = self._results.get_subresult(self._subtest_index)
@@ -915,7 +917,7 @@ class QualificationFrame(wx.Frame):
     
     self._waiting_for_submit = True
 
-    if self._results is not None:
+    if self._results:
       self._results.write_results_to_file() # Write to temp dir
       panel.set_results(self._results)
     else:

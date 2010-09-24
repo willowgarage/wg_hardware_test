@@ -747,7 +747,7 @@
 	</object>
 	<object class="wxPanel" name="continuous_test_panel">
 		<style>wxTAB_TRAVERSAL</style>
-		<size>291,192</size>
+		<size>291,220</size>
 		<object class="wxFlexGridSizer">
 			<rows>2</rows>
 			<cols>1</cols>
@@ -762,19 +762,30 @@
 				<object class="wxBoxSizer">
 					<orient>wxHORIZONTAL</orient>
 					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALL</flag>
-						<border>5</border>
-						<object class="wxCheckBox" name="submit_box">
-							<label>Submit Logs</label>
-							<checked>0</checked>
-						</object>
-					</object>
-					<object class="spacer">
 						<option>1</option>
 						<flag>wxEXPAND</flag>
 						<border>5</border>
-						<size>0,0</size>
+						<object class="wxBoxSizer">
+							<orient>wxVERTICAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="submit_box">
+									<label>Submit Logs</label>
+									<checked>0</checked>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="pause_on_fail_box">
+									<label>Pause on Failure</label>
+									<checked>0</checked>
+								</object>
+							</object>
+						</object>
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
