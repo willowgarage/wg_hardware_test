@@ -81,6 +81,7 @@ class ContinuousTestFrame(wx.Frame):
         self._complete_text = xrc.XRCCTRL(self._cont_panel, 'completed_text')
         self._passed_text = xrc.XRCCTRL(self._cont_panel, 'passed_text')
         self._last_result_text = xrc.XRCCTRL(self._cont_panel, 'last_result_text')
+        self._log_file_text = xrc.XRCCTRL(self._cont_panel, 'log_file_text')
 
         self._last_result = 'N/A'
         self._total_tests = 0
@@ -92,7 +93,18 @@ class ContinuousTestFrame(wx.Frame):
         with open(self._log, 'wb') as f:
             log_csv = csv.writer(f)
             log_csv.writerow(['Time', 'Cycle#', 'Successes', 'Result', 'Tar Name', 'Submit OK', 'Summary'])
+        self._log_file_text.SetValue(basename)
 
+        self.Bind(wx.EVT_CLOSE, self.on_close)
+
+    def on_close(self, event):
+        if event.CanVeto():
+            wx.MessageBox("Press \"Abort\" to stop continuous testing", "Use Abort Button",
+                          wx.OK|wx.ICON_ERROR, self)
+            event.Veto()
+            return
+
+        self.Destroy()
 
     def abort(self, event):
         are_you_sure = wx.MessageDialog(self, "Are you sure you want to abort continuous testing?",

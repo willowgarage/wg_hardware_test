@@ -224,7 +224,7 @@ class SerialPanel(wx.Panel):
       return
 
     if not my_test.validate():
-      wx.MessageBox('Unable to load test data and parameters. Check file %s and try again.' % test_file,'Failed to load test', wx.OK|wx.ICON_ERROR, self)
+      wx.MessageBox('Unable to load test data and parameters. Check file and try again.','Failed to load test', wx.OK|wx.ICON_ERROR, self)
       return 
 
     if my_test.check_assembly and not self._check_assembly(serial):

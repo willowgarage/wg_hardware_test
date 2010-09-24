@@ -894,7 +894,7 @@ class QualificationFrame(wx.Frame):
     """
     self.options.continuous = False  
 
-    self._cont_frame.Close()
+    self._cont_frame.Close(True)
     self._cont_frame = None
 
   def _handle_continuous_results(self):
