@@ -295,7 +295,7 @@ class Test(object):
         name = elems[0].attributes['name'].value
 
       if (elems[0].attributes.has_key('timeout')):
-        timeout = int(pre_startup.attributes['timeout'].value)           
+        timeout = int(elems[0].attributes['timeout'].value)           
 
       self._shutdown_script = TestScript(launch, name, timeout)
                                         
