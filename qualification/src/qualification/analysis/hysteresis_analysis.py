@@ -268,9 +268,11 @@ def effort_analysis(params, data):
     result.values = []
     result.values.append(get_test_value('Positive Effort Avg', max_avg, params.pos_effort - tolerance, params.pos_effort + tolerance))
     result.values.append(get_test_value('Positive Effort SD', max_sd, '', sd_max))
+    result.values.append(get_test_value('Positive Effort SD Percent', sd_max_percent, '', params.sd_max))
 
     result.values.append(get_test_value('Negative Effort Avg', min_avg, params.neg_effort - tolerance, params.neg_effort + tolerance))
     result.values.append(get_test_value('Negative Effort SD', min_sd, '', sd_max))
+    result.values.append(get_test_value('Positive Effort SD Percent', sd_min_percent, '', params.sd_max))
 
     return result
 
