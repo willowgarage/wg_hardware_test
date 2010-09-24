@@ -1,0 +1,16 @@
+<launch> 
+  <node pkg="pr2_hardware_test_monitor" type="pr2_hw_test_monitor" name="monitor" output="screen" >
+    <rosparam command="load" file="$(find pr2_hardware_test_monitor)/test/config/ua_trans_listener.yaml" />
+  </node>
+
+  <!-- Need heartbeat in order to work -->
+  <node pkg="rostopic" type="rostopic" name="heartbeat_pub"
+        args="pub /heartbeat std_msgs/Empty -r 1" />
+
+  <!-- Asserts we are getting good data from the camera, motors, and transmissions -->
+  <test test-name="trans_error_flex" pkg="pr2_hardware_test_monitor"
+        name="trans_error_flex"
+        type="trans_error_test.py" time-limit="30" >
+    <param name="flex_error" value="true" type="bool" />
+  </test>
+</launch>
