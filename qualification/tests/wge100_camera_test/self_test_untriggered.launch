@@ -9,7 +9,7 @@
 
   <!-- Self Test -->
   <node pkg="qualification" type="run_selftest.py"
-        name="selftester" args="--add_ref" output="screen">
+        name="selftester" output="screen">
         <remap from="node_name" to="wge100_camera"/>
   </node>
 
