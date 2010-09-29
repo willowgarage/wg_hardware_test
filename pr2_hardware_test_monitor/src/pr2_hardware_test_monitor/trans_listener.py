@@ -66,7 +66,7 @@ WHEEL_OFFSET = 0.049
 ALLOWED_SLIP = 0.015 # (1.5cm/interval)
 UPDATE_INTERVAL = 0.25 
 
-class CasterPosition:
+class CasterPosition(object):
     def __init__(self, msg):
         self.turret = None
         self.l_wheel = None
@@ -111,7 +111,7 @@ def check_position(new, old):
     return True, r_err, l_err
 
 ##\brief Makes sure caster doesn't slip or drive forward
-class CasterSlipListener:
+class CasterSlipListener(object):
     def __init__(self):
         self._ok = True
         self._update_time = 0
@@ -229,7 +229,7 @@ class CasterSlipListener:
 
 
 ##\brief Monitors transmission of single PR2 joint
-class JointTransmissionListener():
+class JointTransmissionListener(object):
     def __init__(self):
         self._ok = True
         self._num_errors = 0
