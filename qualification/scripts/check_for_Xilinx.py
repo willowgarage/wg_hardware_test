@@ -51,9 +51,6 @@ import sys
 if __name__ == "__main__":
     rospy.init_node(NAME)
     
-    ip = rospy.myargv()[1]
-    via = rospy.myargv()[2]
-
     r = ScriptDoneRequest()
 
     success = False
