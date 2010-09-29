@@ -959,8 +959,20 @@ class QualificationFrame(wx.Frame):
     if self._invent_client and self._invent_client.login():
       return self._invent_client
 
-    username = rospy.get_param('/invent/username', None)
-    password = rospy.get_param('/invent/password', None)
+    default_user = os.getenv('INVENT_USERNAME')
+    default_pass = os.getenv('INVENT_PASSWORD')
+    
+    if default_user and default_pass:
+      iv = Invent(default_user, default_pass)
+      if iv.login():
+        self._invent_client = iv
+
+        rospy.set_param('/invent/username', default_user)
+        rospy.set_param('/invent/password', default_pass)
+        return self._invent_client
+        
+    username = rospy.get_param('/invent/username', '')
+    password = rospy.get_param('/invent/password', '')
 
     if (username and password):
       invent = Invent(username, password)
