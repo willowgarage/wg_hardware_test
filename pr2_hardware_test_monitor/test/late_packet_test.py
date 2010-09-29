@@ -36,7 +36,8 @@
 ##\brief Tests that test monitor latches error state
 
 """
-This tests that a single dropped EtherCAT packet triggers an error.
+This tests that a single late EtherCAT packet is ignored by the 
+dropped packet check.
 """
 
 from __future__ import with_statement
@@ -66,7 +67,7 @@ def _ecat_diag(pkts = 0):
     stat.level = 0
     stat.message = 'OK'
     stat.values.append(KeyValue('Dropped Packets', str(pkts)))
-    stat.values.append(KeyValue('Late Packets', str(0)))
+    stat.values.append(KeyValue('Late Packets', str(pkts)))
 
     array.header.stamp = rospy.get_rostime()
     array.status.append(stat)
@@ -127,13 +128,15 @@ class TestDroppedPacket(unittest.TestCase):
             if rospy.get_time() - self._start > GRACE_TIME:
                 break
 
-        # Publish single dropped packet
+        # Publish single dropped AND LATE packet
         self._diag_pub.publish(_ecat_diag(2))
         self.motors_pub.publish(False)
         sleep(1.0)
 
         # Publish same status for 10 seconds
         for i in range(0, 10):
+            if rospy.is_shutdown():
+                raise Exception("Rospy shutdown")
             self._diag_pub.publish(_ecat_diag(2))
             self.motors_pub.publish(False)
             sleep(1.0)
@@ -144,9 +147,9 @@ class TestDroppedPacket(unittest.TestCase):
             self.assert_(self._last_msg is not None, "No data from test monitor")
             
             # Check that we're in error state
-            self.assert_(self._last_msg.test_ok == TestStatus.ERROR, "Test monitor reports that we're not in error state. Level: %d. Message: %s" % (self._last_msg.test_ok, self._last_msg.message))
+            self.assert_(self._last_msg.test_ok == TestStatus.RUNNING, "Test monitor reports that we're not in error state. Level: %d. Message: %s" % (self._last_msg.test_ok, self._last_msg.message))
             # Check that snapshot trigger was called
-            self.assert_(self._snapped, "Snapshot trigger wasn't called, but we did halt")
+            self.assert_(not self._snapped, "Snapshot trigger was called")
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == '-v':

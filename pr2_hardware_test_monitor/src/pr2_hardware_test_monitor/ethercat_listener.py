@@ -85,6 +85,9 @@ class EthercatListener(PR2HWListenerBase):
         self._dropped_cnt = 0
         self._last_drop_time = 0 # Use rospy.get_time()
 
+        self._late_pkt_cnt = 0
+        self._last_late_pkt_time = 0 # Use rospy.get_time()
+
         return True
 
     # Try twice to halt motors, using persistant service for one try
@@ -110,23 +113,42 @@ class EthercatListener(PR2HWListenerBase):
         except Exception, e:
             rospy.logerr('Unable to reset motors. pr2_etherCAT may have died')
 
+    def _update_dropped_packets(self, kv, now):
+        if not unicode(kv.value).isnumeric():
+            self._last_drop_time = now
+            rospy.logwarn('Unable to convert %s into integer. Unable to count dropped packets' % kv.value)
+            return
+
+        curr_drops = int(kv.value)
+        if curr_drops > self._dropped_cnt:
+            self._last_drop_time = now
+            
+            self._dropped_cnt = curr_drops        
+
+
+    def _update_late_packets(self, kv, now):
+        if not unicode(kv.value).isnumeric():
+            self._last_late_pkt_time = now
+            rospy.logwarn('Unable to convert %s into integer. Unable to count late packets' % kv.value)
+            return
+
+        curr_late_pkts = int(kv.value)
+        if curr_late_pkts > self._late_pkt_cnt:
+            self._last_late_pkt_time = now
+            
+            self._late_pkt_cnt = curr_late_pkts
+
+
     def _diag_cb(self, msg):
         with self._mutex:
+            now = rospy.get_time()
             for stat in msg.status:
                 if stat.name == 'EtherCAT Master':
                     for kv in stat.values:
                         if kv.key == 'Dropped Packets':
-                            if not unicode(kv.value).isnumeric():
-                                self._last_drop_time = rospy.get_time()
-                                rospy.logwarn('Unable to convert %s into integer. Unable to count dropped packets' % kv.value)
-                                break
-
-                            curr_drops = int(kv.value)
-                            if curr_drops > self._dropped_cnt:
-                                self._last_drop_time = rospy.get_time()
-                                
-                            self._dropped_cnt = curr_drops
-                            break
+                            self._update_dropped_packets(kv, now)
+                        elif kv.key == 'Late Packets':
+                            self._update_late_packets(kv, now)
 
 
     def _cal_cb(self, msg):
@@ -138,6 +160,12 @@ class EthercatListener(PR2HWListenerBase):
             self._ok = not msg.data
             self._update_time = rospy.get_time()
     
+    def _is_dropping_pkts(self):
+        now = rospy.get_time()
+        timeout = 5.0
+        return now - self._last_drop_time < timeout and now - self._last_late_pkt_time >= timeout
+            
+
     def check_ok(self):
         with self._mutex:
             msg = ''
@@ -146,9 +174,9 @@ class EthercatListener(PR2HWListenerBase):
                 stat = 1
                 msg = 'Uncalibrated'
 
-            # Warn if we've had a dropped packets in the last three seconds
-            if rospy.get_time() - self._last_drop_time < 3:
-                stat = 1
+            # Warn if we've had a dropped packets in the last five seconds
+            if self._is_dropping_pkts():
+                stat = 2
                 msg = 'Dropping Packets'
 
             if not self._ok:
