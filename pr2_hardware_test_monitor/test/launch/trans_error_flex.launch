@@ -1,4 +1,11 @@
-<launch> 
+<launch>
+  <param name="robot_description" command="$(find xacro)/xacro.py '$(find pr2_mechanism_diagnostics)/test/urdf/upperarm.urdf.xacro'" />
+  
+  <node pkg="pr2_mechanism_diagnostics" type="pr2_mechanism_diagnostics"
+        name="pr2_mechanism_diagnostics" >
+    <param name="init_trans_check"  value="true" />
+  </node>
+
   <node pkg="pr2_hardware_test_monitor" type="pr2_hw_test_monitor" name="monitor" output="screen" >
     <rosparam command="load" file="$(find pr2_hardware_test_monitor)/test/config/ua_trans_listener.yaml" />
   </node>
