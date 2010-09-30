@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # Software License Agreement (BSD License)
 #
-# Copyright (c) 2009, Willow Garage, Inc.
+# Copyright (c) 2010, Willow Garage, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -59,14 +59,6 @@ class TransListenerErrorTest(unittest.TestCase):
     def __init__(self, *args):
         super(TransListenerErrorTest, self).__init__(*args)
 
-        parser = OptionParser(usage="usage ./%prog [options]", 
-                              prog="trans_error_test.py")
-        # Option comes with rostest, will fail w/o this line
-        parser.add_option('--gtest_output', action="store",
-                          dest="gtest")
-        parser.add_option('--text', action="store_true",
-                          dest="text")
-
         self._mutex = threading.Lock()
         rospy.init_node('test_trans_listener_error')
         self._ignore_time = 5 # Ignore values for about 5 seconds
@@ -80,8 +72,7 @@ class TransListenerErrorTest(unittest.TestCase):
 
         self._start_time = rospy.get_time()
 
-        options, args = parser.parse_args(rospy.myargv())
-
+ 
         rospy.Subscriber('test_status', TestStatus, self.cb)
 
         self.mech_pub = rospy.Publisher('mechanism_statistics', MechanismStatistics)
