@@ -61,6 +61,7 @@ class PR2HardwareSimulator:
         self.cal_pub = rospy.Publisher('calibrated', Bool, latch=True)
         self.ecstat_pub = rospy.Publisher('ecstats', ecstats)
         self.mech_pub = rospy.Publisher('mechanism_statistics', MechanismStatistics)
+        self.trans_pub = rospy.Publisher('pr2_mechanism_diagnostics/transmission_status', Bool, latch = True)
 
         self._reset_srv = rospy.Service('pr2_etherCAT/reset_motors', Empty, self.on_reset)
         self._halt_srv = rospy.Service('pr2_etherCAT/halt_motors', Empty, self.on_halt)
@@ -135,6 +136,8 @@ class PR2HardwareSimulator:
         mech_st.header.stamp = rospy.get_rostime()
 
         self.mech_pub.publish(mech_st)
+
+        self.trans_pub.publish(ok)
 
     def _publish_ecstats(self):
         self._total_sent += 20
