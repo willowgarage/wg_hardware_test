@@ -216,11 +216,16 @@ class Invent(object):
 
     return rv
 
+  def getItemReferences(self, key):
+    import warnings
+    warnings.warn('Using deprecated getItemRefences in wg_invent_client/Invent', DeprecationWarning, stacklevel = 2)
+    return self.get_item_references(key)
+
   ## Return any references to an item. References are grouped by
   ## name, and are stored as NAME:REFERENCE,... under each item.
   ##@param key str : Serial number of item
   ##@return { str : str } : { name, reference }
-  def getItemReferences(self, key):
+  def get_item_references(self, key):
     self.login()
 
     key = key.strip()
