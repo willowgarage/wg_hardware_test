@@ -601,14 +601,14 @@ em { font-style:normal; font-weight: bold; }\
             rospy.logerr('Unable to submit to invent. %s' % traceback.format_exc())
             return False
 
-    def _get_total_hours(self):
+    def _get_total_hours(self, iv):
         """
         Returns string of total hours that this device has run under this
         test. Hours from previous tests are pulled from Invent. 
 
         \return str : Hours, to 0.1 hour precision. Ex: "10.2"
         """
-        self._check_invent_hours()
+        self._check_invent_hours(iv)
         return str(_get_hrs(self._cum_seconds + self._invent_hrs_base * 3600.))
         
 
@@ -629,7 +629,7 @@ em { font-style:normal; font-weight: bold; }\
         self._last_invent_time = rospy.get_time()
 
         iv.setKV(self._serial, self._test.name + ' Hours', 
-                 self._get_total_hours())
+                 self._get_total_hours(iv))
 
         hrs_str = self.get_active_str()
 
