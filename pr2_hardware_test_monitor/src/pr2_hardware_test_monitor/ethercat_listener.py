@@ -88,6 +88,8 @@ class EthercatListener(PR2HWListenerBase):
         self._late_pkt_cnt = 0
         self._last_late_pkt_time = 0 # Use rospy.get_time()
 
+        self._recent_dropped_packets = 0
+
         return True
 
     # Try twice to halt motors, using persistant service for one try
@@ -108,6 +110,7 @@ class EthercatListener(PR2HWListenerBase):
                 
 
     def reset(self):
+        self._recent_dropped_packets = 0
         try:
             self._reset_motors()
         except Exception, e:
@@ -121,10 +124,14 @@ class EthercatListener(PR2HWListenerBase):
 
         curr_drops = int(kv.value)
         if curr_drops > self._dropped_cnt:
-            self._last_drop_time = now
-            
-            self._dropped_cnt = curr_drops        
+            # If we've dropped within last hour, add to recent drops
+            if now - self._last_drop_time > 3600: 
+                self._recent_dropped_packets = 0
 
+            self._recent_dropped_packets += curr_drops - self._dropped_cnt
+            
+            self._last_drop_time = now
+            self._dropped_cnt = curr_drops        
 
     def _update_late_packets(self, kv, now):
         if not unicode(kv.value).isnumeric():
@@ -161,9 +168,21 @@ class EthercatListener(PR2HWListenerBase):
             self._update_time = rospy.get_time()
     
     def _is_dropping_pkts(self):
+        """
+        Check if we're dropping packets. 
+        A drop is true if:
+         * Recent dropped packets (within hour) > 1
+         * Last drop time within 5 seconds
+         * Last late time not within 5 seconds
+        Should halt if we drop more than one packet per hour
+         
+        @return bool : True if dropping packets
+        """
         now = rospy.get_time()
         timeout = 5.0
-        return now - self._last_drop_time < timeout and now - self._last_late_pkt_time >= timeout
+        return self._recent_dropped_packets > 1 and \
+            now - self._last_drop_time < timeout and \
+            now - self._last_late_pkt_time >= timeout
             
 
     def check_ok(self):

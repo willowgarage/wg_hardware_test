@@ -134,7 +134,7 @@ class TestDroppedPacket(unittest.TestCase):
 
         # Publish same status for 10 seconds
         for i in range(0, 10):
-            self._diag_pub.publish(_ecat_diag(2))
+            self._diag_pub.publish(_ecat_diag(1))
             self.motors_pub.publish(False)
             sleep(1.0)
 
@@ -144,9 +144,9 @@ class TestDroppedPacket(unittest.TestCase):
             self.assert_(self._last_msg is not None, "No data from test monitor")
             
             # Check that we're in error state
-            self.assert_(self._last_msg.test_ok == TestStatus.ERROR, "Test monitor reports that we're not in error state. Level: %d. Message: %s" % (self._last_msg.test_ok, self._last_msg.message))
+            self.assert_(self._last_msg.test_ok == TestStatus.RUNNING, "Test monitor reports that we're not in error state. Level: %d. Message: %s" % (self._last_msg.test_ok, self._last_msg.message))
             # Check that snapshot trigger was called
-            self.assert_(self._snapped, "Snapshot trigger wasn't called, but we did halt")
+            self.assert_(not self._snapped, "Snapshot trigger was called, but we didn't halt")
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == '-v':
