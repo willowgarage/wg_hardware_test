@@ -761,7 +761,7 @@ class TestMonitorPanel(wx.Panel):
             wx.MessageBox('Unable to launch on machine %s. Unknown exception' % bay.machine,
                           'Unknown Launching Exception', wx.OK|wx.ICON_ERROR)
             import traceback
-            update_test_record(traceback.format_exc())
+            self.update_test_record(traceback.format_exc())
             return False
 
         ssh.close()
