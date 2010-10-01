@@ -43,6 +43,7 @@ rosbuild_add_rostest(test/launch/cam_warn_test.launch)
 
 # Test for dropped packets 
 rosbuild_add_rostest(test/launch/dropped_packet_test.launch)
+rosbuild_add_rostest(test/launch/single_dropped_packet_test.launch)
 rosbuild_add_rostest(test/launch/late_packet_test.launch)
 
 # Test transmission listener
