@@ -158,11 +158,11 @@ class FakeTestFrame(wx.Frame):
         self._level_choice.SetSelection(val)
 
     def set_enum_ctrl(self):
-        enum_param = rospy.get_param('test_choice')
+        enum_param = rospy.get_param('test_choice', 'A')
         self.enum_param_ctrl.SetValue(enum_param)
 
     def set_range_ctrl(self):
-        range_param = rospy.get_param('cycle_rate')
+        range_param = rospy.get_param('cycle_rate', 1.0)
         self.range_param_ctrl.SetValue(range_param)
 
     def on_timer(self, event = None):
