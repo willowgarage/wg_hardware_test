@@ -42,7 +42,9 @@
   
   <!-- Head pan/tilt -->
   <config serial="6804040" 
-	  file="head_conf.launch" descrip="Head" />
+	  file="head_conf.launch" descrip="Head MCB's" />
+  <config serial="6804040"
+	  file="led_projector_conf.launch" descrip="Projector Board" />
 
   <!-- Laser tilt -->
   <config serial="6804001" 
