@@ -62,6 +62,7 @@ class FakeTestFrame(wx.Frame):
         
         self.diag_pub = rospy.Publisher('/diagnostics', DiagnosticArray)
         self.mech_pub = rospy.Publisher('mechanism_statistics', MechanismStatistics)
+        self.trans_pub = rospy.Publisher('pr2_mechanism_diagnostics/transmission_status', Bool)
         self.motors_pub = rospy.Publisher('pr2_etherCAT/motors_halted', Bool)
 
         self._start_time = rospy.get_time()
@@ -142,6 +143,7 @@ class FakeTestFrame(wx.Frame):
         mech_st.actuator_statistics = [ act_st, cont_act_st ]
         mech_st.joint_statistics = [ jnt_st, cont_st ]
 
+        self.trans_pub.publish(self._cal_box.IsChecked())
         self.mech_pub.publish(mech_st)
   
     def on_halt(self, srv):
@@ -191,6 +193,7 @@ class FakeTestFrame(wx.Frame):
 
         halted = Bool()
         halted.data = level != 0
+
         self.motors_pub.publish(halted)
             
 
