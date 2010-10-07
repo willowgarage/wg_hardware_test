@@ -158,7 +158,7 @@ class TestRecord(object):
     Updates CSV record with state changes for a test    
     
     """
-    def __init__(self, test, serial, file_path = None):
+    def __init__(self, test, serial, file_path = None, csv_name = None):
         """
         @param test LifeTest : Test type, params
         @param serial str : Serial number of DUT
@@ -193,8 +193,12 @@ class TestRecord(object):
             if param.rate:
                 self._cum_data[param.name] = 0
 
-        csv_name = str(self._serial) + '_' + format_localtime_file(self._start_time) + \
-            '_' + self._test.name + '.csv'
+        if not csv_name:
+            csv_name = str(self._serial) + '_' + format_localtime_file(self._start_time) + \
+                '_' + self._test.name + '.csv'
+        if not csv_name.endswith('.csv'):
+            csv_name += '.csv'
+
         csv_name = csv_name.replace(' ', '_').replace('/', '-')
 
         if not file_path:
@@ -207,9 +211,11 @@ class TestRecord(object):
 
         self.log_file = os.path.join(file_path, csv_name)
 
-        with open(self.log_file, 'ab') as f:
-            log_csv = csv.writer(f)
-            log_csv.writerow(_get_csv_header_lst(self._test.params))
+        # Write header if file doesn't already exist
+        if not os.path.exists(self.log_file):
+            with open(self.log_file, 'ab') as f:
+                log_csv = csv.writer(f)
+                log_csv.writerow(_get_csv_header_lst(self._test.params))
 
         self._has_checked_invent = False
         self._invent_hrs_base = 0.0
