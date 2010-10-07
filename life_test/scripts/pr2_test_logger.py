@@ -48,16 +48,21 @@ from optparse import OptionParser
 from wg_invent_client import Invent
 
 class PR2TestLogger:
-    def __init__(self, robot_serial, iv):
-        my_test = LifeTest('PR2', 'PR2 Burn in Test', 'PR2 Burn', 1, 'PR2 Burn in Test',
-                           'Burn in', 'pr2_test/pr2_burn_in_test.launch', False, [])
-        self._record = TestRecord(my_test, robot_serial)
+    def __init__(self, robot_serial, iv, output_file = None, submit = True):
+        my_test = LifeTest(short='PR2', testid='pr2-burn-test', name='PR2 Burn in Test', 
+                           desc='PR2 Burn in Test', serial='6802967',
+                           duration=1, launch_script='pr2_test/pr2_burn_in_test.launch', 
+                           test_type='Burn in', power=False)
+
+        self._out_file = output_file
+        self._record = TestRecord(my_test, robot_serial, csv_name = self._out_file)
 
         self._mutex = threading.Lock()
 
         self._iv = iv
         self._serial = robot_serial
         self._closed = False
+        self._submit = submit
 
         self._record.update(False, False, False, 'Started Logging', '')
 
@@ -76,7 +81,11 @@ class PR2TestLogger:
             print >> sys.stderr, "No robot burn in data record. Unable to log to inventory system"
             return
 
-        self._record.update(False, False, False, '', '')
+        self._record.update(False, False, False, 'Stopping robot', '')
+
+        if not self._submit:
+            print "Log recorded: %s. Not submitting to Invent" % self._record.log_file
+            return
 
         if self._record.load_attachments(self._iv):
             print 'Submitted log to inventory system'
@@ -94,31 +103,33 @@ if __name__ == '__main__':
     parser.add_option('-r', '--robot', action="store", dest="robot",
                       default=None, metavar="ROBOT",
                       help="Robot SN (10XX) to store data.")
+    parser.add_option('-o', '--output', action="store", dest="output",
+                      default=None, metavar="OUTPUT_FILE",
+                      help="Log file to store data. Appended to existing file")
+    parser.add_option('-n', '--no-submit', action="store_true", dest="no_submit",
+                      default=False, help="Don't submit to Inventory system")
     
     options,args = parser.parse_args()
-    if not options.username:
+    if not options.username and not options.no_submit:
         parser.error("Must provide username to WG inverntory system")
     if not options.robot:
         parser.error("Must provide valid robot SN to log")
 
     robot = '68029670' + options.robot
     
-    if not len(robot) == 12:
-        parser.error("%s is not a valid robot serial number" % options.robot)
+    if not options.no_submit:
+        print 'Enter your password to the Willow Garage Inventory system'
+        my_pass = getpass.getpass()
 
-
-    print 'Enter your password to the Willow Garage Inventory system'
-    my_pass = getpass.getpass()
-
-    iv = Invent(options.username, my_pass)
-    if not iv.login():
-        parser.error("Must provide valid username and password to WG inventory system")
-    if not iv.check_serial_valid(robot):
-        parser.error("Robot serial number %s is invalid" % options.robot)
+        iv = Invent(options.username, my_pass)
+        if not iv.login():
+            parser.error("Must provide valid username and password to WG inventory system")
+        if not iv.check_serial_valid(robot):
+            parser.error("Robot serial number %s is invalid" % options.robot)
     
-    rospy.init_node('pr2_test_logger', disable_signals = True)
+    rospy.init_node('pr2_test_logger') # , disable_signals = True)
 
-    pr2_logger = PR2TestLogger(robot, iv)
+    pr2_logger = PR2TestLogger(robot, iv, options.output, not options.no_submit)
     rospy.on_shutdown(pr2_logger.close)
     
     print "Logging PR2 burn in test status..."
@@ -130,3 +141,4 @@ if __name__ == '__main__':
     except Exception, e:
         import traceback
         traceback.print_exc()
+        pr2_logger.close()
