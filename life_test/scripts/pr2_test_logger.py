@@ -126,7 +126,9 @@ if __name__ == '__main__':
             parser.error("Must provide valid username and password to WG inventory system")
         if not iv.check_serial_valid(robot):
             parser.error("Robot serial number %s is invalid" % options.robot)
-    
+    else:
+        iv = None
+
     rospy.init_node('pr2_test_logger') # , disable_signals = True)
 
     pr2_logger = PR2TestLogger(robot, iv, options.output, not options.no_submit)
