@@ -36,7 +36,7 @@
 ##\brief Tests that test monitor latches error state
 
 """
-This tests that a single dropped EtherCAT packet triggers a warning.
+This tests that a single dropped EtherCAT packet triggers an error.
 """
 
 from __future__ import with_statement
@@ -66,6 +66,7 @@ def _ecat_diag(pkts = 0):
     stat.level = 0
     stat.message = 'OK'
     stat.values.append(KeyValue('Dropped Packets', str(pkts)))
+    stat.values.append(KeyValue('Late Packets', str(0)))
 
     array.header.stamp = rospy.get_rostime()
     array.status.append(stat)
@@ -101,7 +102,8 @@ class TestDroppedPacket(unittest.TestCase):
         self.cal_pub = rospy.Publisher('calibrated', Bool, latch=True)
 
     def on_halt(self, srv):
-        pass
+        return EmptyResponse()
+
 
     def _snap_cb(self, msg):
         self._snapped = True
@@ -126,7 +128,7 @@ class TestDroppedPacket(unittest.TestCase):
                 break
 
         # Publish single dropped packet
-        self._diag_pub.publish(_ecat_diag(2))
+        self._diag_pub.publish(_ecat_diag(1))
         self.motors_pub.publish(False)
         sleep(1.0)
 
@@ -141,14 +143,10 @@ class TestDroppedPacket(unittest.TestCase):
 
             self.assert_(self._last_msg is not None, "No data from test monitor")
             
-            # Check that message level is OK
-            self.assert_(self._last_msg.test_ok == TestStatus.RUNNING, "Test monitor reports that we're not running. Level: %d. Message: %s" % (self._last_msg.test_ok, self._last_msg.message))
-
-            # Check that we went into warning state
-            self.assert_(self._max_lvl == TestStatus.WARNING, "We didn't get warning message from the ecat listener. Max level: %d" % self._max_lvl)
-
+            # Check that we're in error state
+            self.assert_(self._last_msg.test_ok == TestStatus.ERROR, "Test monitor reports that we're not in error state. Level: %d. Message: %s" % (self._last_msg.test_ok, self._last_msg.message))
             # Check that snapshot trigger was called
-            self.assert_(not self._snapped, "Snapshot trigger was called, but we didn't halt")
+            self.assert_(self._snapped, "Snapshot trigger wasn't called, but we did halt")
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == '-v':

@@ -69,7 +69,9 @@ RESULTS_DIR = result_dir.RESULTS_DIR
 
 def _get_csv_header_lst(params):
     """
-    @brief Returns header to a CSV log file as a list
+    Returns header to a CSV log file as a list
+    @param params [ TestParam ] : Test parameters
+    @return [ str ] : Header items
     """
     hdr = [ 'Time', 'Status', 'Message', 'Monitor Status', 'Elapsed', 
             'Cum. Time', 'Num. Halts', 'Num. Events' ]
@@ -83,6 +85,9 @@ def _get_csv_header_lst(params):
     return hdr
 
 def _alert_prefix(lvl):
+    """
+    Return email subject prefix based on status level
+    """
     if lvl == 2:
         return '--Test Alert--'
     if lvl > 2:
@@ -91,9 +96,21 @@ def _alert_prefix(lvl):
 
 class LogEntry(object):
     """
-    @brief Entry in test log. Gets written to CSV output file.
+    Entry in test log. Gets written to CSV output file.
     """
     def __init__(self, stamp, elapsed, cum_time, status, message, monitor_msg, params, halts, events, note):
+        """
+        @param stamp float : Timestamp
+        @param elapsed float : Seconds elapsed since start
+        @param cum_time float : Cumulative (running) time
+        @param status str : Status string
+        @param message str : Message from manager
+        @param monitor_msg str : Message from test monitor
+        @param params [ TestParam ] : Values of parameters
+        @param halts int : Number of halts
+        @param events int : Number of events
+        @param note str : Note from user
+        """
         self.stamp = stamp
 
         self.status = status
@@ -110,6 +127,10 @@ class LogEntry(object):
         self.events = events
 
     def write_to_lst(self):
+        """
+        Write data to list, to be written to CSV
+        @return [ str ] : List of all items
+        """
         lst = [ format_localtime(self.stamp), self.status, self.message, self.monitor_msg,
                 get_duration_str(self.elapsed), 
                 get_duration_str(self.cum_time), self.halts, self.events ]
@@ -124,7 +145,12 @@ class LogEntry(object):
 
     
 def _get_hrs(seconds):
-    hrsx10 = seconds % 360
+    """
+    Converts seconds to hours to 0.1 hours precision
+    @param seconds : Seconds 
+    @return float : Hours to 0.1 decimal places
+    """
+    hrsx10 = int(seconds / 360)
     return hrsx10 / 10.
 
 class TestRecord(object):
@@ -132,10 +158,11 @@ class TestRecord(object):
     Updates CSV record with state changes for a test    
     
     """
-    def __init__(self, test, serial, file_path = None):
+    def __init__(self, test, serial, file_path = None, csv_name = None):
         """
         @param test LifeTest : Test type, params
         @param serial str : Serial number of DUT
+        @param file_path str : File path of out. Used for unit testing.
         """
         self._start_time = rospy.get_time()
         self._cum_seconds = 0
@@ -166,8 +193,12 @@ class TestRecord(object):
             if param.rate:
                 self._cum_data[param.name] = 0
 
-        csv_name = str(self._serial) + '_' + format_localtime_file(self._start_time) + \
-            '_' + self._test.name + '.csv'
+        if not csv_name:
+            csv_name = str(self._serial) + '_' + format_localtime_file(self._start_time) + \
+                '_' + self._test.name + '.csv'
+        if not csv_name.endswith('.csv'):
+            csv_name += '.csv'
+
         csv_name = csv_name.replace(' ', '_').replace('/', '-')
 
         if not file_path:
@@ -180,9 +211,11 @@ class TestRecord(object):
 
         self.log_file = os.path.join(file_path, csv_name)
 
-        with open(self.log_file, 'ab') as f:
-            log_csv = csv.writer(f)
-            log_csv.writerow(_get_csv_header_lst(self._test.params))
+        # Write header if file doesn't already exist
+        if not os.path.exists(self.log_file):
+            with open(self.log_file, 'ab') as f:
+                log_csv = csv.writer(f)
+                log_csv.writerow(_get_csv_header_lst(self._test.params))
 
         self._has_checked_invent = False
         self._invent_hrs_base = 0.0
@@ -430,6 +463,10 @@ em { font-style:normal; font-weight: bold; }\
         return '\n'.join(html)
 
     def _make_test_info_table(self):
+        """
+        Writes HTML table of test info
+        @return str : HTML table   
+        """
         html = ['<table border="1" cellpadding="2" cellspacing="0">']
         html.append(write_table_row(['Test Name', self._test.name]))
         if self._bay:
@@ -446,10 +483,11 @@ em { font-style:normal; font-weight: bold; }\
 
         return '\n'.join(html)
 
-    ##\brief Writes HTML table of last state of test
-    ##
-    ##\return str : HTML table 
     def _write_table(self):
+        """
+        Writes HTML table of last state of test
+        @return str : HTML table   
+        """
         html = ['<table border="1" cellpadding="2" cellspacing="0">']
         time_str = format_localtime(self._start_time)
         html.append(write_table_row(['Start Time', time_str]))
@@ -465,10 +503,11 @@ em { font-style:normal; font-weight: bold; }\
 
         return '\n'.join(html)
 
-    ##\brief Writes HTML table of test events and messages
-    ##
-    ##\return str : HTML table
     def _write_summary_log(self):
+        """
+        Writes HTML table of test events and messages
+        @return str : HTML table
+        """
         if len(self._log_entries) == 0:
             return '<p>No test log.</p>\n'
 
@@ -487,8 +526,12 @@ em { font-style:normal; font-weight: bold; }\
 
         return '\n'.join(html)
 
-    ##\brief Writes full log to HTML table form
+    ##\brief 
     def write_log(self):
+        """
+        Writes full log to HTML table form
+        @return str : Log of test
+        """
         html = [ '<html>' ]
 
         html.append('<table border="1" cellpadding="2" cellspacing="0">')
@@ -539,14 +582,15 @@ em { font-style:normal; font-weight: bold; }\
         """
         Checks Invent for  the number of hours that the test has run, 
         from Invent. Invent stores this data as a Key-Value for the item.
+        Updates self._invent_hrs_base with data
         """
         if self._has_checked_invent:
             return
 
         if not iv.login():
-            return 0.0
+            return
 
-        hrs_str = iv.getKV(self._serial, self._test.name + ' Hours')
+        hrs_str = iv.getKV(self._serial, self._test.id + ' Hours')
         if not hrs_str:
             self._has_checked_invent = True
             return
@@ -559,6 +603,11 @@ em { font-style:normal; font-weight: bold; }\
 
 
     def _load_attachments(self, iv):
+        """
+        Load attachments to Invent
+        @raise Exception : Exception from Invent 
+        @return bool : True if loaded successfully
+        """
         hrs_str = self.get_active_str()
         note = "%s finished. Total active time: %s." % (self._test.name, hrs_str)
         
@@ -587,7 +636,7 @@ em { font-style:normal; font-weight: bold; }\
         Loads data as "test".
 
         @param iv Invent : Invent client, to load 
-        \return bool : True if loaded successfully
+        @return bool : True if loaded successfully
         """
         try:
             if self.get_cum_time() == 0:
@@ -601,14 +650,14 @@ em { font-style:normal; font-weight: bold; }\
             rospy.logerr('Unable to submit to invent. %s' % traceback.format_exc())
             return False
 
-    def _get_total_hours(self):
+    def _get_total_hours(self, iv):
         """
         Returns string of total hours that this device has run under this
         test. Hours from previous tests are pulled from Invent. 
 
         \return str : Hours, to 0.1 hour precision. Ex: "10.2"
         """
-        self._check_invent_hours()
+        self._check_invent_hours(iv)
         return str(_get_hrs(self._cum_seconds + self._invent_hrs_base * 3600.))
         
 
@@ -628,8 +677,9 @@ em { font-style:normal; font-weight: bold; }\
 
         self._last_invent_time = rospy.get_time()
 
-        iv.setKV(self._serial, self._test.name + ' Hours', 
-                 self._get_total_hours())
+        total_hours = self._get_total_hours(iv)
+        iv.setKV(self._serial, self._test.id + ' Hours', 
+                 total_hours)
 
         hrs_str = self.get_active_str()
 

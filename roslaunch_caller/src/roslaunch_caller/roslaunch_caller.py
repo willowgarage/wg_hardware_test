@@ -45,6 +45,27 @@ import roslaunch.config
 
 import rospy
 
+
+
+# Hot patch to shut down XmlRpcNode properly, #4739
+##@todo Wait until roslib is patched with ROS r11219 to remove this
+import roslib.xmlrpc
+def my_shutdown(self, reason):
+    """
+    Terminate i/o connections for this server.
+    @param reason: human-readable debug string
+    @type  reason: str
+    """
+    if self.server:
+        server = self.server
+        handler = self.handler
+        self.handler = self.server = self.port = self.uri = None
+        if handler:
+            handler._shutdown(reason)
+        if server:
+            server.socket.close()
+            server.server_close()
+
 ## ScriptRoslaunch is a specialization of the roslaunch parent for
 ## using the roslaunch API. It allows registration of a process listener with
 ## the launched parent and also overrides the default roslaunch config
@@ -57,6 +78,8 @@ class ScriptRoslaunch(roslaunch.parent.ROSLaunchParent):
     ## @param process_listener (optional): process listener to
     ## register with roslaunch
     def __init__(self, launch_str, process_listener=None):
+        roslib.xmlrpc.XmlRpcNode.shutdown = my_shutdown
+
         self.launch_strs = [launch_str]
         # use run_id from parent
         run_id = rospy.get_param('/run_id')

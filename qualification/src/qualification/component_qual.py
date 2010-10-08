@@ -43,7 +43,7 @@ import os
 import sys
 import socket
 import wx
-import time
+#import time
 from wx import xrc
 from wx import html
 
@@ -65,6 +65,7 @@ class ConfigObject(QualTestObject):
 class ComponentQualOptions(QualOptions):
   def __init__(self):
     QualOptions.__init__(self)
+
 
 ## Allows user to choose which component to test and which test to run
 class SerialPanel(wx.Panel):
@@ -223,7 +224,7 @@ class SerialPanel(wx.Panel):
       return
 
     if not my_test.validate():
-      wx.MessageBox('Unable to load test data and parameters. Check file %s and try again.' % test_file,'Failed to load test', wx.OK|wx.ICON_ERROR, self)
+      wx.MessageBox('Unable to load test data and parameters. Check file and try again.','Failed to load test', wx.OK|wx.ICON_ERROR, self)
       return 
 
     if my_test.check_assembly and not self._check_assembly(serial):
@@ -351,6 +352,7 @@ class ComponentQualFrame(QualificationFrame):
     if self.options.debug:
       self._debug_menu = wx.Menu()
       self._debug_menu.Append(5005, "Abort Subtest")
+      self._debug_menu.Append(5001, "Continuous Testing")
       menubar.Append(self._debug_menu, "Debug Mode")
 
     self.SetMenuBar(menubar)
@@ -417,6 +419,10 @@ class ComponentQualFrame(QualificationFrame):
     if (event.GetEventObject() == self._debug_menu):
       if (event.GetId() == 5005):
         self.abort_active_test(True)
+      if (event.GetId() == 5001):
+        self.start_continuous_testing()
+
+
 
   def abort_active_test(self, can_veto):
     if can_veto:
@@ -486,6 +492,8 @@ class ComponentQualFrame(QualificationFrame):
     rospy.set_param('/qualification/powerboard/0', my_station.breaker0)
     rospy.set_param('/qualification/powerboard/1', my_station.breaker1)
     rospy.set_param('/qualification/powerboard/2', my_station.breaker2)
+
+    my_station.set_envs()
 
     try:
       machine_addr = socket.gethostbyname(my_station.test_host)

@@ -100,6 +100,7 @@ class QualificationApp(wx.App):
             self._splash.Destroy()
 
 if __name__ == '__main__':
+    os.environ['ROSLAUNCH_SSH_UNKNOWN'] = '1'
     try:
         app = QualificationApp()
         app.MainLoop()

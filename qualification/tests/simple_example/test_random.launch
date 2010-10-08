@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="qualification" name="passing_node"
+        type="analyzer_node.py" args="random" />
+</launch>

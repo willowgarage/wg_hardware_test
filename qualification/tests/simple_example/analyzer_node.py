@@ -41,14 +41,14 @@ from std_srvs.srv import Empty
 from pr2_self_test_msgs.srv import TestResult, TestResultRequest
 from pr2_self_test_msgs.msg import Plot, TestParam, TestValue
 import time
-
+import random
 import rospy
 
 import matplotlib.pyplot as plt
 from StringIO import StringIO
 
 if (len(sys.argv) <= 1):
-  rospy.logerr('Must specify one of pass/fail/human')
+  rospy.logerr('Must specify one of pass/fail/human/random')
   sys.exit(0)
 
 rospy.init_node("test_analyzer")
@@ -72,13 +72,24 @@ r.values.append(TestValue('Effort', '4.0', '2.0', '5.0'))
 r.values.append(TestValue('Low Range', '-2.0', '', '-1.5'))
 r.values.append(TestValue('High Range', '2.0', '1.5', ''))
 
+my_arg = sys.argv[1]
 
-if (sys.argv[1] == "pass"):
+# Randomly generate result if given random keyword
+if my_arg == "random":
+  val = random.randint(0, 2)
+  if val == 0:
+    my_arg = "pass"
+  elif val == 1:
+    my_arg = "fail"
+  else:
+    my_arg = "human"
+
+if (my_arg == "pass"):
   r.html_result = "<p>Test succeeded.</p>"
   r.text_summary = "Test passed."
   r.result = TestResultRequest.RESULT_PASS
   r.values.append(TestValue('Velocity', '2.0', '1.5', '2.5'))
-elif (sys.argv[1] == "fail"):
+elif (my_arg == "fail"):
   r.html_result = "<p>Test failed.</p>"
   r.result = TestResultRequest.RESULT_FAIL
   r.text_summary = "Test Failed."

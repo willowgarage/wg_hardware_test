@@ -46,6 +46,7 @@ roslib.load_manifest(PKG)
 from pr2_mechanism_msgs.msg import MechanismStatistics
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from std_srvs.srv import *
+from std_msgs.msg import Bool
 
 import rospy
 
@@ -66,7 +67,7 @@ WHEEL_OFFSET = 0.049
 ALLOWED_SLIP = 0.015 # (1.5cm/interval)
 UPDATE_INTERVAL = 0.25 
 
-class CasterPosition:
+class CasterPosition(object):
     def __init__(self, msg):
         self.turret = None
         self.l_wheel = None
@@ -111,7 +112,7 @@ def check_position(new, old):
     return True, r_err, l_err
 
 ##\brief Makes sure caster doesn't slip or drive forward
-class CasterSlipListener:
+class CasterSlipListener(object):
     def __init__(self):
         self._ok = True
         self._update_time = 0
@@ -229,7 +230,11 @@ class CasterSlipListener:
 
 
 ##\brief Monitors transmission of single PR2 joint
-class JointTransmissionListener():
+class JointTransmissionListener(object):
+    """
+    This class is not implemented and should be ignored. Do not use.
+    Replaced by transmission checking code in pr2_mechanism_diagnostics.
+    """
     def __init__(self):
         self._ok = True
         self._num_errors = 0
@@ -255,6 +260,7 @@ class JointTransmissionListener():
         self._last_falling = 0
         self._last_bad_reading = 0
 
+        raise NotImplementedExeception("JointTransmissionListener isn't supported")
 
     ## Mandatory params: actuator, joint, deadband
     def create(self, params):
@@ -498,8 +504,11 @@ class JointTransmissionListener():
 class TransmissionListener(PR2HWListenerBase):
     def __init__(self):
         self._joint_monitors = []
-        self._mech_sub = rospy.Subscriber('mechanism_statistics', MechanismStatistics, self._callback)
+        self._mech_sub = None
         self._halt_motors = rospy.ServiceProxy('pr2_etherCAT/halt_motors', Empty)
+
+        self._trans_sub = rospy.Subscriber('pr2_mechanism_diagnostics/transmission_status', Bool, self._trans_cb)
+        self._reset_trans = rospy.ServiceProxy('pr2_mechanism_diagnostics/reset_trans_check', Empty)
 
         self._mutex = threading.Lock()
         self._ok = True
@@ -511,20 +520,28 @@ class TransmissionListener(PR2HWListenerBase):
             if joint == 'type' or joint == 'file':
                 continue
 
+            # NOTE: Not creating JointTransmissionListeners because pr2_mechanism_diagnostics
+            # can do this for us.
             if joint == 'caster_slip':
                 joint_mon = CasterSlipListener()
-            else:
-                joint_mon = JointTransmissionListener()
-            if not joint_mon.create(joint_param):
-                rospy.logerr('Unable to create JointTransmissionListener')
-                return False
-            self._joint_monitors.append(joint_mon)
+                if not joint_mon.create(joint_param):
+                    rospy.logerr('Unable to create CasterSlipListener')
+                    return False
+                self._joint_monitors.append(joint_mon)
+
+        if self._joint_monitors:
+            self._mech_sub = rospy.Subscriber('mechanism_statistics', MechanismStatistics, self._callback)
+
         return True
+
+    def _trans_cb(self, msg):
+        with self._mutex:
+            self._last_msg_time = rospy.get_time()
+            self._ok = msg.data
         
     def _callback(self, msg):
         with self._mutex:
             self._last_msg_time = rospy.get_time()
-            self._diag_stats = []
             
             was_ok = self._ok
             
@@ -547,6 +564,11 @@ class TransmissionListener(PR2HWListenerBase):
             self._ok = True
             for joint_mon in self._joint_monitors:
                 joint_mon.reset()
+
+            try:
+                self._reset_trans()
+            except Exception, e:
+                rospy.logerr("Unable to reset tranmission checker")
             
     def check_ok(self):
         with self._mutex:
@@ -565,6 +587,5 @@ class TransmissionListener(PR2HWListenerBase):
             diag_stats = []
             for joint_mon in self._joint_monitors:
                 diag_stats.append(joint_mon.get_status())
-                
                 
         return status, msg, diag_stats

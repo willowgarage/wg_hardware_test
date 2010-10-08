@@ -55,7 +55,8 @@ class CasterCmd:
     def update(self):
         if self._count == 0:
             if self._left:
-                self.steer = -0.9 * STEER_VEL
+                # Slower steering velocity to make caster process
+                self.steer = -0.8 * STEER_VEL
             else:
                 self.steer = STEER_VEL
             self.drive = 0

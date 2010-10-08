@@ -32,65 +32,18 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import roslib
-roslib.load_manifest('qualification')
-
 import sys
-import rospy
-from std_srvs.srv import *
-from pr2_self_test_msgs.srv import *
-import std_msgs
-import rospy
-import subprocess
 import os
-import os.path
-
-rospy.init_node("load_firmware", anonymous=True)
-
-r = TestResultRequest()
-r.plots = []
 
 try:
-    impactdir=rospy.get_param("~impactdir")
-    url=rospy.get_param("~url")
+    impactdir = os.environ['IMPACTDIR']
+    url = os.environ['WGE100_CAMERA_URL']
 except:
     import traceback
     traceback.print_exc()
-#if (len(sys.argv) != 2):
-    #print >> sys.stderr, 'must specify impact directory (%i) args given'%len(sys.argv);
-    print >> sys.stderr, 'impactdir option must indicate impact project directory';
-    print >> sys.stderr, 'url option must indicate camera url';
-    r.html_result = "<p>Bad arguments to load_firmware.py.</p>"
-    r.text_summary = "Error in test."
-    r.result = TestResultRequest.RESULT_HUMAN_REQUIRED
-    print "error"
+    print >> sys.stderr, 'IMPACTDIR environment variable must indicate impact project directory';
+    print >> sys.stderr, 'WGE100_CAMERA_URL environment variable must indicate camera url';
+    raise
 else:
-    try:
-        os.chdir(impactdir);
-        p = subprocess.Popen(['rosrun', 'wge100_camera', 'upload_mcs', 'default.mcs', url], stdout=subprocess.PIPE)
-        upload_mcs_out = p.communicate()[0]
-    except Exception, e:
-        upload_mcs_out = str(e)
-   
-    upload_mcs_out = upload_mcs_out.replace('\n','<br>')
-
-    if '''Success!''' in upload_mcs_out:
-        r.text_summary = "Firmware download succeeded."
-        r.html_result = "<p>Test passed.</p><p>"+upload_mcs_out+"</p>" 
-        r.result = TestResultRequest.RESULT_PASS
-        print "pass"
-    else:
-        r.text_summary = "Firmware download failed."
-        r.result = TestResultRequest.RESULT_FAIL
-        r.html_result = "<p>Test Failed.</p><p>"+upload_mcs_out+"</p>"
-        print "fail"
-        print upload_mcs_out
-    
-result_service = rospy.ServiceProxy('test_result', TestResult)
-
-rospy.sleep(5);
-
-# block until the test_result service is available
-rospy.wait_for_service('test_result')
-result_service.call(r)
-
+    os.chdir(impactdir);
+    os.execlp('rosrun', 'rosrun', 'wge100_camera', 'upload_mcs', 'default.mcs', url)

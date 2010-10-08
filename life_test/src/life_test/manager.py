@@ -352,7 +352,7 @@ class TestManagerFrame(wx.Frame):
         elif self._debug and not self.load_invent_client():
             wx.MessageBox('Warning: Without inventory access, a lot of things won\'t really work.',
                           'No Inventory Access', wx.OK|wx.ICON_ERROR, self)
-            self._invent_client = Invent('', '')
+            self._invent_client = None
             
         if (not self._debug) and (not self._invent_client.check_serial_valid(serial)):
             wx.MessageBox('Serial number "%s" appears to be invalid. Re-enter the serial number and try again.' % (serial), 'Invalid Serial Number', wx.OK|wx.ICON_ERROR, self)
