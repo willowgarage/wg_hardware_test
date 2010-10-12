@@ -98,6 +98,16 @@
 	   val="0.5" rate="true" />
   </test>
 
+  <test serial="6804338" name="Shoulder Test" id="shoulder-burn"
+	short="Shoulder" duration="30"
+	desc="Tests shoulder with dummy UA."
+	rate="1.0" script="shoulder_test/test_gui.launch"
+	type="Burn-in Test" power="true" >
+    <param name="Cycle Rate" param_name="cycle_rate"
+	   desc="Rate"
+	   val="0.5" rate="true" />
+  </test>
+
   <test serial="6804139" name="Shoulder/UA Right Test" id="shoulder-ua-right-burn"
 	short="Shoulder/UA" duration="15"
 	desc="Tests shoulder, upper arm and dummy FA, configured as right arm. (Shoulder is used as test fixture)"
