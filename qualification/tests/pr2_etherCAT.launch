@@ -1,6 +1,9 @@
 <launch>
   <include file="$(find qualification)/tests/init.machine" />
 
+  <!-- 5000us timeout for late packets -->
+  <param name="pr2_etherCAT/realtime_socket_timeout" value="5000" />
+  
   <!-- pr2_etherCAT -->
   <node machine="test_host" pkg="pr2_etherCAT" name="pr2_etherCAT"
         launch-prefix="pr2_grant" 

@@ -1,4 +1,7 @@
 <launch>
+  <!-- 5000us timeout for late packets -->
+  <param name="pr2_etherCAT/realtime_socket_timeout" value="5000" />
+
   <!-- Launch pr2_etherCAT on test host, as root -->
   <node machine="test_host" pkg="pr2_etherCAT" type="pr2_etherCAT"
         launch-prefix="pr2_grant"
