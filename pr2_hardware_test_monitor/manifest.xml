@@ -1,5 +1,6 @@
 <package>
   <description brief="Utilities for monitoring status of PR2 during hardware testing" >
+    Test monitoring utilities for runtime monitoring of PR2 component testing.
   </description>
   <author>Kevin Watts</author>
   <license>BSD</license>

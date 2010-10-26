@@ -33,10 +33,16 @@
 #
 
 ##\author Kevin Watts
-##\brief Tests that test monitor latches error state
+##\brief Tests that test monitor detects dropped packets
+
 
 """
-This tests that a single dropped EtherCAT packet triggers an error.
+This tests that dropped etherCAT packets are detected as errors or
+ignored depending on late packets. This simulates diagnostics data from
+"EtherCAT Master" and checks the output from the test monitor.
+
+From #4848: If net drops > 10 per hour, this is a failure.
+"net drops" = dropped packets - late packets
 """
 
 from __future__ import with_statement
@@ -59,14 +65,19 @@ import threading
 GRACE_TIME = 35 # 30 + 5 seconds for HW monitor to be ready
 IGNORE_TIME = 5
 
-def _ecat_diag(pkts = 0):
+# Generate diagnostic status message
+def _ecat_diag(pkts = 0, lates = 0):
+    # Drops >= lates
+    if pkts < lates:
+        pkts = lates
+
     array = DiagnosticArray()
     stat = DiagnosticStatus()
     stat.name = 'EtherCAT Master'
     stat.level = 0
     stat.message = 'OK'
     stat.values.append(KeyValue('Dropped Packets', str(pkts)))
-    stat.values.append(KeyValue('Late Packets', str(0)))
+    stat.values.append(KeyValue('Late Packets', str(lates)))
 
     array.header.stamp = rospy.get_rostime()
     array.status.append(stat)
@@ -87,6 +98,9 @@ class TestDroppedPacket(unittest.TestCase):
         self._max_lvl = -1
 
         self._halted = False
+
+        self._num_drops = rospy.get_param('~num_drops', 10)
+        self._num_lates = rospy.get_param('~num_lates', 0)
 
         self._snapped = False
         self._snapshot_sub = rospy.Subscriber('snapshot_trigger', std_msgs.msg.Empty, self._snap_cb)
@@ -131,10 +145,11 @@ class TestDroppedPacket(unittest.TestCase):
         self._diag_pub.publish(_ecat_diag(1))
         self.motors_pub.publish(False)
         sleep(1.0)
+        # Make sure we're OK
 
         # Publish same status for 10 seconds
         for i in range(0, 10):
-            self._diag_pub.publish(_ecat_diag(2))
+            self._diag_pub.publish(_ecat_diag(self._num_drops, self._num_lates))
             self.motors_pub.publish(False)
             sleep(1.0)
 
@@ -143,10 +158,15 @@ class TestDroppedPacket(unittest.TestCase):
 
             self.assert_(self._last_msg is not None, "No data from test monitor")
             
-            # Check that we're in error state
-            self.assert_(self._last_msg.test_ok == TestStatus.ERROR, "Test monitor reports that we're not in error state. Level: %d. Message: %s" % (self._last_msg.test_ok, self._last_msg.message))
-            # Check that snapshot trigger was called
-            self.assert_(self._snapped, "Snapshot trigger wasn't called, but we did halt")
+            # Check that we're in error state if we should be
+            if self._num_drops - self._num_lates >= 10:
+                self.assert_(self._last_msg.test_ok == TestStatus.ERROR, "Test monitor reports that we're not in error state. Level: %d. Message: %s" % (self._last_msg.test_ok, self._last_msg.message))
+                # Check that snapshot trigger was called
+                self.assert_(self._snapped, "Snapshot trigger wasn't called, but we did halt")
+            else:
+                self.assert_(self._last_msg.test_ok == TestStatus.RUNNING, "Test monitor reports that we're not running. Level: %d. Message: %s" % (self._last_msg.test_ok, self._last_msg.message))
+                # Check that snapshot trigger wasn't called
+                self.assert_(not self._snapped, "Snapshot trigger wasn't called, but we did halt")
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == '-v':

@@ -51,6 +51,10 @@ import threading
 
 from pr2_hw_listener import PR2HWListenerBase
 
+from collections import deque
+
+DROPS_PER_HOUR = 10
+
 class EthercatListener(PR2HWListenerBase):
     def __init__(self):
         self._mutex = threading.Lock()
@@ -58,6 +62,13 @@ class EthercatListener(PR2HWListenerBase):
         self._cal = False
         self._ok = True
         self._update_time = -1
+
+        # Records dropped packets. New drops appended to deque
+        self._dropped_times = deque()
+
+        self._net_drops = 0
+
+        self._drops_per_hour = DROPS_PER_HOUR
 
     def create(self, params):
        # Give it 10 seconds to start up
@@ -68,6 +79,9 @@ class EthercatListener(PR2HWListenerBase):
             self._srv_ok = False
             rospy.logerr('Unable to find halt motors service. Unable to initialize ethercat listener')
             return False
+
+        if params.has_key('drops_per_hour'):
+           self._drops_per_hour = params['drops_per_hour'] 
 
         self._reset_motors = rospy.ServiceProxy('pr2_etherCAT/reset_motors', Empty)
 
@@ -81,14 +95,6 @@ class EthercatListener(PR2HWListenerBase):
         self._cal_sub = rospy.Subscriber('calibrated', Bool, self._cal_cb)
 
         self._diag_sub = rospy.Subscriber('/diagnostics', DiagnosticArray, self._diag_cb)
-
-        self._dropped_cnt = 0
-        self._last_drop_time = 0 # Use rospy.get_time()
-
-        self._late_pkt_cnt = 0
-        self._last_late_pkt_time = 0 # Use rospy.get_time()
-
-        self._recent_dropped_packets = 0
 
         return True
 
@@ -110,11 +116,13 @@ class EthercatListener(PR2HWListenerBase):
                 
 
     def reset(self):
-        self._recent_dropped_packets = 0
         try:
             self._reset_motors()
         except Exception, e:
             rospy.logerr('Unable to reset motors. pr2_etherCAT may have died')
+
+        with self._mutex:
+            self._dropped_times.clear()
 
     def _update_dropped_packets(self, kv, now):
         if not unicode(kv.value).isnumeric():
@@ -124,12 +132,6 @@ class EthercatListener(PR2HWListenerBase):
 
         curr_drops = int(kv.value)
         if curr_drops > self._dropped_cnt:
-            # If we've dropped within last hour, add to recent drops
-            if now - self._last_drop_time > 3600: 
-                self._recent_dropped_packets = 0
-
-            self._recent_dropped_packets += curr_drops - self._dropped_cnt
-            
             self._last_drop_time = now
             self._dropped_cnt = curr_drops        
 
@@ -145,18 +147,42 @@ class EthercatListener(PR2HWListenerBase):
             
             self._late_pkt_cnt = curr_late_pkts
 
+    def _update_drops(self, stat, now):
+        if stat.name != 'EtherCAT Master':
+            raise Exception('Diagnostic status with invalid name! Expected \"EtherCAT Master\", got: %s',
+                            stat.name)
+
+        drops = -1
+        lates = -1
+        for kv in stat.values:
+            if kv.key == 'Dropped Packets':
+                drops = int(kv.value)
+            elif kv.key == 'Late Packets':
+                lates = int(kv.value)
+
+        if (drops == -1 or lates == -1):
+            raise Exception("Diagnostics didn't contain data for dropped or late packets.")
+
+        # For every new dropped packet, we add the current timestamp to our deque
+        new_net_drops = drops - lates
+        if new_net_drops > self._net_drops:
+            for i in range(0, new_net_drops - self._net_drops):
+                self._dropped_times.append(now)
+
+        self._net_drops = new_net_drops
+        
+        # Clean up the buffer to the max_length
+        while len(self._dropped_times) > self._drops_per_hour:
+            self._dropped_times.popleft()
+
 
     def _diag_cb(self, msg):
         with self._mutex:
-            now = rospy.get_time()
+            now = msg.header.stamp.to_sec()
             for stat in msg.status:
                 if stat.name == 'EtherCAT Master':
-                    for kv in stat.values:
-                        if kv.key == 'Dropped Packets':
-                            self._update_dropped_packets(kv, now)
-                        elif kv.key == 'Late Packets':
-                            self._update_late_packets(kv, now)
-
+                    self._update_drops(stat, now)
+            
 
     def _cal_cb(self, msg):
         with self._mutex:
@@ -170,19 +196,17 @@ class EthercatListener(PR2HWListenerBase):
     def _is_dropping_pkts(self):
         """
         Check if we're dropping packets. 
-        A drop is true if:
-         * Recent dropped packets (within hour) > 1
-         * Last drop time within 5 seconds
-         * Last late time not within 5 seconds
-        Should halt if we drop more than one packet per hour
+        A drop is true if we've had more than 10 dropped packets in last hour.
+
          
         @return bool : True if dropping packets
         """
         now = rospy.get_time()
-        timeout = 5.0
-        return self._recent_dropped_packets > 1 and \
-            now - self._last_drop_time < timeout and \
-            now - self._last_late_pkt_time >= timeout
+
+        if len(self._dropped_times) < self._drops_per_hour:
+            return False
+
+        return now - self._dropped_times[0] < 3600
             
 
     def check_ok(self):
