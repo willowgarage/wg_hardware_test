@@ -77,7 +77,7 @@ def _ecat_diag(pkts = 0, lates = 0):
     stat.level = 0
     stat.message = 'OK'
     stat.values.append(KeyValue('Dropped Packets', str(pkts)))
-    stat.values.append(KeyValue('Late Packets', str(lates)))
+    stat.values.append(KeyValue('RX Late Packet', str(lates)))
 
     array.header.stamp = rospy.get_rostime()
     array.status.append(stat)

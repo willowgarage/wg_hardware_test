@@ -157,11 +157,12 @@ class EthercatListener(PR2HWListenerBase):
         for kv in stat.values:
             if kv.key == 'Dropped Packets':
                 drops = int(kv.value)
-            elif kv.key == 'Late Packets':
+            elif kv.key == 'RX Late Packet':
                 lates = int(kv.value)
 
         if (drops == -1 or lates == -1):
-            raise Exception("Diagnostics didn't contain data for dropped or late packets.")
+            raise Exception("Diagnostics didn't contain data for dropped or late packets. Drops: %d. Lates: %d" %
+                            (drops, lates))
 
         # For every new dropped packet, we add the current timestamp to our deque
         new_net_drops = drops - lates
@@ -217,7 +218,7 @@ class EthercatListener(PR2HWListenerBase):
                 stat = 1
                 msg = 'Uncalibrated'
 
-            # Warn if we've had a dropped packets in the last five seconds
+            # Error if we've had a dropped packets
             if self._is_dropping_pkts():
                 stat = 2
                 msg = 'Dropping Packets'
