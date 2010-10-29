@@ -12,7 +12,6 @@
         pkg="pr2_hardware_test_monitor"
         name="test_monitor"
         type="dropped_packet_test.py" />
-
   
   <!-- Asserts don't fail on only one packet dropped -->
   <test test-name="single_dropped_packet_test" time-limit="90"  
@@ -31,7 +30,7 @@
     <param name="num_drops" value="15" />
     <param name="num_lates" value="12" />
   </test>
-  
+
   <!-- Asserts we fail for drops - lates > 10 -->
   <test test-name="late_packet_test_fail"
         time-limit="90"  
@@ -40,7 +39,6 @@
         type="dropped_packet_test.py" >
     <param name="num_drops" value="15" />
     <param name="num_lates" value="3" />
+    <param name="increasing_drops" value="true" />
   </test>
-
-  
 </launch>

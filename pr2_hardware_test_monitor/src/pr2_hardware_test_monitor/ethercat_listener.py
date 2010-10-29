@@ -62,8 +62,10 @@ class EthercatListener(PR2HWListenerBase):
         self._cal = False
         self._ok = True
         self._update_time = -1
+        self._diag_update_time = -1
 
         # Records dropped packets. New drops appended to deque
+        # Deque is kept =< max length of self._drops_per_hour
         self._dropped_times = deque()
 
         self._net_drops = 0
@@ -124,29 +126,6 @@ class EthercatListener(PR2HWListenerBase):
         with self._mutex:
             self._dropped_times.clear()
 
-    def _update_dropped_packets(self, kv, now):
-        if not unicode(kv.value).isnumeric():
-            self._last_drop_time = now
-            rospy.logwarn('Unable to convert %s into integer. Unable to count dropped packets' % kv.value)
-            return
-
-        curr_drops = int(kv.value)
-        if curr_drops > self._dropped_cnt:
-            self._last_drop_time = now
-            self._dropped_cnt = curr_drops        
-
-    def _update_late_packets(self, kv, now):
-        if not unicode(kv.value).isnumeric():
-            self._last_late_pkt_time = now
-            rospy.logwarn('Unable to convert %s into integer. Unable to count late packets' % kv.value)
-            return
-
-        curr_late_pkts = int(kv.value)
-        if curr_late_pkts > self._late_pkt_cnt:
-            self._last_late_pkt_time = now
-            
-            self._late_pkt_cnt = curr_late_pkts
-
     def _update_drops(self, stat, now):
         if stat.name != 'EtherCAT Master':
             raise Exception('Diagnostic status with invalid name! Expected \"EtherCAT Master\", got: %s',
@@ -167,7 +146,7 @@ class EthercatListener(PR2HWListenerBase):
         # For every new dropped packet, we add the current timestamp to our deque
         new_net_drops = drops - lates
         if new_net_drops > self._net_drops:
-            for i in range(0, new_net_drops - self._net_drops):
+            for i in range(new_net_drops - self._net_drops):
                 self._dropped_times.append(now)
 
         self._net_drops = new_net_drops
@@ -175,6 +154,8 @@ class EthercatListener(PR2HWListenerBase):
         # Clean up the buffer to the max_length
         while len(self._dropped_times) > self._drops_per_hour:
             self._dropped_times.popleft()
+
+        self._diag_update_time = rospy.get_time()
 
 
     def _diag_cb(self, msg):
@@ -198,7 +179,6 @@ class EthercatListener(PR2HWListenerBase):
         """
         Check if we're dropping packets. 
         A drop is true if we've had more than 10 dropped packets in last hour.
-
          
         @return bool : True if dropping packets
         """
@@ -207,7 +187,7 @@ class EthercatListener(PR2HWListenerBase):
         if len(self._dropped_times) < self._drops_per_hour:
             return False
 
-        return now - self._dropped_times[0] < 3600
+        return abs(now - self._dropped_times[0]) < 3600
             
 
     def check_ok(self):
@@ -226,6 +206,10 @@ class EthercatListener(PR2HWListenerBase):
             if not self._ok:
                 stat = 2
                 msg = 'Motors Halted'
+
+            if rospy.get_time() - self._diag_update_time > 3:
+                stat = 3
+                msg = 'No MCB Diagnostics'
 
             if rospy.get_time() - self._update_time > 3:
                 stat = 3
