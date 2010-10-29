@@ -1,6 +1,7 @@
 ethercat:
   type: EthercatListener
   file: ethercat_listener
+  drops_per_hour: 100
 drive:
   type: DriveListener
   file: drive_listener
