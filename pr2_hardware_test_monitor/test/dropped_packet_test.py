@@ -101,6 +101,7 @@ class TestDroppedPacket(unittest.TestCase):
 
         self._num_drops = rospy.get_param('~num_drops', 10)
         self._num_lates = rospy.get_param('~num_lates', 0)
+        self._increasing_drops = rospy.get_param('~increasing_drops', False)
 
         self._snapped = False
         self._snapshot_sub = rospy.Subscriber('snapshot_trigger', std_msgs.msg.Empty, self._snap_cb)
@@ -148,10 +149,22 @@ class TestDroppedPacket(unittest.TestCase):
         # Make sure we're OK
 
         # Publish same status for 10 seconds
-        for i in range(0, 10):
-            self._diag_pub.publish(_ecat_diag(self._num_drops, self._num_lates))
-            self.motors_pub.publish(False)
-            sleep(1.0)
+        if not self._increasing_drops:
+            for i in range(0, 10):
+                self._diag_pub.publish(_ecat_diag(self._num_drops, self._num_lates))
+                self.motors_pub.publish(False)
+                sleep(1.0)
+        else: # Test slowly increasing dropped packets
+            drop_count = 0
+            late_count = 0
+            for i in range(0, max(self._num_drops, self._num_lates)):
+                if drop_count < self._num_drops:
+                    drop_count += 1
+                if late_count < self._num_lates:
+                    late_count += 1
+                self._diag_pub.publish(_ecat_diag(drop_count, late_count))
+                self.motors_pub.publish(False)
+                sleep(1.0)
 
         with self._mutex:
             self.assert_(not rospy.is_shutdown(), "Rospy shutdown")
