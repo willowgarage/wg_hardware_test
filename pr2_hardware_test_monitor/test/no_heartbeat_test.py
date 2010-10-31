@@ -53,7 +53,7 @@ import rospy, rostest
 from time import sleep
 import sys
 
-from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
+from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from pr2_self_test_msgs.msg import TestStatus
 from std_msgs.msg import Bool
 import std_msgs.msg
@@ -68,8 +68,16 @@ def _camera_diag(level = 0):
     stat.level = level
     stat.message = 'OK'
 
+    motor_stat = DiagnosticStatus()
+    motor_stat.name = 'EtherCAT Master'
+    motor_stat.level = 0
+    motor_stat.values = [
+        KeyValue(key='Dropped Packets', value='0'),
+        KeyValue(key='RX Late Packet', value='0')]
+
     array.header.stamp = rospy.get_rostime()
     array.status.append(stat)
+    array.status.append(motor_stat)
     
     return array
 
