@@ -79,8 +79,14 @@ def _ecat_diag(pkts = 0, lates = 0):
     stat.values.append(KeyValue('Dropped Packets', str(pkts)))
     stat.values.append(KeyValue('RX Late Packet', str(lates)))
 
+    mcb_stat = DiagnosticStatus()
+    mcb_stat.name = 'EtherCAT Device (my_motor)'
+    mcb_stat.level = 0
+    mcb_stat.values.append(KeyValue('Num encoder_errors', '0'))
+
     array.header.stamp = rospy.get_rostime()
     array.status.append(stat)
+    array.status.append(mcb_stat)
     
     return array
 

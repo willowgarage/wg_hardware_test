@@ -55,6 +55,8 @@ from collections import deque
 
 DROPS_PER_HOUR = 10
 
+ENCODER_ERRORS_FIELD = 'Num encoder_errors'
+
 class EthercatListener(PR2HWListenerBase):
     def __init__(self):
         self._mutex = threading.Lock()
@@ -69,6 +71,11 @@ class EthercatListener(PR2HWListenerBase):
         self._dropped_times = deque()
 
         self._net_drops = 0
+
+        self._encoder_errors_detected = False
+        self._last_encoder_errors_update = rospy.get_time()
+        # Stores encoder errors by motor for each motor
+        self._encoder_errors_cnt = {}
 
         self._drops_per_hour = DROPS_PER_HOUR
 
@@ -125,6 +132,7 @@ class EthercatListener(PR2HWListenerBase):
 
         with self._mutex:
             self._dropped_times.clear()
+            self._encoder_errors_detected = False
 
     def _update_drops(self, stat, now):
         if stat.name != 'EtherCAT Master':
@@ -146,7 +154,7 @@ class EthercatListener(PR2HWListenerBase):
         # For every new dropped packet, we add the current timestamp to our deque
         new_net_drops = drops - lates
         if new_net_drops > self._net_drops:
-            for i in range(new_net_drops - self._net_drops):
+            for i in range(min(new_net_drops - self._net_drops, self._drops_per_hour)):
                 self._dropped_times.append(now)
 
         self._net_drops = new_net_drops
@@ -157,6 +165,38 @@ class EthercatListener(PR2HWListenerBase):
 
         self._diag_update_time = rospy.get_time()
 
+    def _update_encoder_errors(self, stat):
+        """
+        Check for encoder errors for every motor. 
+        
+        Updates cache of encoder errors. Reports encoder error detected if
+        it can't find the number of encoder errors, or if encoder errors count
+        increases.
+        """
+        if not stat.name.startswith('EtherCAT Device ('):
+            raise Exception("Invalid diagnostic status name: %s" % stat.name)
+
+        last_errors = self._encoder_errors_cnt.get(stat.name, 0)
+        
+        curr_errors = -1
+        for kv in stat.values:
+            if kv.key == ENCODER_ERRORS_FIELD:
+                curr_errors = int(kv.value)
+
+        if curr_errors < 0:
+            rospy.logerr('Unable to find encoder errors for motor %s', stat.name)
+            self._encoder_errors_detected = True
+            return 
+               
+        self._last_encoder_errors_update = rospy.get_time()
+
+        if curr_errors > last_errors:
+            self._encoder_errors_detected = True
+            
+        # Update cache with last value for encoder status
+        self._encoder_errors_cnt[stat.name] = curr_errors
+        
+        
 
     def _diag_cb(self, msg):
         with self._mutex:
@@ -164,6 +204,8 @@ class EthercatListener(PR2HWListenerBase):
             for stat in msg.status:
                 if stat.name == 'EtherCAT Master':
                     self._update_drops(stat, now)
+                if stat.name.startswith('EtherCAT Device ('):
+                    self._update_encoder_errors(stat)
             
 
     def _cal_cb(self, msg):
@@ -198,20 +240,29 @@ class EthercatListener(PR2HWListenerBase):
                 stat = 1
                 msg = 'Uncalibrated'
 
+            if not self._ok:
+                stat = 2
+                msg = 'Motors Halted'
+
             # Error if we've had a dropped packets
             if self._is_dropping_pkts():
                 stat = 2
                 msg = 'Dropping Packets'
 
-            if not self._ok:
+            # Encoder errors check, #4814
+            if self._encoder_errors_detected:
                 stat = 2
-                msg = 'Motors Halted'
+                msg = 'Encoder Errors'
 
-            if rospy.get_time() - self._diag_update_time > 3:
+            if rospy.get_time() - self._last_encoder_errors_update > 3.0:
+                stat = 3
+                msg = 'No MCB Encoder Status'
+
+            if rospy.get_time() - self._diag_update_time > 3.0:
                 stat = 3
                 msg = 'No MCB Diagnostics'
 
-            if rospy.get_time() - self._update_time > 3:
+            if rospy.get_time() - self._update_time > 3.0:
                 stat = 3
                 msg = 'EtherCAT Stale'
                 if self._update_time == -1:
