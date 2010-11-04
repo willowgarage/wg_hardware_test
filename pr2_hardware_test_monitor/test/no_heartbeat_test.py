@@ -97,6 +97,8 @@ class TestMonitorHeartbeat(unittest.TestCase):
 
         self._halted = False
 
+        self._heartbeat_pub = rospy.Publisher('/heartbeat', std_msgs.msg.Empty)
+
         # Publish that we're calibrated
         self._cal_pub = rospy.Publisher('calibrated', Bool, latch=True)
         self._cal_pub.publish(True)
@@ -169,6 +171,26 @@ class TestMonitorHeartbeat(unittest.TestCase):
             self.assert_(self._halted, "Halt motors wasn't called after no heartbeat")
 
             self.assert_(self._snapped, "Snapshot trigger wasn't called for halt")
+
+
+        # Send the heartbeat to reset the monitor automatically, #4878
+        for i in range(5):
+            if rospy.is_shutdown():
+                break
+
+            self._pub.publish(False)
+            self._diag_pub.publish(_camera_diag())
+            self._heartbeat_pub.publish()
+            sleep(1.0)
+
+        with self._mutex:
+            self.assert_(not rospy.is_shutdown(), "Rospy shutdown")
+            self.assert_(self._last_msg is not None, "No data from test monitor")
+
+            # Check that we're halted for heartbeat
+            self.assert_(self._last_msg.test_ok == TestStatus.RUNNING, "Test monitor should have reset automatically after heartbeat sent")
+
+
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == '-v':
