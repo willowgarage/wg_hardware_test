@@ -173,6 +173,12 @@ class PR2HardwareSimulator:
         stat.message = 'OK'
         stat.values.append(KeyValue('Dropped Packets', '0'))
         stat.values.append(KeyValue('RX Late Packet', '0'))
+        
+        # Check for encoder errors
+        mcb_stat = DiagnosticStatus()
+        mcb_stat.name = 'EtherCAT Device (my_motor)'
+        mcb_stat.level = 0
+        mcb_stat.values.append(KeyValue('Num encoder_errors', '0'))
 
         # Test camera listener
         stat_cam = DiagnosticStatus()
@@ -187,6 +193,7 @@ class PR2HardwareSimulator:
         stat_hk.message = 'OK'
 
         msg.status.append(stat_cam)
+        msg.status.append(mcb_stat)
         msg.status.append(stat_hk)
         msg.header.stamp = rospy.get_rostime()
      

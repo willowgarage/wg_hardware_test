@@ -33,13 +33,15 @@
 #
 
 ##\author Kevin Watts
-##\brief Tests that test monitor latches error state
+##\brief Tests that test monitor detects dropped packets
+
 
 """
-This tests that a transient error status, such as a camera error, produces 
-the correct behavior. We expect that an error, after a "grace period",
-will cause the "halt" method of all listeners to be called, and that the error 
-state will "latch" until reset is called.
+This tests that encoder errors are reported as failures. 
+This simulates diagnostics data from "EtherCAT Master" 
+and checks the output from the test monitor.
+
+From #4814: Fail for any encoder errors
 """
 
 from __future__ import with_statement
@@ -60,76 +62,65 @@ from std_srvs.srv import *
 import threading
 
 GRACE_TIME = 35 # 30 + 5 seconds for HW monitor to be ready
+IGNORE_TIME = 5
 
-def _camera_diag(level = 0):
+# Generate diagnostic status message
+def _ecat_diag(enc_errors = 0):
     array = DiagnosticArray()
     stat = DiagnosticStatus()
-    stat.name = 'wge100: Driver Status'
-    stat.level = level
+    stat.name = 'EtherCAT Master'
+    stat.level = 0
     stat.message = 'OK'
-
-    motor_stat = DiagnosticStatus()
-    motor_stat.name = 'EtherCAT Master'
-    motor_stat.level = 0
-    motor_stat.values = [
-        KeyValue(key='Dropped Packets', value='0'),
-        KeyValue(key='RX Late Packet', value='0')]
+    stat.values.append(KeyValue('Dropped Packets', '0'))
+    stat.values.append(KeyValue('RX Late Packet', '0'))
 
     mcb_stat = DiagnosticStatus()
     mcb_stat.name = 'EtherCAT Device (my_motor)'
     mcb_stat.level = 0
-    mcb_stat.values.append(KeyValue('Num encoder_errors', '0'))
+    mcb_stat.values.append(KeyValue('Num encoder_errors', str(enc_errors)))
 
     array.header.stamp = rospy.get_rostime()
     array.status.append(stat)
-    array.status.append(motor_stat)
     array.status.append(mcb_stat)
-        
+    
     return array
 
-class TestMonitorLatch(unittest.TestCase):
+class TestEncoderError(unittest.TestCase):
     def __init__(self, *args):
-        super(TestMonitorLatch, self).__init__(*args)
+        super(TestEncoderError, self).__init__(*args)
 
         self._mutex = threading.Lock()
-        rospy.init_node('test_monitor_latch_test')
-        self._ignore_time = 5
-        self._start_time = rospy.get_time()
+        rospy.init_node('test_monitor_drop_pkt')
         self._ok = True
         self._level = 0
 
         self._start = rospy.get_time()
         self._last_msg = None
+        self._max_lvl = -1
 
         self._halted = False
 
-        # Publish that we're calibrated
-        self._cal_pub = rospy.Publisher('calibrated', Bool, latch=True)
-        self._cal_pub.publish(True)
+        self._num_errors = rospy.get_param('~num_errors', 1)
 
         self._snapped = False
         self._snapshot_sub = rospy.Subscriber('snapshot_trigger', std_msgs.msg.Empty, self._snap_cb)
 
+        self._halt_srv = rospy.Service('pr2_etherCAT/halt_motors', Empty, self.on_halt)
         self._diag_pub = rospy.Publisher('/diagnostics', DiagnosticArray)
-        self._pub = rospy.Publisher('pr2_etherCAT/motors_halted', Bool)
-        self._hlt = rospy.Service('pr2_etherCAT/halt_motors', Empty, self._hlt_cb)
-        self._rst = rospy.Service('pr2_etherCAT/reset_motors', Empty, self._rst_cb)
 
         self._reset_test = rospy.ServiceProxy('reset_test', Empty)
 
         rospy.Subscriber('test_status', TestStatus, self._cb)
 
+        self._motors_pub = rospy.Publisher('pr2_etherCAT/motors_halted', Bool)
+        self.cal_pub = rospy.Publisher('calibrated', Bool, latch=True)
+
+    def on_halt(self, srv):
+        return EmptyResponse()
+
     def _snap_cb(self, msg):
         self._snapped = True
 
-    def _hlt_cb(self, srv):
-        self._halted = True
-        return EmptyResponse()
-
-    def _rst_cb(self, srv):
-        self._halted = False
-        return EmptyResponse()
-    
     def _cb(self, msg):
         with self._mutex:
             if not self._last_msg:
@@ -137,65 +128,43 @@ class TestMonitorLatch(unittest.TestCase):
 
             self._last_msg = msg
 
+            if rospy.get_time() - self._start > IGNORE_TIME:
+                self._max_lvl = max(msg.test_ok, self._max_lvl)
 
-    def test_monitor(self):
+    def test_drop_pkt(self):
+        self.cal_pub.publish(True)
         while not rospy.is_shutdown():
-            self._pub.publish(False)
-            self._diag_pub.publish(_camera_diag())
+            self._diag_pub.publish(_ecat_diag())
+            self._motors_pub.publish(False)
             sleep(1.0)
             if rospy.get_time() - self._start > GRACE_TIME:
                 break
 
-        # Publish camera error for 10 seconds
-        for i in range(0, 10):
-            self._pub.publish(False)
-            self._diag_pub.publish(_camera_diag(level = 2))
-            sleep(1.0)
-
-        # Publish cameras OK 5x
-        for i in range(0, 5):
-            self._pub.publish(False)
-            self._diag_pub.publish(_camera_diag())
-            sleep(1.0)
+        # Publish data with encoder errors
+        self._diag_pub.publish(_ecat_diag(self._num_errors))
+        self._motors_pub.publish(False)
+        sleep(1.0)        
 
         with self._mutex:
             self.assert_(not rospy.is_shutdown(), "Rospy shutdown")
 
             self.assert_(self._last_msg is not None, "No data from test monitor")
             
-            # Check that message level is error state
-            self.assert_(self._last_msg.test_ok == TestStatus.ERROR, "Didn't record error state from Test Monitor. Should have error state because motors halted. Level: %d" % self._last_msg.test_ok)
-
-            # Check that message message has motors data
-            self.assert_(self._last_msg.message != 'OK', "Got OK message from test monitor, even with error level")
-            self.assert_(self._last_msg.message.find("Camera Error") > -1, "Didn't get camera error message")
-
-            # Check that it called halt_motors correctly
-            self.assert_(self._halted, "Halt motors wasn't called after failure")
-
-            # Check that snapshot trigger was called
-            self.assert_(self._snapped, "Snapshot trigger wasn't called after halt")
-
-        # Reset the test and make sure we're OK
-        self._reset_test()
-
-        # Publish good data for 5s
-        for i in range(0, 5):
-            self._pub.publish(False)
-            self._diag_pub.publish(_camera_diag())
-            sleep(1.0)
-
-        with self._mutex:
-            self.assert_(not rospy.is_shutdown(), "Rospy shutdown")
-            self.assert_(self._last_msg.test_ok == TestStatus.RUNNING, "Test didn't reset properly after error condition")
-
-            self.assert_(not self._halted, "Reset motors wasn't called after reset")
+            # Check that we're in error state if we should be
+            if self._num_errors > 0:
+                self.assert_(self._last_msg.test_ok == TestStatus.ERROR, "Test monitor reports that we're not in error state. Level: %d. Message: %s" % (self._last_msg.test_ok, self._last_msg.message))
+                # Check that snapshot trigger was called
+                self.assert_(self._snapped, "Snapshot trigger wasn't called, but we did halt")
+            else:
+                self.assert_(self._last_msg.test_ok == TestStatus.RUNNING, "Test monitor reports that we're not running. Level: %d. Message: %s" % (self._last_msg.test_ok, self._last_msg.message))
+                # Check that snapshot trigger wasn't called
+                self.assert_(not self._snapped, "Snapshot trigger wasn't called, but we did halt")
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == '-v':
         suite = unittest.TestSuite()
-        suite.addTest(TestMonitorLatch('test_monitor'))
+        suite.addTest(TestEncoderError('test_dropped_pkt'))
 
         unittest.TextTestRunner(verbosity=2).run(suite)
     else:
-        rostest.run(PKG, sys.argv[0], TestMonitorLatch, sys.argv)
+        rostest.run(PKG, sys.argv[0], TestEncoderError, sys.argv)

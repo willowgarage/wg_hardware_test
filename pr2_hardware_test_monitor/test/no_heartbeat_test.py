@@ -75,9 +75,15 @@ def _camera_diag(level = 0):
         KeyValue(key='Dropped Packets', value='0'),
         KeyValue(key='RX Late Packet', value='0')]
 
+    mcb_stat = DiagnosticStatus()
+    mcb_stat.name = 'EtherCAT Device (my_motor)'
+    mcb_stat.level = 0
+    mcb_stat.values.append(KeyValue('Num encoder_errors', '0'))
+
     array.header.stamp = rospy.get_rostime()
     array.status.append(stat)
     array.status.append(motor_stat)
+    array.status.append(mcb_stat)
     
     return array
 
