@@ -364,7 +364,7 @@ class TestMonitorPanel(wx.Panel):
                 self.update_test_record('Stopping test after no data received for %d seconds.' % int(interval))
                 # Tear down test if its stale to stop safely, #4443
                 self.stop_test()
-                self.update_test_record('Test on bay %s was stopped after no updates, but is incomplete' % self._bay.name)
+                self.update_test_record('Test on %s was stopped after no updates, but is incomplete' % self._serial)
 
             self._update_controls(4)
             self.update_test_record()
