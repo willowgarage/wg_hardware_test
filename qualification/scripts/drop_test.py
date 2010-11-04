@@ -34,6 +34,7 @@
 ##\author Kevin Watts
 ##\brief Monitors dropped packets for given motors, and prompts user when drop test done
 
+from __future__ import with_statement
 PKG='qualification'
 
 import roslib; roslib.load_manifest(PKG)
@@ -189,34 +190,38 @@ class DropTestFrame(wx.Frame):
 
     ##\brief Callback for diagnostics msgs
     def _diag_cb(self, msg):
-        try:
-            self._mutex.acquire()
-        except:
-            return
+        with self._mutex:
+            # Record that we have data
+            if self._drop_packets == -1:
+                self._eth_master_ok = True
+                self._drop_packets = 0
 
-        # Record that we have data
-        if self._drop_packets == -1:
-            self._eth_master_ok = True
-            self._drop_packets = 0
+            for stat in msg.status:
+                self._msgs.append(stat)
 
-        for stat in msg.status:
-            self._msgs.append(stat)
-        self._mutex.release()
         wx.CallAfter(self._check_msgs)
 
     ##\brief Checks diagnostics for EtherCAT Master, makes sure OK
     def _check_msgs(self):
-        self._mutex.acquire()
-        for msg in self._msgs:
-            if msg.name == 'EtherCAT Master':
-                if msg.level != 0:
-                    self._eth_master_ok = False
-                for kv in msg.values:
-                    if kv.key == 'Dropped Packets':
-                        if int(kv.value) != 0:
-                            self._drop_packets = int(kv.value)
-        self._msgs = []
-        self._mutex.release()
+        with self._mutex:
+            dropped_pkts = 0
+            late_pkts = 0
+
+            for msg in self._msgs:
+                if msg.name == 'EtherCAT Master':
+                    if msg.level != 0:
+                        self._eth_master_ok = False
+                    for kv in msg.values:
+                        if kv.key == 'Dropped Packets':
+                            if int(kv.value) != 0:
+                                dropped_pkts = int(kv.value)
+                        if kv.key == 'RX Late Packet':
+                            if int(kv.value) != 0:
+                                late_pkts = int(kv.value)
+
+            # Subtract off late packets from drops, #4824
+            self._drop_packets = dropped_pkts - late_pkts
+            self._msgs = []
 
     ##\brief OK if no dropped packets and motors running
     def is_ok(self):
