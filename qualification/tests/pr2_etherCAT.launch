@@ -11,5 +11,7 @@
 
   <include file="$(find pr2_controller_manager)/controller_manager.launch" />
   <param name="pr2_controller_manager/mechanism_statistics_publish_rate" type="double" value="20" />
-  <param name="pr2_mechanism_diagnostics/init_trans_check" type="bool" value="true" />
+  
+  <!-- Transmission checking system -->
+  <node pkg="pr2_transmission_check" name="pr2_transmission_check" type="pr2_transmission_check" />
 </launch>
