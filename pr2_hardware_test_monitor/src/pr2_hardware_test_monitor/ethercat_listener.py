@@ -176,6 +176,10 @@ class EthercatListener(PR2HWListenerBase):
         if not stat.name.startswith('EtherCAT Device ('):
             raise Exception("Invalid diagnostic status name: %s" % stat.name)
 
+        # Ignore led_projector, no encoder errors
+        if stat.name.find('led_projector') > -1:
+            return
+
         last_errors = self._encoder_errors_cnt.get(stat.name, 0)
         
         curr_errors = -1
