@@ -1,0 +1,27 @@
+<package>
+  <description brief="pr2_transmission_check">
+
+     pr2_transmission_check
+
+  </description>
+  <author>Kevin Watts</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/pr2_transmission_check</url>
+  <depend package="roscpp"/>
+  <depend package="rospy"/>
+  <depend package="pr2_msgs"/>
+  <depend package="std_msgs"/>
+  <depend package="std_srvs"/>
+  <depend package="diagnostic_msgs"/>
+  <depend package="pr2_description"/>
+  <depend package="pr2_component_descriptions"/>
+  <depend package="pr2_mechanism_msgs" />
+  <depend package="angles" />
+  <depend package="urdf" />
+  <depend package="xacro" />
+  <depend package="diagnostic_updater" />
+  <depend package="pr2_mechanism_model" />
+</package>
+
+
