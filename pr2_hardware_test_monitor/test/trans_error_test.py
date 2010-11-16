@@ -161,7 +161,7 @@ class TransListenerErrorTest(unittest.TestCase):
         with self._mutex:
             self.assert_(not rospy.is_shutdown(), "Rospy shutdown")
             self.assert_(self._message, "No data from test monitor")
-            self.assert_(self._level == 2, "Transmission listener didn't report error")
+            self.assert_(self._level == 2, "Transmission listener didn't report error. Level: %d. Message: %s" % (self._level, self._message))
             self.assert_(not self._ok, "Transmission listener didn't call halt motors!")
 
 

@@ -41,4 +41,15 @@
     <param name="num_lates" value="3" />
     <param name="increasing_drops" value="true" />
   </test>
+
+  <!-- Asserts we fail for lots of drops - lates > 10 -->
+  <test test-name="late_packet_test_fail2"
+        time-limit="90"  
+        pkg="pr2_hardware_test_monitor"
+        name="test_monitor"
+        type="dropped_packet_test.py" >
+    <param name="num_drops" value="50" />
+    <param name="num_lates" value="0" />
+    <param name="increasing_drops" value="true" />
+  </test>
 </launch>
