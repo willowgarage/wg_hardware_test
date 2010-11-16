@@ -237,9 +237,9 @@ class EthercatListener(PR2HWListenerBase):
             
 
     def check_ok(self):
+        msg = ''
+        stat = 0
         with self._mutex:
-            msg = ''
-            stat = 0
             if not self._cal:
                 stat = 1
                 msg = 'Uncalibrated'
@@ -248,7 +248,7 @@ class EthercatListener(PR2HWListenerBase):
                 stat = 2
                 msg = 'Motors Halted'
 
-            # Error if we've had a dropped packets
+            # Error if we've had dropped packets
             if self._is_dropping_pkts():
                 stat = 2
                 msg = 'Dropping Packets'

@@ -48,7 +48,5 @@ rosbuild_add_rostest(test/launch/dropped_packet_test.launch)
 rosbuild_add_rostest(test/launch/encoder_errors_test.launch)
 
 # Test transmission listener
-# These won't work until pr2_mechanism_diagnostics is released 
-# with transmission check code (dturtle).
-rosbuild_add_rostest_future(test/launch/trans_error_flex.launch)
-rosbuild_add_rostest_future(test/launch/trans_error_roll.launch)
+rosbuild_add_rostest(test/launch/trans_error_flex.launch)
+rosbuild_add_rostest(test/launch/trans_error_roll.launch)
