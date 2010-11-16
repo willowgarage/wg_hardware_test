@@ -40,6 +40,7 @@
   <depend package="pr2_hardware_test_monitor" />
   <depend package="pr2_self_test_msgs" />
   <depend package="rosbag" />
+  <depend package="pr2_transmission_check" />
   
   <!-- Unit test -->
   <depend package="rostopic" />
