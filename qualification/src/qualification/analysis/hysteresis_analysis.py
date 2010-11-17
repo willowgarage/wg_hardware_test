@@ -41,6 +41,7 @@ import os
 import string
 from time import sleep
 
+# Matplotlib can behave funny, using "Agg" backend is probably the best
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -111,8 +112,8 @@ class HysteresisParameters(object):
 
         return test_params
 
-def get_test_value(name, value, min, max):
-    return TestValue(str(name), str(value), str(min), str(max))
+def get_test_value(name, value, minv, maxv):
+    return TestValue(str(name), str(value), str(minv), str(maxv))
     
     
 class HysteresisDirectionData(object):
@@ -135,6 +136,7 @@ class HysteresisTestData(object):
         self.range_max = max(self.positive.range_max, self.negative.range_max)
         self.range_min = min(self.positive.range_min, self.negative.range_min)
 
+
 class HysteresisAnalysisResult(object):
     __slots__ = ['html', 'summary', 'result', 'values' ]
     def __init__(self):
@@ -143,6 +145,8 @@ class HysteresisAnalysisResult(object):
         self.result = False
         self.values = []
 
+##\brief Checks range of test
+##\return  HysteresisAnalysisResult : Result of test
 def range_analysis(params, data):
     result = HysteresisAnalysisResult()
     if (params.range_max == 0 and params.range_min == 0):
@@ -199,6 +203,8 @@ def range_analysis(params, data):
     
     return result
 
+##\brief Analyzes test effort
+##\return  HysteresisAnalysisResult : Result of test
 def effort_analysis(params, data):
     result = HysteresisAnalysisResult()
     
@@ -276,6 +282,8 @@ def effort_analysis(params, data):
 
     return result
 
+##\brief Analyzes velocity data 
+##\return  HysteresisAnalysisResult : Result of test
 def velocity_analysis(params, data):
     html = ['<p>Search velocity: %.2f.</p><br>\n' % abs(params.velocity)]
 
@@ -307,6 +315,7 @@ def velocity_analysis(params, data):
     return result
 
 ##\brief Checks slope of test data (effort v. position)
+##\return  HysteresisAnalysisResult : Result of test
 def regression_analysis(params, data):
     result = HysteresisAnalysisResult()    
 
@@ -365,6 +374,7 @@ def regression_analysis(params, data):
 
     return result
 
+##\return pr2_self_test_msgs/Plot 
 def plot_effort(params, data):
     # Plot the analyzed data
     fig = plt.figure(1)
@@ -493,6 +503,7 @@ class WristRollHysteresisParams(HysteresisParameters):
         return test_params
 
 ##\brief Analyzes flex effort during wrist difference test
+##\return  HysteresisAnalysisResult : Result of test
 def wrist_flex_analysis(params, data):
     flex_max = numpy.average(data.pos_flex_effort)
     flex_max_sd = numpy.std(data.pos_flex_effort)
@@ -564,6 +575,7 @@ def wrist_flex_analysis(params, data):
     return result
 
 ##\brief Plots effort of wrist flex during qual
+##\return pr2_self_test_msgs.Plot : 
 def plot_flex_effort(params, data):
     # Can move to separate plotting function
     # Plot the analyzed data
@@ -601,6 +613,7 @@ def plot_flex_effort(params, data):
     
     return p
 
+##\return str : Summary
 def make_wrist_test_summary(roll_stat, flex_stat):
     if flex_stat and roll_stat:
         return "Wrist Difference check OK. Motors are symmetric."
@@ -611,5 +624,6 @@ def make_wrist_test_summary(roll_stat, flex_stat):
     return "Wrist roll hystereis and flex effort failed."
 
 ##\brief Checks wrist data before analysis
+##\return bool : True if OK to proceed
 def wrist_hysteresis_data_present(data):
     return data.positive.position.size > 100 and data.negative.position.size > 100

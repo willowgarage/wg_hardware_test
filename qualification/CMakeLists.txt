@@ -5,6 +5,7 @@ rosbuild_init()
 rosbuild_add_executable(tests/wge100_camera_test/led_flash_test tests/wge100_camera_test/led_flash_test.cpp)
 
 rosbuild_add_pyunit(unit_test/check_test_files.py)
+rosbuild_add_pyunit(unit_test/hysteresis_check.py)
 
 
 # Test launch files parse check
