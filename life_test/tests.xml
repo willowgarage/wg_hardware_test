@@ -47,10 +47,20 @@
            rate="true" val="2.0" />
   </test>
 
-  <test serial="6804108" name="Caster Test (No Air)" id="caster-burn"
+  <test serial="6804108" name="Caster Test (No Air)" id="caster-burn-no-air"
         short="Caster" duration="40"
-        desc="Caster jerks around under pressure. Put pressure on caster BEFORE turning this test on."
+        desc="Caster jerks around without air"
         script="caster_test/test_no_air.launch" power="true"
+        type="Burn-in Test" >
+    <param name="Rate" param_name="cycle_rate"
+           desc="Frequency of test"
+           rate="true" val="2.0" />
+  </test>
+
+  <test serial="6804108" name="Caster Test (Steer Only)" id="caster-burn-steer"
+        short="Caster" duration="40"
+        desc="Caster steers in one direction continuously"
+        script="caster_test/test_steer.launch" power="true"
         type="Burn-in Test" >
     <param name="Rate" param_name="cycle_rate"
            desc="Frequency of test"
