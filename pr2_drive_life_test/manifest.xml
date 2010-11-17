@@ -12,6 +12,7 @@
   <depend package="amcl"/>
   <depend package="map_server"/>
   <depend package="rospy"/>
+  <depend package="roscpp"/>
   <depend package="geometry_msgs"/>
   <depend package="visualization_msgs"/>
   <depend package="sensor_msgs" />
