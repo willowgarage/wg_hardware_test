@@ -51,7 +51,7 @@ private:
 
   geometry_msgs::PoseWithCovarianceStamped initial_pose_;
 
-  ros::NodeHandle nh_;
+  ros::NodeHandle nh_, pnh_;
   tf::TransformListener tf_;
   bool drive_halted_;
   ros::Time start_time_;
@@ -78,6 +78,7 @@ private:
     return true; 
   }
 
+  /***< \brief Publish initia pose to reset localization **/
   void sendInitialPose() 
   {
     pose_pub_.publish(initial_pose_);
@@ -89,6 +90,7 @@ private:
       drive_halted_ = true;
   }
 
+  /*** < \brief Return target pose in map frame **/
   geometry_msgs::PoseStamped getTarget()
   {
     float dur = (ros::Time::now() - start_time_).toSec();
@@ -106,6 +108,7 @@ private:
     return rv;
   }
 
+  /***< \brief Publish target pose for debugging **/
   void pubPose(const geometry_msgs::PoseStamped &ps)
   {
     pose_pub_.publish(ps);
@@ -113,9 +116,11 @@ private:
 
   void commandBase(const geometry_msgs::PoseStamped &ps)
   {
+    // Transform to local frame
     geometry_msgs::PoseStamped local_target;
     tf_.transformPose(robot_frame_id_, ps, local_target);
 
+    // Send commands based on gains
     geometry_msgs::Twist base_cmd;
     base_cmd.linear.y = y_gain_ * local_target.pose.position.y;
     // Check for big enough x to prevent wheel slip
@@ -132,6 +137,9 @@ private:
 
 public:
   PR2DriveLifeTest() :
+    robot_frame_id_("base_link"),
+    map_frame_id_("map"),
+    pnh_("~"),
     drive_halted_(false),
     x_gain_(3.0),
     y_gain_(3.0),
@@ -143,26 +151,51 @@ public:
     y_freq_(0.52),
     theta_freq_(1.1)
   { 
+    // Get gains
+    pnh_.param("x_gain",     x_gain_,     x_gain_);
+    pnh_.param("y_gain",     y_gain_,     y_gain_);
+    pnh_.param("theta_gain", theta_gain_, theta_gain_);
 
-    initial_pose_.pose.pose.position.x = 2.207;
-    initial_pose_.pose.pose.position.x = 5.253;
+    // Get ranges
+    pnh_.param("x_range",     x_rng_,     x_rng_);
+    pnh_.param("y_range",     y_rng_,     y_rng_);
+    pnh_.param("theta_range", theta_rng_, theta_rng_);
 
-    tf::Quaternion qt = tf::createQuaternionFromYaw(3.071);
+    // Get frequencies
+    pnh_.param("x_freq",     x_freq_,     x_freq_);
+    pnh_.param("y_freq",     y_freq_,     y_freq_);
+    pnh_.param("theta_freq", theta_freq_, theta_freq_);
+
+    // Initial position
+    double x_initial     = 2.207;
+    double y_initial     = 5.253;
+    double theta_initial = 3.071;
+    pnh_.param("x_initial",     x_initial,     x_initial);
+    pnh_.param("y_initial",     y_initial,     y_initial);
+    pnh_.param("theta_initial", theta_initial, theta_initial);
+
+    // Set initial pose to center of the map
+    initial_pose_.pose.pose.position.x = x_initial;
+    initial_pose_.pose.pose.position.y = y_initial;
+
+    tf::Quaternion qt = tf::createQuaternionFromYaw(theta_initial);
     tf::quaternionTFToMsg(qt, initial_pose_.pose.pose.orientation);
     // Same initial covariances from rviz
     initial_pose_.pose.covariance[0] = 0.25;
     initial_pose_.pose.covariance[7] = 0.25;
     initial_pose_.pose.covariance[21] = 0.068;
     
+    tf_.waitForTransform(map_frame_id_, robot_frame_id_, ros::Time(0), ros::Duration(15));
+
     // Publish pose, cmd_vel
     pose_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("target", 5, true);
-    cmd_pub_ = nh_.advertise<geometry_msgs::Twist>("cmd_vel", 5, true);
+    cmd_pub_  = nh_.advertise<geometry_msgs::Twist>("cmd_vel", 5, true);
     
     // Sub to motors_halted
     motors_sub_ = nh_.subscribe("pr2_etherCAT/motors_halted", 10, &PR2DriveLifeTest::motorsCB, this);
 
     // Advertise services
-    halt_driving_ = nh_.advertiseService("pr2_base/halt_drive", &PR2DriveLifeTest::haltDriveCB, this);
+    halt_driving_  = nh_.advertiseService("pr2_base/halt_drive",  &PR2DriveLifeTest::haltDriveCB, this);
     reset_driving_ = nh_.advertiseService("pr2_base/reset_drive", &PR2DriveLifeTest::resetDriveCB, this);
   }
 
@@ -174,7 +207,6 @@ public:
     pubPose(target);
     commandBase(target);
   }
-
 };
 
 int main(int argv, char **argc)
@@ -183,7 +215,7 @@ int main(int argv, char **argc)
 
   PR2DriveLifeTest pdlt;
   
-  ros::Rate my_rate(0.002);
+  ros::Rate my_rate(500);
   while (ros::ok())
   {
     pdlt.update();
