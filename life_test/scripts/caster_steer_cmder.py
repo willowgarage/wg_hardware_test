@@ -46,7 +46,6 @@ STEER_VEL = 6.0
                     
 def main():
     rospy.init_node('caster_cmder')
-    cmder = CasterCmd()
     pub_steer = rospy.Publisher("%s/steer" % TOPIC_PREFIX, Float64)
     pub_drive = rospy.Publisher("%s/drive" % TOPIC_PREFIX, Float64)
     pub_steer.publish(Float64(0.0))
@@ -56,8 +55,7 @@ def main():
     while not rospy.is_shutdown():
         pub_steer.publish(Float64(STEER_VEL))
         pub_drive.publish(Float64(0.0))
-        
-        cmder.update()
+
         my_rate.sleep()
         
 
