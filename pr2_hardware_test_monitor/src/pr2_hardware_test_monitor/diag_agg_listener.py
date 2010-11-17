@@ -57,8 +57,8 @@ from pr2_hw_listener import PR2HWListenerBase
 class DiagAggState(State):
     def __init__(self, whitelist = None, ignore_categories = None):
         """
-        @param whitelist [ str ] : Values to focus on.
-        @param ignore_categories [ str ] : Ignore matching values
+        \param whitelist [ str ] : Values to focus on.
+        \param ignore_categories [ str ] : Ignore matching values
         """
         State.__init__(self)
 
@@ -148,8 +148,8 @@ class DiagAggListener(PR2HWListenerBase):
          * whitelist : Only focus on these values 
         Both may be string or list. 
 
-        @param params { str : str } : ROS parameters to initialize 
-        @return bool : True if init OK
+        \param params { str : str } : ROS parameters to initialize 
+        \return bool : True if init OK
         """
         if params.has_key('ignore_diags'):
             ignore_diags = _convert_to_list(params['ignore_diags'])

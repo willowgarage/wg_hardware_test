@@ -39,7 +39,7 @@
 
 class PR2HWListenerBase(object):
     """
-    @brief Base class for PR2 hardware listeners
+    Base class for PR2 hardware listeners
     """
     def __init__(self):
         pass
@@ -67,6 +67,6 @@ class PR2HWListenerBase(object):
         """
         Called at 1Hz to check status
 
-        @return (int, str, []) : Level, message, [ DiagnosticStatus ] for output
+        \return (int, str, []) : Level, message, [ DiagnosticStatus ] for output
         """
         return 0, '', None
