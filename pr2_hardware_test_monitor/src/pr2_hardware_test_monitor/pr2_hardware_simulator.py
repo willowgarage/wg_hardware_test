@@ -54,6 +54,9 @@ from time import sleep
 import math
 
 class PR2HardwareSimulator:
+    """
+    Publishes representative output from a PR2 during operation.
+    """
     def __init__(self):
         self.diag_pub = rospy.Publisher('/diagnostics', DiagnosticArray)
         self.diag_agg_pub = rospy.Publisher('/diagnostics_agg', DiagnosticArray)
