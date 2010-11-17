@@ -46,24 +46,43 @@ from geometric_shapes_msgs.msg import Shape
 from geometry_msgs.msg import Pose
 from actionlib_msgs.msg import GoalStatus
 
-COLLISION_TOPIC = "collision_object"
-FAILED_OUT = 10
+from life_test.commanders.arm_cmder import ArmCmder
 
+COLLISION_TOPIC = "collision_object"
+
+# Shoulder pan joints are limited in position to prevent contact
 ranges = {
-    'r_shoulder_pan_joint': (-2.0, 0.4),
+    'r_shoulder_pan_joint': (-2.0, -0.4),
     'r_shoulder_lift_joint': (-0.4, 1.25),
     'r_upper_arm_roll_joint': (-3.1, 0),
     'r_elbow_flex_joint': (-2.0, -0.05),
     'r_forearm_roll_joint': (-3.14, 3.14),
     'r_wrist_flex_joint': (-1.8, -0.2),
     'r_wrist_roll_joint': (-3.14, 3.14),
-    'l_shoulder_pan_joint': (-0.4, 2.0),
+    'l_shoulder_pan_joint': (0.4, 2.0),
     'l_shoulder_lift_joint': (-0.4, 1.25),
     'l_upper_arm_roll_joint': (0, 3.1),
     'l_elbow_flex_joint': (-2.0, -0.05),
     'l_forearm_roll_joint': (-3.14, 3.14),
     'l_wrist_flex_joint': (-1.8, -0.2),
     'l_wrist_roll_joint': (-3.14, 3.14)
+}
+
+recovery_positions = {
+    'r_shoulder_pan_joint': - math.pi / 4,
+    'r_shoulder_lift_joint': 0.0,
+    'r_upper_arm_roll_joint': 0.0,
+    'r_elbow_flex_joint': 0.0,
+    'r_forearm_roll_joint': 0.0,
+    'r_wrist_flex_joint': 0.0,
+    'r_wrist_roll_joint': 0.0,
+    'l_shoulder_pan_joint': math.pi / 4,
+    'l_shoulder_lift_joint': 0.0,
+    'l_upper_arm_roll_joint': 0.0,
+    'l_elbow_flex_joint': 0.0,
+    'l_forearm_roll_joint': 0.0,
+    'l_wrist_flex_joint': 0.0,
+    'l_wrist_roll_joint': 0.0
 }
 
 def get_virtual_gloves():
@@ -104,9 +123,6 @@ def get_virtual_gloves():
 
     return r_glove, l_glove
     
-                           
-    
-
 
 ##\brief Sets up a virtual table in front of the robot
 def get_virtual_table(height = 0.42):
@@ -149,48 +165,6 @@ def get_virtual_table(height = 0.42):
 
     return table_msg
 
-##\brief Moves arms to 0 position using unsafe trajectory
-def get_recovery_goal():
-    # Send to right, left arm controllers
-    point = JointTrajectoryPoint()
-    point.time_from_start = rospy.Duration.from_sec(5)    
-    
-    goal = JointTrajectoryGoal()
-    goal.trajectory.points.append(point)
-    goal.trajectory.header.stamp = rospy.get_rostime()
-
-    positions = {}
-    for joint, range in ranges.iteritems():
-        positions[joint] = 0 
-    positions['r_shoulder_pan_joint'] = - math.pi / 4
-    positions['l_shoulder_pan_joint'] = math.pi / 4
-
-    for joint, position in positions.iteritems():
-        goal.trajectory.joint_names.append(joint)
-        goal.trajectory.points[0].positions.append(position)
-        goal.trajectory.points[0].velocities.append(0)
-
-    return goal
-
-def get_both_arms_goal():
-    goal = JointTrajectoryGoal()
-    point = JointTrajectoryPoint()
-    point.time_from_start = rospy.Duration.from_sec(0)
-    
-    goal.trajectory.points.append(point)
-    goal.trajectory.header.stamp = rospy.get_rostime()    
-
-    positions = {}
-    for joint, range in ranges.iteritems():
-        positions[joint] = random.uniform(range[0], range[1])
-    positions['r_shoulder_pan_joint'] = positions['l_shoulder_pan_joint'] - math.pi / 2
-
-    for joint, range in ranges.iteritems():
-        goal.trajectory.joint_names.append(joint)
-        goal.trajectory.points[0].positions.append(positions[joint])
-
-    return goal
-
 if __name__ == '__main__':
     rospy.init_node('arm_cmder_client')
     client = actionlib.SimpleActionClient('collision_free_arm_trajectory_action_both_arms', 
@@ -199,7 +173,6 @@ if __name__ == '__main__':
     client.wait_for_server()
 
     rospy.loginfo('Right, left arm commanders ready')
-    #my_rate = rospy.Rate(0.5)
 
     table_pub = rospy.Publisher(COLLISION_TOPIC, CollisionObject, latch = True)
     table_pub.publish(get_virtual_table())
@@ -210,39 +183,15 @@ if __name__ == '__main__':
     sleep(1)
     glove_pub.publish(l_glove)
 
-
-    # Recovery trajectory clients
+    # Recovery trajectory client
     recovery_client = actionlib.SimpleActionClient('both_arms_controller/joint_trajectory_action',
                                                 JointTrajectoryAction)
     
-    fail_count = 0
+    cmder = ArmCmder(client, ranges, recovery_client, recovery_positions)
+
     while not rospy.is_shutdown():
-        rospy.logdebug('Sending goal to arms.')   
-        goal = get_both_arms_goal()
-        client.send_goal(goal)
-
-        # Wait for result, or wait 10 seconds to allow full travel
-        client.wait_for_result(rospy.Duration.from_sec(10))
-        my_result = client.get_state()
-        
-        if my_result == GoalStatus.SUCCEEDED:
-            fail_count = 0
-	    rospy.loginfo('Goal succeeded')
-        else:
-	    rospy.loginfo('Goal failed')
-            fail_count += 1
-
-        rospy.logdebug('Got return state: %d from goal' % my_result)
-        
-        if fail_count > FAILED_OUT:
-	    fail_count = 0
-            client.cancel_goal()
-
-            rospy.loginfo('Sending recovery trajectory, arms are stuck')
-            recovery_goal = get_recovery_goal()
-            recovery_client.send_goal(recovery_goal)
-            recovery_client.wait_for_result(rospy.Duration.from_sec(10))
+        rospy.logdebug('Sending goal to arms.')
+        cmder.send_cmd()
 
         sleep(2.0)
-        #my_rate.sleep()
 
