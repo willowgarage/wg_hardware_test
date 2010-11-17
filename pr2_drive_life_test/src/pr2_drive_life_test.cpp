@@ -65,9 +65,18 @@ private:
   ros::ServiceServer halt_driving_, reset_driving_;
   
 
-  bool haltDriveCB(std_srvs::Empty::Request &req, std_srvs::Empty::Response &resp) { drive_halted_ = true; return true; }
+  bool haltDriveCB(std_srvs::Empty::Request &req, std_srvs::Empty::Response &resp) 
+  { 
+    drive_halted_ = true; 
+    return true; 
+  }
 
-  bool resetDriveCB(std_srvs::Empty::Request &req, std_srvs::Empty::Response &resp) { drive_halted_ = false; sendInitialPose(); return true; }
+  bool resetDriveCB(std_srvs::Empty::Request &req, std_srvs::Empty::Response &resp) 
+  { 
+    drive_halted_ = false; 
+    sendInitialPose(); 
+    return true; 
+  }
 
   void sendInitialPose() 
   {
@@ -156,10 +165,6 @@ public:
     halt_driving_ = nh_.advertiseService("pr2_base/halt_drive", &PR2DriveLifeTest::haltDriveCB, this);
     reset_driving_ = nh_.advertiseService("pr2_base/reset_drive", &PR2DriveLifeTest::resetDriveCB, this);
   }
-  
-
-
-
 
   ~PR2DriveLifeTest() { }
 
@@ -174,6 +179,8 @@ public:
 
 int main(int argv, char **argc)
 {
+  ros::init(argv, argc, "pr2_drive_life_test");
+
   PR2DriveLifeTest pdlt;
   
   ros::Rate my_rate(0.002);
@@ -182,5 +189,4 @@ int main(int argv, char **argc)
     pdlt.update();
     ros::spinOnce();
   }
-
 }
