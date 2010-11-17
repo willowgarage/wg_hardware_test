@@ -41,6 +41,14 @@ import copy
 import random
 random.seed()
 
+class DummyWristRollHysteresisTestData(hyst_analysis.HysteresisTestData): 
+    def __init__(self, pos_data, neg_data):
+        hyst_analysis.HysteresisTestData.__init__(self, pos_data, neg_data)
+
+        self.pos_flex_effort = numpy.array([ 0.0 for x in pos_data.position ])
+        self.neg_flex_effort = numpy.array([ 0.0 for x in neg_data.position ])
+                
+
 class TestHysteresis(unittest.TestCase):
     def setUp(self):
         self.pos_position = [ 0.001 * i for i in range(-1100, 1100)]
@@ -70,6 +78,20 @@ class TestHysteresis(unittest.TestCase):
         self.params.slope      =  0.0
         self.params.joint_name = "dummy_jnt"
 
+        # Wrist data is a little different
+        self.wrist_roll_data = DummyWristRollHysteresisTestData(self.pos_data, self.neg_data)
+
+        # Wrist params also a bit different
+        self.wrist_roll_params = copy.deepcopy(self.params)
+        self.wrist_roll_params.flex_joint   = 'wrist_flx_jnt'
+        self.wrist_roll_params.flex_tol     = 0.5
+        self.wrist_roll_params.flex_max     = 1.0
+        self.wrist_roll_params.flex_sd      = 0.25
+        self.wrist_roll_params.flex_p_gain  = 1.0
+        self.wrist_roll_params.flex_i_gain  = 1.0
+        self.wrist_roll_params.flex_d_gain  = 1.0
+        self.wrist_roll_params.flex_i_clamp = 1.0
+
     def test_range(self):
         # Our current data should pass
         good = hyst_analysis.range_analysis(self.params, self.data)
@@ -83,6 +105,7 @@ class TestHysteresis(unittest.TestCase):
         bad = hyst_analysis.range_analysis(bad_params, self.data)
         self.assert_(not bad.result, "Hysteresis didn't fail for invalid range. Message: %s\n%s" % (bad.summary, bad.html))
 
+        # Check range data for continuous joint
         cont_range = copy.deepcopy(self.params)
         cont_range.range_max = 0.0
         cont_range.range_min = 0.0
@@ -131,6 +154,7 @@ class TestHysteresis(unittest.TestCase):
 
 
     def test_slope(self):
+        # Simulate some slope data, make sure we're OK
         slope_params = copy.deepcopy(self.params)
         slope_params.slope      =  1.0
         slope_params.pos_effort =  1.0
@@ -154,10 +178,19 @@ class TestHysteresis(unittest.TestCase):
         p_eff = hyst_analysis.plot_effort(self.params, self.data)
         p_vel = hyst_analysis.plot_velocity(self.params, self.data)
     
+    def test_wrist_analysis(self):
+        # Check that our data is valid
+        self.assert_(hyst_analysis.wrist_hysteresis_data_present(self.wrist_roll_data), "Unable to confirm that wrist data was valid. Should have valid data")
 
+        # Check wrist flex analysis.
+        flex_analysis = hyst_analysis.wrist_flex_analysis(self.wrist_roll_params, self.wrist_roll_data)
+        self.assert_(flex_analysis.result, "Wrist flex analysis failed! %s\n%s" % (flex_analysis.summary,
+                                                                                   flex_analysis.html))
+
+        # Smoke test on the plots
+        p = hyst_analysis.plot_flex_effort(self.wrist_roll_params, self.wrist_roll_data)
         
         
-
 if __name__ == '__main__':
     rostest.unitrun(PKG, 'check_hysteresis', TestHysteresis)
 
