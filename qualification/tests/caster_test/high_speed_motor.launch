@@ -1,0 +1,14 @@
+<launch>
+  <rosparam command="load"
+            file="$(find qualification)/tests/caster_test/caster_motor_controller.yaml" />
+  
+  <node pkg="pr2_controller_manager" type="spawner" name="motor_ctrl_spawner"
+        args="caster_motor" />
+
+  <!-- Commands high speed to motor -->
+  <node pkg="qualification" type="caster_runner.py" name="caster_runner" >
+    <param name="command" type="double" value="16.5" />
+    <param name="time" type="double" value="15.0" />
+    <param name="mse" type="double" value="1.0" />
+  </node>
+</launch>
