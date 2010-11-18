@@ -1,0 +1,9 @@
+caster_motor:
+  type: robot_mechanism_controllers/JointVelocityController
+  joint: caster_motor_joint
+  pid:
+    p: 6.0
+    i: 0.0
+    d: 0.0
+    i_clamp: 0.0
+    
