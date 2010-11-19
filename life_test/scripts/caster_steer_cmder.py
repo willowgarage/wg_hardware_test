@@ -42,6 +42,7 @@ TOPIC_PREFIX = 'caster_fl'
 
 # CHANGE THIS NUMBER TO CHANGE THE STEER VELOCITY OF THE CASTER
 STEER_VEL = 6.0 
+SPEED = 3.7
 
                     
 def main():
@@ -53,8 +54,9 @@ def main():
 
     my_rate = rospy.Rate(float(rospy.get_param('cycle_rate', 1.0)))
     while not rospy.is_shutdown():
-        pub_steer.publish(Float64(STEER_VEL))
-        pub_drive.publish(Float64(0.0))
+        pub_steer.publish(Float64(0.0))
+        #pub_steer.publish(Float64(STEER_VEL))
+        pub_drive.publish(Float64(SPEED))
 
         my_rate.sleep()
         
