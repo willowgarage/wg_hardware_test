@@ -23,7 +23,7 @@
   <node pkg="pr2_hardware_test_monitor" type="pr2_hw_test_monitor"
         name="monitor" machine="test_host" >
     <rosparam command="load"
-              file="$(find life_test)/caster_test/caster_listeners.yaml" />
+              file="$(find life_test)/caster_test/caster_no_air_listeners.yaml" />
   </node>
 
 </launch>
