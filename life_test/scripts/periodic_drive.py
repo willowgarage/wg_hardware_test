@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#
 # Copyright (c) 2008, Willow Garage, Inc.
 # All rights reserved.
 #
@@ -28,6 +29,7 @@
 
 # Author: Stuart Glaser
 import time
+import math
 import random
 random.seed()
 import roslib
@@ -38,10 +40,10 @@ from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
 
 
-STRAIGHT = 0.82
+STRAIGHT = 0.82 + math.pi / 2
 ROTATION_JOINT = 'fl_caster_rotation_joint'
 SPEED = 10.0
-PERIOD = 30.0
+PERIOD = 15.0
 PI = 3.14159
 
 class LastMessage(object):
@@ -79,6 +81,7 @@ def main():
                 break
         if rotation_idx < 0:
             rospy.logwarn("The %s joint was not found in the mechanism state" % ROTATION_JOINT)
+            continue
 
         # Steers the caster to be straight
         angle_diff = angle - jnt_states.position[rotation_idx]
