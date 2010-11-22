@@ -47,7 +47,7 @@
            rate="true" val="2.0" />
   </test>
 
-    <test serial="6804108" name="Caster Test" id="caster-periodic-drive"
+    <test serial="6804108" name="Caster Periodic Drive Test" id="caster-periodic-drive"
         short="Caster" duration="40"
         desc="Caster drives around"
         script="caster_test/test_full_drive.launch" power="true"
