@@ -62,13 +62,11 @@ class FakeTestFrame(wx.Frame):
         
         self.diag_pub = rospy.Publisher('/diagnostics', DiagnosticArray)
         self.mech_pub = rospy.Publisher('mechanism_statistics', MechanismStatistics)
-        self.trans_pub = rospy.Publisher('pr2_mechanism_diagnostics/transmission_status', Bool)
+        self.trans_pub = rospy.Publisher('pr2_transmission_check/transmission_status', Bool)
         self.motors_pub = rospy.Publisher('pr2_etherCAT/motors_halted', Bool)
 
         self._start_time = rospy.get_time()
 
-
-        
         # Load XRC
         xrc_path = os.path.join(roslib.packages.get_pkg_dir('life_test'), 'xrc/gui.xrc')
 
@@ -188,6 +186,15 @@ class FakeTestFrame(wx.Frame):
         stat.level = level
         stat.name = 'EtherCAT Master'
         stat.message = choice 
+        stat.values.append(KeyValue(key='Dropped Packets', value='0'))
+        stat.values.append(KeyValue(key='RX Late Packet', value='0'))
+
+        mcb_stat = DiagnosticStatus()
+        mcb_stat.level = 0
+        mcb_stat.name = 'EtherCAT Device (cont_motor)'
+        mcb_stat.message = 'OK'
+        mcb_stat.values.append(KeyValue(key='Num encoder_errors', value='0'))
+        msg.status.append(mcb_stat)
      
         self.diag_pub.publish(msg)
 
