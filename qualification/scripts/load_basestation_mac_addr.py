@@ -38,29 +38,49 @@ import sys, getpass
 
 from wg_invent_client import Invent
 
+from optparse import OptionParser
+import subprocess
+
+class GetIDException(Exception): pass
+
 def print_usage():
     print 'Loads mac address into Invent for a given robot'
     print
-    print 'load_mac_addr.py 10XX USERNAME ADDRESS'
+    print 'load_basestation_mac_addr.py 10XX USERNAME'
     print 'Asks for password'
     
     return
 
+def get_iface_mac(iface):
+    p = subprocess.Popen(['ifconfig', iface], stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+
+    (o, e) = p.communicate()
+    if p.returncode != 0:
+        raise GetIDException("Unable to recover %s mac address" % iface)
+
+    lines = o.split('\n')
+    first = lines[0]
+
+    words = first.split()
+    if len(words) < 5 or not words[3].strip() == 'HWaddr':
+        raise GetIDException("Unable to parse mac address output: %s. Got: %s. Length: %d" % (first, words[3], len(words)))
+    mac = words[4].replace(':', '').lower()
+
+    if not len(mac) == 12:
+        raise GetIDException("Unable to parse mac address output: %s. Recovered: %s" % (first, mac))
+    
+    return mac
+
 if __name__ == '__main__':
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 3:
         print_usage()
         sys.exit(1)
 
-    print >> sys.stderr, "Make sure you have the right robot. Enter Invent password"
-
-    sn = '68029670' + sys.argv[1]
+    sn = '68037600' + sys.argv[1]
     user = sys.argv[2]
-    addr = sys.argv[3].replace(':', '')
 
-    if not len(addr) == 12:
-        print >> sys.stderr, "Mac address %s is not valid. Please retry." % addr
-        sys.exit(1)
-
+    print "Enter Invent password"
     passwd = getpass.getpass()
 
     iv = Invent(user, passwd)
@@ -73,6 +93,9 @@ if __name__ == '__main__':
         print >> sys.stderr, "Serial %s is invalid. Robot must be entered in as '10XX'" % sn
         sys.exit(1)
 
-    iv.addItemReference(sn, 'wan0', addr)
+    for iface in ('wan0', 'lan0'):
+        addr =  get_iface_mac(iface)
+        if not iv.addItemReference(sn, iface, addr):
+            raise Exception("Unable to load address %s to iface %s" % (addr, iface))
 
-    print 'Loaded wan0 mac address for %s' % sn
+    print 'Loaded mac address for %s' % sn
