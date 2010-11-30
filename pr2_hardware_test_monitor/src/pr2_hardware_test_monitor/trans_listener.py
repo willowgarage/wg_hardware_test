@@ -240,7 +240,8 @@ class TransmissionListener(PR2HWListenerBase):
         self._reset_trans = rospy.ServiceProxy('pr2_transmission_check/reset_trans_check', Empty)
 
         self._mutex = threading.Lock()
-        self._ok = True
+        self._ok = True # Status callback OK
+        self._jms_ok = True # Joint monitors OK
         self._last_msg_time = 0
         
     def create(self, params):
@@ -266,22 +267,34 @@ class TransmissionListener(PR2HWListenerBase):
     def _trans_cb(self, msg):
         with self._mutex:
             self._last_msg_time = rospy.get_time()
+
+            was_ok = self._ok
             self._ok = msg.data
+
+            if not self._ok and was_ok:
+                rospy.logerr('Halting motors, broken transmission.')
+                try:
+                    self._halt_motors()
+                except Exception, e:
+                    import traceback
+                    rospy.logerr('Caught exception trying to halt motors: %s', traceback.format_exc())
+
+
         
     def _callback(self, msg):
         with self._mutex:
             self._last_msg_time = rospy.get_time()
             
-            was_ok = self._ok
+            was_ok = self._jms_ok
             
             for joint_mon in self._joint_monitors:
                 ok = joint_mon.update(msg)
-                self._ok = ok and self._ok
+                self._ok_jms = ok and self._ok_jms
                 
 
         # Halt if broken
-        if not self._ok and was_ok:
-            rospy.logerr('Halting motors, broken transmission.')
+        if not self._jms_ok and was_ok:
+            rospy.logerr('Halting motors, caster slipping')
             try:
                 self._halt_motors()
             except Exception, e:
@@ -291,6 +304,7 @@ class TransmissionListener(PR2HWListenerBase):
     def reset(self):
         with self._mutex:
             self._ok = True
+            self._jms_ok = True
             for joint_mon in self._joint_monitors:
                 joint_mon.reset()
 
@@ -302,15 +316,18 @@ class TransmissionListener(PR2HWListenerBase):
     def check_ok(self):
         with self._mutex:
             if self._last_msg_time == 0:
-                return 3, "No mech state", None
+                return 3, "No trans status", None
             if rospy.get_time() - self._last_msg_time > 3:
-                return 3, "Mech state stale", None
+                return 3, "Trans status stale", None
 
-            if self._ok:
-                status = 0
+            if self._ok and self._jms_ok:
+                status = DiagnosticStatus.OK
                 msg = ''
+            elif self._ok:  
+                status = DiagnosticStatus.ERROR
+                msg = 'Caster Slipping'
             else:
-                status = 2
+                status = DiagnosticStatus.ERROR
                 msg = 'Transmission Broken'
         
             diag_stats = []
