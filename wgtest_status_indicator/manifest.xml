@@ -1,0 +1,14 @@
+<package>
+  <description brief="Controls status indicator light for Test Manager">
+Controls Delcom USB indicator light with the status of Test Manager.
+  </description>
+  <author>Kevin Watts</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/wgtest_status_indicator</url>
+  <depend package="roscpp"/>
+  <depend package="pr2_self_test_msgs"/>
+  <rosdep name="libhid" />
+</package>
+
+
