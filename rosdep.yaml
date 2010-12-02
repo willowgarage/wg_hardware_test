@@ -4,3 +4,5 @@ python-clearsilver:
   ubuntu: python-clearsilver
   debian: python-clearsilver
   centos: python-clearsilver
+libhid:
+  ubuntu: libhid0 libhid-dev
