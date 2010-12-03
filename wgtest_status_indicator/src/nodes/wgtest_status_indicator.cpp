@@ -41,6 +41,7 @@
 
 #include <ros/ros.h>
 #include <string>
+#include <signal.h>
 
 #include <pr2_self_test_msgs/TestInfoArray.h>
 
@@ -49,6 +50,14 @@ using namespace wgtest_status_indicator;
 DelcomUSBLight *g_light;
 
 ros::Time *g_last_callback;
+
+volatile bool g_shutdown_req_;
+
+void signal_handler(int sig)
+{
+  ROS_INFO("Caught signal, shutting down.");
+  g_shutdown_req_ = true;
+}
 
 void callback(const pr2_self_test_msgs::TestInfoArray &msg)
 {
@@ -64,11 +73,11 @@ void callback(const pr2_self_test_msgs::TestInfoArray &msg)
   
   // Make command
   USBLightCommand cmd;
-  if (status == 0)
+  if (status == 0) // OK
     cmd.green = true;
-  else if (status == 1)
+  else if (status == 1) // WARN
     cmd.orange = true;
-  else
+  else // ERROR
     cmd.red = true;
 
   g_light->sendCommand(cmd);
@@ -78,31 +87,77 @@ void callback(const pr2_self_test_msgs::TestInfoArray &msg)
   g_last_callback = new ros::Time(ros::Time::now());
 }
 
-int main(int argc, char **argv)
+// Runs ROS node and handles any ROS communication
+void runNode()
 {
-  g_last_callback = new ros::Time(0);
-
-  ros::init(argc, argv, "wgtest_status_indicator");
-
   ros::NodeHandle nh;
 
   ros::Subscriber stat_sub = nh.subscribe("test_info", 5, &callback);
 
-  g_light = new DelcomUSBLight();
+  USBLightCommand red_cmd;
+  red_cmd.red = true;
 
   ros::Rate my_rate(1.0);
-
-  USBLightCommand off_cmd;
-  off_cmd.off = true;
-
-  while (ros::ok())
+  while (ros::ok() && !g_shutdown_req_)
   {
     ros::spinOnce();
     my_rate.sleep();
 
+    // Send red if we haven't heard from Test Manager in a while
     if (ros::Time::now() - *g_last_callback > ros::Duration(30.0))
-      g_light->sendCommand(off_cmd);
+      g_light->sendCommand(red_cmd);
+
+    if (!ros::master::check())
+    {
+      ROS_ERROR("ROS Master is down. Shutting down ROS.");
+      break;
+    }
   }
 
+  // Send red if we're shut down
+  g_light->sendCommand(red_cmd);
+
+  ros::shutdown();
+}
+
+int main(int argc, char **argv)
+{
+  g_shutdown_req_ = false;
+  g_last_callback = new ros::Time(0);
+  g_light = new DelcomUSBLight();
+
+  signal(SIGINT, signal_handler);
+
+  ros::init(argc, argv, "wgtest_status_indicator", 
+            ros::init_options::NoSigintHandler | ros::init_options::AnonymousName);
+  ros::Time::init();
+
+  USBLightCommand red_cmd;
+  red_cmd.red = true;
+  g_light->sendCommand(red_cmd);
+
+  ros::WallRate wrate(1.0);
+
+  while (!g_shutdown_req_)
+  {
+    wrate.sleep();
+
+    if (!ros::master::check())
+    {
+      ROS_ERROR_THROTTLE(60, "Unable to contact master. Will retry");
+      continue;
+    }
+
+    ROS_INFO("Main loop");
+
+    // Run Node
+    runNode();
+  }
+
+  USBLightCommand off_cmd;
+  off_cmd.off = true;
+  g_light->sendCommand(off_cmd);
+
   delete g_light;
+  delete g_last_callback;
 }
