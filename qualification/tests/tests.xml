@@ -7,6 +7,8 @@
   <test serial="6802966"
         file="caster_test/test_motor.xml" descrip="Caster Motor + Gear Test" />
   <test serial="6802966"
+        file="caster_test/test_motor_fast.xml" descrip="Motor High-Speed Test" />
+  <test serial="6802966"
         file="caster_test/test_hub.xml" descrip="Caster Hub + Motor Test" />
 
   <!-- Torso -->
@@ -56,6 +58,11 @@
 	file="shoulder_test/test.xml" descrip="Shoulder Test" />
   <test serial="6804204" 
 	file="shoulder_test/test_dummy_ua.xml" descrip="Shoulder + CB Test (Dummy UA)" />
+  <test serial="6804338" 
+	file="shoulder_test/test.xml" descrip="Shoulder Test" />
+  <test serial="6804338" 
+	file="shoulder_test/test_dummy_ua.xml" descrip="Shoulder + CB Test (Dummy UA)" />
+
   <test serial="6802816" 
 	file="shoulder_test/test_ua_roll.xml" descrip="Upperarm Roll Drivetrain Test" />
   <test serial="6802818" 
