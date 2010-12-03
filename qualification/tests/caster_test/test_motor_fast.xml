@@ -1,4 +1,4 @@
-<test name="Caster Drivetrain Test" id="caster-motor-test" >
+<test name="Caster Drivetrain Test" id="caster-motor-speed-test" >
   <instructions>instructions_motor.html</instructions>
   <pre_startup timeout="30" name="Power On">../../scripts/power_cycle.launch</pre_startup>
   <pre_startup name="Configure MCB's" timeout="30"
