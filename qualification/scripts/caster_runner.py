@@ -12,7 +12,7 @@ from std_msgs.msg import Float64
 
 from sensor_msgs.msg import JointState
 
-from pr2_self_test_msgs.srv import TestResultRequest
+from pr2_self_test_msgs.srv import TestResultRequest, TestResult
 
 import numpy
 
@@ -46,7 +46,7 @@ def pack_result(proxy, command, mse, tolerance):
         r.result = TestResultRequest.RESULT_PASS
     else:
         r.result = TestResultRequest.RESULT_HUMAN_REQUIRED
-    r.summary = 'Velocity command: %.2f. MSE: %.2f. Tolerance: %.2f' % (command, mse, tolerance)
+    r.text_summary = 'Velocity command: %.2f. MSE: %.2f. Tolerance: %.2f' % (command, mse, tolerance)
     
     proxy.call(r)
 
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     timeout = rospy.get_param('~time', 15.0)
     tolerance = rospy.get_param('~tolerance', 1.0)
 
-    result_srv = rospy.ServiceProxy('test_result', TestResultRequest)
+    result_srv = rospy.ServiceProxy('test_result', TestResult)
 
 
     errors = [] # Store velocity tracking errors
