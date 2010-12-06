@@ -610,13 +610,9 @@ class TestMonitorPanel(wx.Panel):
         launch += ' <node machine="localhost" pkg="rosbag" type="rosbag" '
         launch += 'args="record -o /hwlog/%s_life_test /diagnostics --split 1000" name="test_logger" />\n' % self._serial
 
-        # Rosrecord launches - will record burst of data on trigger
-        #launch += ' <node machine="localhost" pkg="rosrecord" type="rosrecord" name="snapshot_record" '
-        #launch += 'args="-f /hwlog/%s_test_events joint_states mechanism_statistics -s " />\n' % self._serial
-
         # Rosbag records our motor traces
         launch += ' <node machine="localhost" pkg="rosbag" type="rosbag" name="mtrace_record" '
-        launch += 'args="record -o /hwlog/%s_motor_trace -e %s/motor_trace/.* " />\n' % (self._serial, bay.name)
+        launch += 'args="record -o /hwlog/%s_motor_trace -e /%s/motor_trace/.* " />\n' % (self._serial, bay.name)
         
         launch += '</group>\n</launch>'
 
