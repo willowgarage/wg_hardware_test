@@ -1,5 +1,5 @@
 caster_bl:
-  type: CasterController
+  type: pr2_mechanism_controllers/CasterController
   caster_pid: {p: 6.0}
   wheel_pid: {p: 4.0}
   joints:
@@ -8,9 +8,9 @@ caster_bl:
     wheel_r: bl_caster_r_wheel_joint
 
 caster_fl:
-  type: CasterController
+  type: pr2_mechanism_controllers/CasterController
   caster_pid: {p: 6.0}
-  wheel_pid: {p: 4.0}
+  wheel_pid: {p: 4.0} # Todo: Should probably change to 6.0 to be like PR2
   joints:
     caster: fl_caster_rotation_joint
     wheel_l: fl_caster_l_wheel_joint

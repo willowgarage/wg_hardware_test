@@ -37,7 +37,7 @@ import actionlib
 import random
 random.seed()
 
-from pr2_controllers_msgs.msg import *
+from pr2_controllers_msgs.msg import JointTrajectoryGoal, JointTrajectoryAction
 from trajectory_msgs.msg import JointTrajectoryPoint
 from actionlib_msgs.msg import GoalStatus
 
@@ -63,7 +63,18 @@ def _get_recovery_goal(recovery):
     return goal
 
 class ArmCmder(object):
+    """
+    This class sends commands random to an arm using a JointTrajectoryAction. 
+    It sends "safe" commands by default. If the arm fails to move after a few tries, 
+    it sends an unsafe, predefined recovery command.
+    """
     def __init__(self, arm_client, ranges, recovery_client, recovery_positions):
+        """
+        \param arm_client SimpleActionClient : Client to collision free arm commands
+        \param ranges { str : (float, float) } : Position ranges for each joint.
+        \param recovery_client SimpleActionClient : Client to unsafe arm controller
+        \param recovery_positions { str : float } : Recovery positions for each joint
+        """
         self._arm_client = arm_client
         self._ranges = ranges
         self._recovery_client = recovery_client

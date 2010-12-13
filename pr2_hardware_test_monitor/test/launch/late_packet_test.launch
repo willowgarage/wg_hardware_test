@@ -7,9 +7,13 @@
   <node pkg="rostopic" type="rostopic" name="heartbeat_pub"
         args="pub /heartbeat std_msgs/Empty -r 1" />
 
-  <!-- Asserts we latch error state -->
-  <test test-name="late_packet_test" time-limit="90"  
+  <!-- Asserts we can pick up late packets -->
+  <test test-name="late_packet_test"
+        time-limit="90"  
         pkg="pr2_hardware_test_monitor"
         name="test_monitor"
-        type="late_packet_test.py" />
+        type="dropped_packet_test.py" >
+    <param name="num_drops" value="15" />
+    <param name="num_lates" value="12" />
+  </test>
 </launch>

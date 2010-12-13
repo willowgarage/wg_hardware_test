@@ -64,7 +64,7 @@ R_WHEEL_NAME = 'fl_caster_r_wheel_joint'
 WHEEL_RADIUS = 0.074792
 WHEEL_OFFSET = 0.049
 
-ALLOWED_SLIP = 0.015 # (1.5cm/interval)
+ALLOWED_SLIP = 0.020 # (2.0cm/interval)
 UPDATE_INTERVAL = 0.25 
 
 class CasterPosition(object):
@@ -229,277 +229,6 @@ class CasterSlipListener(object):
         return diag
 
 
-##\brief Monitors transmission of single PR2 joint
-class JointTransmissionListener(object):
-    """
-    This class is not implemented and should be ignored. Do not use.
-    Replaced by transmission checking code in pr2_mechanism_diagnostics.
-    """
-    def __init__(self):
-        self._ok = True
-        self._num_errors = 0
-        self._num_hits = 0
-        self._num_errors_since_reset = 0
-        self._rx_count = 0
-        self._max_position = -10000000
-        self._min_position = 100000000
-
-        self._broke_count = 0
-
-        self.act_exists = False
-        self.joint_exists = False
-
-        self.calibrated = False
-        self.cal_reading = None
-        self.position = None
-        self.level = 0
-        self.message = 'OK'
-        self.reading_msg = 'No data'
-
-        self._last_rising = 0
-        self._last_falling = 0
-        self._last_bad_reading = 0
-
-        raise NotImplementedExeception("JointTransmissionListener isn't supported")
-
-    ## Mandatory params: actuator, joint, deadband
-    def create(self, params):
-        if not params.has_key('actuator'):
-            rospy.logerr('Parameter "actuator" not found! Aborting.')
-            return False
-        self._actuator = params['actuator']
-
-        if not params.has_key('joint'):
-            rospy.logerr('Parameter "joint" not found! Aborting.')
-            return False
-        self._joint = params['joint']
-
-        if not params.has_key('deadband') and self._joint.find("gripper") < 0:
-            rospy.logerr('Parameter "deadband" not found! Aborting.')
-            return False
-        if params.has_key('deadband'):
-            self._deadband = params['deadband']
-        else:
-            self._deadband = None
-
-        ## Calibration flag references
-        if not params.has_key('up_ref'):
-            self._up_ref = None
-        else:
-            self._up_ref = params['up_ref']
-        
-        if not params.has_key('down_ref'):
-            self._down_ref = None
-        else:
-            self._down_ref = params['down_ref']
-
-        # Must have either up/down, except grippers
-        if self._up_ref is None and self._down_ref is None and self._joint.find("gripper") < 0:
-            rospy.logerr('Neither up or down reference was given! Aborting.')
-            return False
-
-        # For continuous joints
-        if not params.has_key('wrap'):
-            self._wrap = None
-        else:
-            self._wrap = params['wrap']
-        
-        # Max limit
-        if not params.has_key('max'):
-            self._max = None
-        else:
-            self._max = params['max']
-
-        # Min limit
-        if not params.has_key('min'):
-            self._min = None
-        else:
-            self._min = params['min']
-
-        return True
-
-    def reset(self):
-        self._ok = True
-        self._num_errors_since_reset = 0
-
-    def check_device(self, position, cal_reading, calibrated):
-        if not calibrated:
-            return True # Don't bother with uncalibrated joints
-
-        if self._wrap is not None and self._wrap > 0:
-            position = position % (self._wrap)
-
-        if self._up_ref is not None:
-            if abs(position - self._up_ref) < self._deadband:
-                return True # Don't know b/c in deadband
-            if self._wrap is not None:
-                if abs((self._wrap - position) - self._up_ref) < self._deadband:
-                    return True # This checks that we're not really close to the flag on the other side of the wrap
-        if self._down_ref is not None:
-            if abs(position - self._down_ref) < self._deadband:
-                return True
-            if self._wrap is not None:
-                if abs((self._wrap - position) - self._down_ref) < self._deadband:
-                    return True 
-
-        # Check limits
-        if self._max is not None and position > self._max:
-            return False
-        if self._min is not None and position < self._min:
-            return False
-
-        # Grippers only have max/min. No other stuff.
-        if self._joint.find("gripper") > 0:
-            return True
-
-        # cal_bool is True if the flag is closed
-        # cal_bool = True for "13"
-        cal_bool = cal_reading % 2 == 1
-        
-        
-        ## Has both up and down limit
-        if (self._up_ref is not None) and (self._down_ref is not None):
-            if self._up_ref > self._down_ref:
-                if position < self._down_ref and cal_bool:
-                    return True
-                if (position > self._down_ref) and (position < self._up_ref) and not cal_bool:
-                    return True
-                if position > self._up_ref and cal_bool:
-                    return True
-                else:
-                    rospy.logwarn('Broken transmission reading for %s. Position: %f (wrapped), cal_reading: %d. Up ref: %s, down ref: %s' % (self._joint, position, cal_reading, str(self._up_ref), str(self._down_ref)))
-                    return False
-            else: # Down > Up
-                if position < self._up_ref and not cal_bool:
-                    return True
-                if (position > self._up_ref) and (position < self._down_ref) and cal_bool:
-                    return True
-                if (position > self._down_ref) and not cal_bool:
-                    return True
-                else:
-                    rospy.logwarn('Broken transmission reading for %s. Position: %f (wrapped), cal_reading: %d. Up ref: %s, down ref: %s' % (self._joint, position, cal_reading, str(self._up_ref), str(self._down_ref)))
-                    return False
-
-        ## Has only up limit
-        if self._up_ref is not None:
-            if position > self._up_ref and cal_bool:
-                return True
-            if position < self._up_ref and not cal_bool:
-                return True
-            else:
-                rospy.logwarn('Broken transmission reading for %s. Position: %f (wrapped), cal_reading: %d. Up ref: %s, down ref: %s' % (self._joint, position, cal_reading, str(self._up_ref), str(self._down_ref)))
-                return False
-
-        ## Has only down limit
-        if self._down_ref is not None:
-            if position > self._down_ref and not cal_bool:
-                return True
-            if position < self._down_ref and cal_bool:
-                return True
-            else:
-                rospy.logwarn('Broken transmission reading for %s. Position: %f (wrapped), cal_reading: %d. Up ref: %s, down ref: %s' % (self._joint, position, cal_reading, str(self._up_ref), str(self._down_ref)))
-                return False
-        
-        rospy.logwarn('Broken transmission reading for %s. (No case handled.) Position: %f (wrapped), cal_reading: %d. Up ref: %s, down ref: %s' % (self._joint, position, cal_reading, str(self._up_ref), str(self._down_ref)))
-        return False
-
-
-    def update(self, mech_state):
-        self._rx_count += 1
-
-        # Check if we can find both the joint and actuator
-        act_names = [x.name for x in mech_state.actuator_statistics]
-        self.act_exists = self._actuator in act_names ;
-        
-        if self.act_exists:
-            self.cal_reading = mech_state.actuator_statistics[act_names.index(self._actuator)].calibration_reading
-            self._last_rising = mech_state.actuator_statistics[act_names.index(self._actuator)].last_calibration_rising_edge
-            self._last_falling = mech_state.actuator_statistics[act_names.index(self._actuator)].last_calibration_falling_edge
-
-        joint_names = [x.name for x in mech_state.joint_statistics]
-        self.joint_exists = self._joint in joint_names
-        if self.joint_exists :
-            self.position = mech_state.joint_statistics[joint_names.index(self._joint)].position
-            self.calibrated = (mech_state.joint_statistics[joint_names.index(self._joint)].is_calibrated == 1)
-            
-        # First check existance of joint, actuator
-        if not (self.act_exists and self.joint_exists):
-            self.level = 2
-            self.message = 'Actuators, Joints missing'
-            self._ok = False
-            return self._ok
-        
-        # Monitor current state
-        # Give it a certain number of false positives before reporting error
-        self.reading_msg = 'OK'
-        if not self.check_device(self.position, self.cal_reading, self.calibrated):
-            self._broke_count += 1
-            self._num_hits += 1
-            self._last_bad_reading = self.position
-        else:
-            self._broke_count = 0
-
-        if self._broke_count > GRACE_HITS:
-            self._ok = False
-            self._num_errors += 1
-            self._num_errors_since_reset += 1
-            self.reading_msg = 'Broken'
-        
-        # If we've had an error since the last reset, we're no good
-        if not self._ok:
-            self.message = 'Broken'
-            self.level = 2
-        else:
-            self.message = 'OK'
-            self.level = 0
-        
-        if self.calibrated:
-            self._max_position = max(self._max_position, self.position)
-            self._min_position = min(self._min_position, self.position)
-        
-        return self._ok
-
-    def get_status(self):
-        diag = DiagnosticStatus()
-        diag.level = self.level
-        diag.name = "Trans. Listener: %s" % self._joint
-        diag.message = self.message
-        diag.values = []
-
-        diag.values.append(KeyValue('Transmission Status', self.message))
-        diag.values.append(KeyValue('Current Reading', self.reading_msg)) 
-        diag.values.append(KeyValue("Joint", self._joint))
-        diag.values.append(KeyValue("Actuator", self._actuator))
-        diag.values.append(KeyValue("Up position", str(self._up_ref)))
-        diag.values.append(KeyValue("Down position", str(self._down_ref)))
-        diag.values.append(KeyValue("Wrap", str(self._wrap)))
-        diag.values.append(KeyValue("Max Limit", str(self._max)))
-        diag.values.append(KeyValue("Min Limit", str(self._min)))
-        diag.values.append(KeyValue("Deadband", str(self._deadband)))
-
-        diag.values.append(KeyValue('Actuator Exists', str(self.act_exists)))
-        diag.values.append(KeyValue('Joint Exists', str(self.joint_exists)))
-
-        diag.values.append(KeyValue("Mech State RX Count", str(self._rx_count)))
-
-        diag.values.append(KeyValue('Is Calibrated', str(self.calibrated)))
-        diag.values.append(KeyValue('Calibration Reading', str(self.cal_reading)))
-        diag.values.append(KeyValue('Joint Position', str(self.position)))
-        
-        diag.values.append(KeyValue('Total Errors', str(self._num_errors)))
-        diag.values.append(KeyValue('Errors Since Reset', str(self._num_errors_since_reset)))
-        diag.values.append(KeyValue('Total Bad Readings', str(self._num_hits)))
-        diag.values.append(KeyValue('Max Obs. Position', str(self._max_position)))
-        diag.values.append(KeyValue('Min Obs. Position', str(self._min_position)))
-
-        diag.values.append(KeyValue('Last Rising Edge', str(self._last_rising)))
-        diag.values.append(KeyValue('Last Falling Edge', str(self._last_falling)))
-        diag.values.append(KeyValue('Last Bad Reading', str(self._last_bad_reading)))
-
-        return diag
-
-        
-
 ##\brief Loads individual joint listeners, monitors all robot transmissions
 class TransmissionListener(PR2HWListenerBase):
     def __init__(self):
@@ -507,11 +236,12 @@ class TransmissionListener(PR2HWListenerBase):
         self._mech_sub = None
         self._halt_motors = rospy.ServiceProxy('pr2_etherCAT/halt_motors', Empty)
 
-        self._trans_sub = rospy.Subscriber('pr2_mechanism_diagnostics/transmission_status', Bool, self._trans_cb)
-        self._reset_trans = rospy.ServiceProxy('pr2_mechanism_diagnostics/reset_trans_check', Empty)
+        self._trans_sub = rospy.Subscriber('pr2_transmission_check/transmission_status', Bool, self._trans_cb)
+        self._reset_trans = rospy.ServiceProxy('pr2_transmission_check/reset_trans_check', Empty)
 
         self._mutex = threading.Lock()
-        self._ok = True
+        self._ok = True # Status callback OK
+        self._jms_ok = True # Joint monitors OK
         self._last_msg_time = 0
         
     def create(self, params):
@@ -520,7 +250,7 @@ class TransmissionListener(PR2HWListenerBase):
             if joint == 'type' or joint == 'file':
                 continue
 
-            # NOTE: Not creating JointTransmissionListeners because pr2_mechanism_diagnostics
+            # NOTE: Not creating JointTransmissionListeners because pr2_transmission_check
             # can do this for us.
             if joint == 'caster_slip':
                 joint_mon = CasterSlipListener()
@@ -537,22 +267,34 @@ class TransmissionListener(PR2HWListenerBase):
     def _trans_cb(self, msg):
         with self._mutex:
             self._last_msg_time = rospy.get_time()
+
+            was_ok = self._ok
             self._ok = msg.data
+
+            if not self._ok and was_ok:
+                rospy.logerr('Halting motors, broken transmission.')
+                try:
+                    self._halt_motors()
+                except Exception, e:
+                    import traceback
+                    rospy.logerr('Caught exception trying to halt motors: %s', traceback.format_exc())
+
+
         
     def _callback(self, msg):
         with self._mutex:
             self._last_msg_time = rospy.get_time()
             
-            was_ok = self._ok
+            was_ok = self._jms_ok
             
             for joint_mon in self._joint_monitors:
                 ok = joint_mon.update(msg)
-                self._ok = ok and self._ok
+                self._ok_jms = ok and self._ok_jms
                 
 
         # Halt if broken
-        if not self._ok and was_ok:
-            rospy.logerr('Halting motors, broken transmission.')
+        if not self._jms_ok and was_ok:
+            rospy.logerr('Halting motors, caster slipping')
             try:
                 self._halt_motors()
             except Exception, e:
@@ -562,6 +304,7 @@ class TransmissionListener(PR2HWListenerBase):
     def reset(self):
         with self._mutex:
             self._ok = True
+            self._jms_ok = True
             for joint_mon in self._joint_monitors:
                 joint_mon.reset()
 
@@ -573,15 +316,18 @@ class TransmissionListener(PR2HWListenerBase):
     def check_ok(self):
         with self._mutex:
             if self._last_msg_time == 0:
-                return 3, "No mech state", None
+                return 3, "No trans status", None
             if rospy.get_time() - self._last_msg_time > 3:
-                return 3, "Mech state stale", None
+                return 3, "Trans status stale", None
 
-            if self._ok:
-                status = 0
+            if self._ok and self._jms_ok:
+                status = DiagnosticStatus.OK
                 msg = ''
+            elif self._ok:  
+                status = DiagnosticStatus.ERROR
+                msg = 'Caster Slipping'
             else:
-                status = 2
+                status = DiagnosticStatus.ERROR
                 msg = 'Transmission Broken'
         
             diag_stats = []

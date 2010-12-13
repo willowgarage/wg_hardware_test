@@ -2,7 +2,7 @@
 #
 # Software License Agreement (BSD License)
 #
-# Copyright (c) 2008, Willow Garage, Inc.
+# Copyright (c) 2009, Willow Garage, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,8 @@
 #
 
 ##\author Kevin Watts
-##\brief Listens to diagnostics from wge100 camera and reports OK/FAIL
+##\brief Listens to diagnostics from hokuyo_node and reports OK/FAIL
+
 PKG = 'pr2_hardware_test_monitor'
 
 import roslib
@@ -50,6 +51,9 @@ import threading
 from pr2_hw_listener import PR2HWListenerBase
 
 class HokuyoListener(PR2HWListenerBase):
+    """
+    Listens to diagnostics from a Hokuyo laser scanner with the given namespace.
+    """
     def __init__(self):
         self._diag_sub = rospy.Subscriber('/diagnostics', DiagnosticArray, self._diag_callback)
         self._mutex = threading.Lock()
@@ -58,20 +62,19 @@ class HokuyoListener(PR2HWListenerBase):
         self._update_time = 0
         self.name = 'tilt_hokuyo_node'
 
-    # Doesn't do anything
     def create(self, params):
+        """
+        params must have the value "name", which is the namespace of the Hokuyo to listen to.
+
+        \param params { } : ROS Parameters in namespace
+        \return bool : True if created OK
+        """
         if not params.has_key('name'):
             rospy.logerr('Hokuyo Listener was not given param "name"')
             return False
         self.name = params['name']
         
         return True
-
-    def halt(self):
-        pass
-
-    def reset(self):
-        pass
 
     def _diag_callback(self, msg):
         self._mutex.acquire()

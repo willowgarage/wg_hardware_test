@@ -54,6 +54,9 @@ from time import sleep
 import math
 
 class PR2HardwareSimulator:
+    """
+    Publishes representative output from a PR2 during operation.
+    """
     def __init__(self):
         self.diag_pub = rospy.Publisher('/diagnostics', DiagnosticArray)
         self.diag_agg_pub = rospy.Publisher('/diagnostics_agg', DiagnosticArray)
@@ -61,7 +64,7 @@ class PR2HardwareSimulator:
         self.cal_pub = rospy.Publisher('calibrated', Bool, latch=True)
         self.ecstat_pub = rospy.Publisher('ecstats', ecstats)
         self.mech_pub = rospy.Publisher('mechanism_statistics', MechanismStatistics)
-        self.trans_pub = rospy.Publisher('pr2_mechanism_diagnostics/transmission_status', Bool, latch = True)
+        self.trans_pub = rospy.Publisher('pr2_transmission_check/transmission_status', Bool, latch = True)
 
         self._reset_srv = rospy.Service('pr2_etherCAT/reset_motors', Empty, self.on_reset)
         self._halt_srv = rospy.Service('pr2_etherCAT/halt_motors', Empty, self.on_halt)
@@ -172,6 +175,13 @@ class PR2HardwareSimulator:
         stat.name = 'EtherCAT Master'
         stat.message = 'OK'
         stat.values.append(KeyValue('Dropped Packets', '0'))
+        stat.values.append(KeyValue('RX Late Packet', '0'))
+        
+        # Check for encoder errors
+        mcb_stat = DiagnosticStatus()
+        mcb_stat.name = 'EtherCAT Device (my_motor)'
+        mcb_stat.level = 0
+        mcb_stat.values.append(KeyValue('Num encoder_errors', '0'))
 
         # Test camera listener
         stat_cam = DiagnosticStatus()
@@ -186,6 +196,7 @@ class PR2HardwareSimulator:
         stat_hk.message = 'OK'
 
         msg.status.append(stat_cam)
+        msg.status.append(mcb_stat)
         msg.status.append(stat_hk)
         msg.header.stamp = rospy.get_rostime()
      

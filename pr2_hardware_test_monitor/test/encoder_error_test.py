@@ -33,11 +33,15 @@
 #
 
 ##\author Kevin Watts
-##\brief Tests that test monitor latches error state
+##\brief Tests that test monitor detects dropped packets
+
 
 """
-This tests that a single late EtherCAT packet is ignored by the 
-dropped packet check.
+This tests that encoder errors are reported as failures. 
+This simulates diagnostics data from "EtherCAT Master" 
+and checks the output from the test monitor.
+
+From #4814: Fail for any encoder errors
 """
 
 from __future__ import with_statement
@@ -60,23 +64,30 @@ import threading
 GRACE_TIME = 35 # 30 + 5 seconds for HW monitor to be ready
 IGNORE_TIME = 5
 
-def _ecat_diag(pkts = 0):
+# Generate diagnostic status message
+def _ecat_diag(enc_errors = 0):
     array = DiagnosticArray()
     stat = DiagnosticStatus()
     stat.name = 'EtherCAT Master'
     stat.level = 0
     stat.message = 'OK'
-    stat.values.append(KeyValue('Dropped Packets', str(pkts)))
-    stat.values.append(KeyValue('Late Packets', str(pkts)))
+    stat.values.append(KeyValue('Dropped Packets', '0'))
+    stat.values.append(KeyValue('RX Late Packet', '0'))
+
+    mcb_stat = DiagnosticStatus()
+    mcb_stat.name = 'EtherCAT Device (my_motor)'
+    mcb_stat.level = 0
+    mcb_stat.values.append(KeyValue('Num encoder_errors', str(enc_errors)))
 
     array.header.stamp = rospy.get_rostime()
     array.status.append(stat)
+    array.status.append(mcb_stat)
     
     return array
 
-class TestDroppedPacket(unittest.TestCase):
+class TestEncoderError(unittest.TestCase):
     def __init__(self, *args):
-        super(TestDroppedPacket, self).__init__(*args)
+        super(TestEncoderError, self).__init__(*args)
 
         self._mutex = threading.Lock()
         rospy.init_node('test_monitor_drop_pkt')
@@ -89,6 +100,8 @@ class TestDroppedPacket(unittest.TestCase):
 
         self._halted = False
 
+        self._num_errors = rospy.get_param('~num_errors', 1)
+
         self._snapped = False
         self._snapshot_sub = rospy.Subscriber('snapshot_trigger', std_msgs.msg.Empty, self._snap_cb)
 
@@ -99,12 +112,11 @@ class TestDroppedPacket(unittest.TestCase):
 
         rospy.Subscriber('test_status', TestStatus, self._cb)
 
-        self.motors_pub = rospy.Publisher('pr2_etherCAT/motors_halted', Bool)
+        self._motors_pub = rospy.Publisher('pr2_etherCAT/motors_halted', Bool)
         self.cal_pub = rospy.Publisher('calibrated', Bool, latch=True)
 
     def on_halt(self, srv):
         return EmptyResponse()
-
 
     def _snap_cb(self, msg):
         self._snapped = True
@@ -123,39 +135,36 @@ class TestDroppedPacket(unittest.TestCase):
         self.cal_pub.publish(True)
         while not rospy.is_shutdown():
             self._diag_pub.publish(_ecat_diag())
-            self.motors_pub.publish(False)
+            self._motors_pub.publish(False)
             sleep(1.0)
             if rospy.get_time() - self._start > GRACE_TIME:
                 break
 
-        # Publish single dropped AND LATE packet
-        self._diag_pub.publish(_ecat_diag(2))
-        self.motors_pub.publish(False)
-        sleep(1.0)
-
-        # Publish same status for 10 seconds
-        for i in range(0, 10):
-            if rospy.is_shutdown():
-                raise Exception("Rospy shutdown")
-            self._diag_pub.publish(_ecat_diag(2))
-            self.motors_pub.publish(False)
-            sleep(1.0)
+        # Publish data with encoder errors
+        self._diag_pub.publish(_ecat_diag(self._num_errors))
+        self._motors_pub.publish(False)
+        sleep(1.0)        
 
         with self._mutex:
             self.assert_(not rospy.is_shutdown(), "Rospy shutdown")
 
             self.assert_(self._last_msg is not None, "No data from test monitor")
             
-            # Check that we're in error state
-            self.assert_(self._last_msg.test_ok == TestStatus.RUNNING, "Test monitor reports that we're not in error state. Level: %d. Message: %s" % (self._last_msg.test_ok, self._last_msg.message))
-            # Check that snapshot trigger was called
-            self.assert_(not self._snapped, "Snapshot trigger was called")
+            # Check that we're in error state if we should be
+            if self._num_errors > 0:
+                self.assert_(self._last_msg.test_ok == TestStatus.ERROR, "Test monitor reports that we're not in error state. Level: %d. Message: %s" % (self._last_msg.test_ok, self._last_msg.message))
+                # Check that snapshot trigger was called
+                self.assert_(self._snapped, "Snapshot trigger wasn't called, but we did halt")
+            else:
+                self.assert_(self._last_msg.test_ok == TestStatus.RUNNING, "Test monitor reports that we're not running. Level: %d. Message: %s" % (self._last_msg.test_ok, self._last_msg.message))
+                # Check that snapshot trigger wasn't called
+                self.assert_(not self._snapped, "Snapshot trigger wasn't called, but we did halt")
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == '-v':
         suite = unittest.TestSuite()
-        suite.addTest(TestDroppedPacket('test_dropped_pkt'))
+        suite.addTest(TestEncoderError('test_dropped_pkt'))
 
         unittest.TextTestRunner(verbosity=2).run(suite)
     else:
-        rostest.run(PKG, sys.argv[0], TestDroppedPacket, sys.argv)
+        rostest.run(PKG, sys.argv[0], TestEncoderError, sys.argv)

@@ -1,5 +1,6 @@
 <package>
   <description brief="Utilities for monitoring status of PR2 during hardware testing" >
+    Test monitoring utilities for runtime monitoring of PR2 component testing.
   </description>
   <author>Kevin Watts</author>
   <license>BSD</license>
@@ -15,6 +16,7 @@
   <depend package="robot_monitor" />
   <depend package="ectools" />
   <depend package="pr2_mechanism_diagnostics" />
+  <depend package="pr2_transmission_check" />
   <depend package="xacro" /> <!-- For testing with dummy URDF files -->
   <platform os="ubuntu" version="9.04"/>
   <platform os="ubuntu" version="9.10"/>

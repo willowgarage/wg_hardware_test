@@ -34,7 +34,7 @@
 #
 
 ##\author Kevin Watts
-##\brief Listens to pr2_etherCAT/motors_halted, allows base to drive
+##\brief Checks whether PR2 is driving during PR2 burn in test
 
 from __future__ import with_statement
 PKG = 'pr2_hardware_test_monitor'

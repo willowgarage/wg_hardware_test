@@ -158,7 +158,7 @@ class TestRecord(object):
     Updates CSV record with state changes for a test    
     
     """
-    def __init__(self, test, serial, file_path = None, csv_name = None):
+    def __init__(self, test, serial, file_path = None, csv_name = None, send_email = True):
         """
         @param test LifeTest : Test type, params
         @param serial str : Serial number of DUT
@@ -219,6 +219,8 @@ class TestRecord(object):
 
         self._has_checked_invent = False
         self._invent_hrs_base = 0.0
+
+        self._send_email = send_email
 
 
     def get_elapsed(self):
@@ -368,6 +370,10 @@ class TestRecord(object):
         """
         Sends email with test info to testing team
         """
+        # Don't send email if we have that disabled
+        if not self._send_email:
+            return True
+
         try:
             msg = self.make_email_message(lvl, alert_msg)
 

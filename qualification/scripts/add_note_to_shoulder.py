@@ -36,7 +36,7 @@
 ##\brief Adds note to shoulder explaining which UA was under test
 
 
-SHOULDER_PN = '6804204'
+SHOULDER_PNS = ['6804204', '6804338']
 
 PKG = 'qualification'
 import roslib; roslib.load_manifest(PKG)
@@ -54,11 +54,17 @@ def _report_invalid_id():
     dlg = wx.MessageDialog(None, "Invalid Shoulder Serial number. Press Cancel to abort, OK to retry", "Invalid ID", wx.OK|wx.CANCEL)
     return dlg.ShowModal() == wx.ID_OK
 
+def _check_pn(serial):
+    for part in SHOULDER_PNS:
+        if serial.startswith(part):
+            return True
+    return False
+
 def get_sn_from_user(iv):
     while not rospy.is_shutdown():
         sn = str(wx.GetTextFromUser("Enter the shoulder serial number by scanning the shoulder barcode", "Enter Shoulder SN"))
         if not unicode(sn).isnumeric() or not len(sn) == 12 or \
-                not sn.startswith(SHOULDER_PN) or not iv.check_serial_valid(sn):
+                not _check_pn(sn) or not iv.check_serial_valid(sn):
             if _report_invalid_id():
                 continue
             return None

@@ -364,7 +364,7 @@ class TestMonitorPanel(wx.Panel):
                 self.update_test_record('Stopping test after no data received for %d seconds.' % int(interval))
                 # Tear down test if its stale to stop safely, #4443
                 self.stop_test()
-                self.update_test_record('Test on bay %s was stopped after no updates, but is incomplete' % self._bay.name)
+                self.update_test_record('Test on %s was stopped after no updates, but is incomplete' % self._serial)
 
             self._update_controls(4)
             self.update_test_record()
@@ -610,13 +610,9 @@ class TestMonitorPanel(wx.Panel):
         launch += ' <node machine="localhost" pkg="rosbag" type="rosbag" '
         launch += 'args="record -o /hwlog/%s_life_test /diagnostics --split 1000" name="test_logger" />\n' % self._serial
 
-        # Rosrecord launches - will record burst of data on trigger
-        launch += ' <node machine="localhost" pkg="rosrecord" type="rosrecord" name="snapshot_record" '
-        launch += 'args="-f /hwlog/%s_test_events joint_states mechanism_statistics -s " />\n' % self._serial
-
         # Rosbag records our motor traces
         launch += ' <node machine="localhost" pkg="rosbag" type="rosbag" name="mtrace_record" '
-        launch += 'args="record -o /hwlog/%s_motor_trace -e %s/motor_trace/.* " />\n' % (self._serial, bay.name)
+        launch += 'args="record -o /hwlog/%s_motor_trace -e /%s/motor_trace/.* " />\n' % (self._serial, bay.name)
         
         launch += '</group>\n</launch>'
 

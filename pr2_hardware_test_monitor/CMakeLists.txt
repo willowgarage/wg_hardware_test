@@ -43,11 +43,10 @@ rosbuild_add_rostest(test/launch/cam_warn_test.launch)
 
 # Test for dropped packets 
 rosbuild_add_rostest(test/launch/dropped_packet_test.launch)
-rosbuild_add_rostest(test/launch/single_dropped_packet_test.launch)
-rosbuild_add_rostest(test/launch/late_packet_test.launch)
+
+# Test for encoder errors
+rosbuild_add_rostest(test/launch/encoder_errors_test.launch)
 
 # Test transmission listener
-# These won't work until pr2_mechanism_diagnostics is released 
-# with transmission check code (dturtle).
-rosbuild_add_rostest_future(test/launch/trans_error_flex.launch)
-rosbuild_add_rostest_future(test/launch/trans_error_roll.launch)
+rosbuild_add_rostest(test/launch/trans_error_flex.launch)
+rosbuild_add_rostest(test/launch/trans_error_roll.launch)

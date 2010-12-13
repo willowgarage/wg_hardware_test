@@ -7,9 +7,5 @@
   <node pkg="rostopic" type="rostopic" name="heartbeat_pub"
         args="pub /heartbeat std_msgs/Empty -r 1" />
 
-  <!-- Asserts we latch error state -->
-  <test test-name="single_dropped_packet_test" time-limit="90"  
-        pkg="pr2_hardware_test_monitor"
-        name="test_monitor"
-        type="single_dropped_packet_test.py" />
+
 </launch>

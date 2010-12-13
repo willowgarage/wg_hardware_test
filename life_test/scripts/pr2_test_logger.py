@@ -48,14 +48,14 @@ from optparse import OptionParser
 from wg_invent_client import Invent
 
 class PR2TestLogger:
-    def __init__(self, robot_serial, iv, output_file = None, submit = True):
+    def __init__(self, robot_serial, iv, output_file = None, submit = True, email = True):
         my_test = LifeTest(short='PR2', testid='pr2-burn-test', name='PR2 Burn in Test', 
                            desc='PR2 Burn in Test', serial='6802967',
                            duration=1, launch_script='pr2_test/pr2_burn_in_test.launch', 
                            test_type='Burn in', power=False)
 
         self._out_file = output_file
-        self._record = TestRecord(my_test, robot_serial, csv_name = self._out_file)
+        self._record = TestRecord(my_test, robot_serial, csv_name = self._out_file, send_email = email)
 
         self._mutex = threading.Lock()
 
@@ -78,7 +78,7 @@ class PR2TestLogger:
 
         # Don't log if we didn't start running
         if self._record.get_cum_time() < 1:
-            print >> sys.stderr, "No robot burn in data record. Unable to log to inventory system"
+            print >> sys.stderr, "No robot burn in data record. Unable to send to inventory system"
             return
 
         self._record.update(False, False, False, 'Stopping robot', '')
@@ -108,6 +108,8 @@ if __name__ == '__main__':
                       help="Log file to store data. Appended to existing file")
     parser.add_option('-n', '--no-submit', action="store_true", dest="no_submit",
                       default=False, help="Don't submit to Inventory system")
+    parser.add_option('--no-email', action="store_true", dest="no_email",
+                      default=False, help="Don't email updates")
     
     options,args = parser.parse_args()
     if not options.username and not options.no_submit:
@@ -131,7 +133,7 @@ if __name__ == '__main__':
 
     rospy.init_node('pr2_test_logger') # , disable_signals = True)
 
-    pr2_logger = PR2TestLogger(robot, iv, options.output, not options.no_submit)
+    pr2_logger = PR2TestLogger(robot, iv, options.output, not options.no_submit, not options.no_email)
     rospy.on_shutdown(pr2_logger.close)
     
     print "Logging PR2 burn in test status..."
