@@ -1,0 +1,19 @@
+<launch> 
+  <node pkg="pr2_hardware_test_monitor" type="pr2_hw_test_monitor" name="monitor" output="screen" >
+    <rosparam command="load" file="$(find pr2_hardware_test_monitor)/test/config/ecat_listener.yaml" />
+  </node>
+
+  <!-- Need heartbeat in order to work -->
+  <node pkg="rostopic" type="rostopic" name="heartbeat_pub"
+        args="pub /heartbeat std_msgs/Empty -r 1" />
+
+  <!-- Asserts we can pick up late packets -->
+  <test test-name="late_packet_test"
+        time-limit="90"  
+        pkg="pr2_hardware_test_monitor"
+        name="test_monitor"
+        type="dropped_packet_test.py" >
+    <param name="num_drops" value="15" />
+    <param name="num_lates" value="12" />
+  </test>
+</launch>

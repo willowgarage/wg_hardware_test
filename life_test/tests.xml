@@ -47,6 +47,36 @@
            rate="true" val="2.0" />
   </test>
 
+    <test serial="6804108" name="Caster Periodic Drive Test" id="caster-periodic-drive"
+        short="Caster" duration="40"
+        desc="Caster drives around"
+        script="caster_test/test_full_drive.launch" power="true"
+        type="Burn-in Test" >
+    <param name="Rate" param_name="cycle_rate"
+           desc="Frequency of test"
+           rate="true" val="2.0" />
+  </test>
+
+  <test serial="6804108" name="Caster Test (No Air)" id="caster-burn-no-air"
+        short="Caster" duration="40"
+        desc="Caster jerks around without air"
+        script="caster_test/test_no_air.launch" power="true"
+        type="Burn-in Test" >
+    <param name="Rate" param_name="cycle_rate"
+           desc="Frequency of test"
+           rate="true" val="2.0" />
+  </test>
+
+  <test serial="6804108" name="Caster Test (Steer Only)" id="caster-burn-steer"
+        short="Caster" duration="40"
+        desc="Caster steers in one direction continuously"
+        script="caster_test/test_steer.launch" power="true"
+        type="Burn-in Test" >
+    <param name="Rate" param_name="cycle_rate"
+           desc="Frequency of test"
+           rate="true" val="2.0" />
+  </test>
+
   
   <test serial="6804213" name="Wrist Test"  id="wrist-burn"
 	short="Wrist" duration="40"
@@ -89,6 +119,16 @@
   </test>
 
   <test serial="6804204" name="Shoulder Test" id="shoulder-burn"
+	short="Shoulder" duration="30"
+	desc="Tests shoulder with dummy UA."
+	rate="1.0" script="shoulder_test/test_gui.launch"
+	type="Burn-in Test" power="true" >
+    <param name="Cycle Rate" param_name="cycle_rate"
+	   desc="Rate"
+	   val="0.5" rate="true" />
+  </test>
+
+  <test serial="6804338" name="Shoulder Test" id="shoulder-burn"
 	short="Shoulder" duration="30"
 	desc="Tests shoulder with dummy UA."
 	rate="1.0" script="shoulder_test/test_gui.launch"

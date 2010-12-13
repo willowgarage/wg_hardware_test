@@ -62,12 +62,11 @@ class FakeTestFrame(wx.Frame):
         
         self.diag_pub = rospy.Publisher('/diagnostics', DiagnosticArray)
         self.mech_pub = rospy.Publisher('mechanism_statistics', MechanismStatistics)
+        self.trans_pub = rospy.Publisher('pr2_transmission_check/transmission_status', Bool)
         self.motors_pub = rospy.Publisher('pr2_etherCAT/motors_halted', Bool)
 
         self._start_time = rospy.get_time()
 
-
-        
         # Load XRC
         xrc_path = os.path.join(roslib.packages.get_pkg_dir('life_test'), 'xrc/gui.xrc')
 
@@ -142,6 +141,7 @@ class FakeTestFrame(wx.Frame):
         mech_st.actuator_statistics = [ act_st, cont_act_st ]
         mech_st.joint_statistics = [ jnt_st, cont_st ]
 
+        self.trans_pub.publish(self._cal_box.IsChecked())
         self.mech_pub.publish(mech_st)
   
     def on_halt(self, srv):
@@ -156,11 +156,11 @@ class FakeTestFrame(wx.Frame):
         self._level_choice.SetSelection(val)
 
     def set_enum_ctrl(self):
-        enum_param = rospy.get_param('test_choice')
+        enum_param = rospy.get_param('test_choice', 'A')
         self.enum_param_ctrl.SetValue(enum_param)
 
     def set_range_ctrl(self):
-        range_param = rospy.get_param('cycle_rate')
+        range_param = rospy.get_param('cycle_rate', 1.0)
         self.range_param_ctrl.SetValue(range_param)
 
     def on_timer(self, event = None):
@@ -186,11 +186,21 @@ class FakeTestFrame(wx.Frame):
         stat.level = level
         stat.name = 'EtherCAT Master'
         stat.message = choice 
+        stat.values.append(KeyValue(key='Dropped Packets', value='0'))
+        stat.values.append(KeyValue(key='RX Late Packet', value='0'))
+
+        mcb_stat = DiagnosticStatus()
+        mcb_stat.level = 0
+        mcb_stat.name = 'EtherCAT Device (cont_motor)'
+        mcb_stat.message = 'OK'
+        mcb_stat.values.append(KeyValue(key='Num encoder_errors', value='0'))
+        msg.status.append(mcb_stat)
      
         self.diag_pub.publish(msg)
 
         halted = Bool()
         halted.data = level != 0
+
         self.motors_pub.publish(halted)
             
 

@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="qualification" type="check_for_Xilinx.py" name="check_for_Xilinx" />
+</launch>

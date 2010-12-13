@@ -2,7 +2,7 @@
 #
 # Software License Agreement (BSD License)
 #
-# Copyright (c) 2008, Willow Garage, Inc.
+# Copyright (c) 2010, Willow Garage, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
 #
 
 ##\author Kevin Watts
-##\brief Listens to diagnostics from wge100 camera and reports OK/FAIL
+##\brief Listens to diagnostics_agg and reports statusx
 
 
 from __future__ import with_statement
@@ -48,18 +48,37 @@ from std_srvs.srv import *
 import rospy
 
 import threading
+import types
 
 from robot_monitor.robot_monitor_panel import State
 
 from pr2_hw_listener import PR2HWListenerBase
 
 class DiagAggState(State):
-    def __init__(self, ignore_categories = []):
+    def __init__(self, whitelist = None, ignore_categories = None):
+        """
+        \param whitelist [ str ] : Values to focus on.
+        \param ignore_categories [ str ] : Ignore matching values
+        """
         State.__init__(self)
 
-        self._ignore_categories = ignore_categories
+        self._whitelist = whitelist 
+        self._ignore_categories = ignore_categories if ignore_categories else []
               
     def _is_ignored(self, name):
+        """
+        Check if item should be ignored.
+        If we have a whitelist, False if item in it. 
+        Else if, True if we're supposed to ignore it.
+        """
+        if self._whitelist:
+            if name in self._whitelist:
+                return False
+            elif name.lstrip('/') in self._whitelist:
+                return False
+            else:
+                return True
+
         for ignore in self._ignore_categories:
             if name == ignore:
                 return True
@@ -70,6 +89,10 @@ class DiagAggState(State):
 
 
     def get_top_level_state(self):
+        """
+        Get top level status (OK, WARN, ERROR, STALE) of diagnostics
+        Handles ignore categories, etc.
+        """
         level = -1
         min_level = 255
         msgs = []
@@ -99,7 +122,18 @@ class DiagAggState(State):
             
         return level, msgs
 
+def _convert_to_list(val):
+    if type(val) in (list, tuple):
+        return val
+    else:
+        return [ str(val) ]
+
 class DiagAggListener(PR2HWListenerBase):
+    """
+    Listens to /diagnostics_agg topic and checks top level state of diagnostics
+    Will latch any error messages until reset occurs
+
+    """
     def __init__(self):
         self._mutex = threading.Lock()
 
@@ -108,19 +142,34 @@ class DiagAggListener(PR2HWListenerBase):
         self._update_time = 0
 
     def create(self, params):
+        """
+        Parameter values:
+         * ignore_diags : Any values to ignore when computing top level state
+         * whitelist : Only focus on these values 
+        Both may be string or list. 
+
+        \param params { str : str } : ROS parameters to initialize 
+        \return bool : True if init OK
+        """
         if params.has_key('ignore_diags'):
-            ignore_diags = params['ignore_diags']
+            ignore_diags = _convert_to_list(params['ignore_diags'])
         else:
             ignore_diags = [ 'Other' ]
 
-        self._state = DiagAggState(ignore_diags)
+        whitelist = None
+        if params.has_key('whitelist'):
+            whitelist = _convert_to_list(params['whitelist'])
+        
+        self._state = DiagAggState(whitelist = whitelist, ignore_categories = ignore_diags)
 
         self._diag_agg_sub = rospy.Subscriber('/diagnostics_agg', DiagnosticArray, self._diag_callback)
 
         return True
 
     def reset(self):
-        # Clears state of messages that were in error or warning
+        """
+        Clears state of messages that were in error or warning
+        """
         self._msgs = []
 
     def _diag_callback(self, msg):
@@ -135,6 +184,9 @@ class DiagAggListener(PR2HWListenerBase):
                     self._msgs.append(msg)
             
     def check_ok(self):
+        """
+        @return (int, str, None) : Level, Message. No diagnostics
+        """
         with self._mutex:
             msg = ''
             stat = self._level

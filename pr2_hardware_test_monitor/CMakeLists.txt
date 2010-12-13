@@ -29,8 +29,9 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
+rosbuild_add_roslaunch_check(test/launch)
 
-# Test test_monitor, with trans, ethercat, camera listeners                                                   
+# Test test_monitor, with trans, ethercat, camera listeners               
 rosbuild_add_rostest(test/launch/fake_monitor.launch)
 rosbuild_add_rostest(test/launch/latch_test.launch)
 rosbuild_add_rostest(test/launch/no_heartbeat_test.launch)
@@ -42,3 +43,10 @@ rosbuild_add_rostest(test/launch/cam_warn_test.launch)
 
 # Test for dropped packets 
 rosbuild_add_rostest(test/launch/dropped_packet_test.launch)
+
+# Test for encoder errors
+rosbuild_add_rostest(test/launch/encoder_errors_test.launch)
+
+# Test transmission listener
+rosbuild_add_rostest(test/launch/trans_error_flex.launch)
+rosbuild_add_rostest(test/launch/trans_error_roll.launch)

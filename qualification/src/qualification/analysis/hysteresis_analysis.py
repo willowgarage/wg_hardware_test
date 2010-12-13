@@ -41,6 +41,7 @@ import os
 import string
 from time import sleep
 
+# Matplotlib can behave funny, using "Agg" backend is probably the best
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -49,6 +50,9 @@ from StringIO import StringIO
 from pr2_self_test_msgs.msg import Plot, TestParam, TestValue
 
 class HysteresisParameters(object):
+    """
+    Stores Hysteresis test parameters. Can output them as TestParams
+    """
     def __init__(self):
         self.joint_name = None
         
@@ -86,6 +90,9 @@ class HysteresisParameters(object):
         return True
 
     def get_test_params(self):
+        """
+        \return [ TestParam ] : 
+        """
         test_params = []
         
         test_params.append(TestParam("Joint Name", self.joint_name))
@@ -111,11 +118,17 @@ class HysteresisParameters(object):
 
         return test_params
 
-def get_test_value(name, value, min, max):
-    return TestValue(str(name), str(value), str(min), str(max))
+def get_test_value(name, value, minv, maxv):
+    """
+    Convert values to TestValue. Force converts all arguments to string.
+    """
+    return TestValue(str(name), str(value), str(minv), str(maxv))
     
     
 class HysteresisDirectionData(object):
+    """
+    Data for one direction in hysteresis test
+    """
     def __init__(self, position, effort, velocity):
         self.range_max = max(position)
         self.range_min = min(position)
@@ -128,6 +141,9 @@ class HysteresisDirectionData(object):
         self.velocity = numpy.array(velocity)[min_index: max_index]
 
 class HysteresisTestData(object):
+    """
+    Data for hysteresis test
+    """
     def __init__(self, positive_data, negative_data):
         self.positive = positive_data
         self.negative = negative_data
@@ -135,7 +151,9 @@ class HysteresisTestData(object):
         self.range_max = max(self.positive.range_max, self.negative.range_max)
         self.range_min = min(self.positive.range_min, self.negative.range_min)
 
+
 class HysteresisAnalysisResult(object):
+    """Struct to store result data"""
     __slots__ = ['html', 'summary', 'result', 'values' ]
     def __init__(self):
         self.html = ''
@@ -143,6 +161,11 @@ class HysteresisAnalysisResult(object):
         self.result = False
         self.values = []
 
+##\brief Checks range of test
+##
+## To pass, we must be a continuous joint, or must have exceeded our min
+## and max ranges.
+##\return  HysteresisAnalysisResult : Result of test
 def range_analysis(params, data):
     result = HysteresisAnalysisResult()
     if (params.range_max == 0 and params.range_min == 0):
@@ -199,6 +222,17 @@ def range_analysis(params, data):
     
     return result
 
+##\brief Analyzes test effort
+## 
+## To pass, our average efforts must lie within the tolerances of the min/max efforts
+## and must have their std. dev. below the threshold (sd_max). All percentage quantities 
+## are calculated in percent of difference in effort:
+## sd_value = numpy.std(effort) / (numpy.average(positive) - numpy.average(negative))
+## 
+## Effort tolerances is given by "tolerance". SD tolerance given by "sd_max". Both tolerances
+## given in percent of effort.
+##
+##\return  HysteresisAnalysisResult : Result of test
 def effort_analysis(params, data):
     result = HysteresisAnalysisResult()
     
@@ -268,11 +302,18 @@ def effort_analysis(params, data):
     result.values = []
     result.values.append(get_test_value('Positive Effort Avg', max_avg, params.pos_effort - tolerance, params.pos_effort + tolerance))
     result.values.append(get_test_value('Positive Effort SD', max_sd, '', sd_max))
+    result.values.append(get_test_value('Positive Effort SD Percent', sd_max_percent, '', params.sd_max))
+
     result.values.append(get_test_value('Negative Effort Avg', min_avg, params.neg_effort - tolerance, params.neg_effort + tolerance))
-    result.values.append(get_test_value('Positive Effort SD', max_sd, '', sd_max))
+    result.values.append(get_test_value('Negative Effort SD', min_sd, '', sd_max))
+    result.values.append(get_test_value('Positive Effort SD Percent', sd_min_percent, '', params.sd_max))
 
     return result
 
+##\brief Analyzes velocity data 
+## 
+## Reports velocity RMS, Avg and STD, but doesn't enforce any pass/fail standard
+##\return  HysteresisAnalysisResult : Result of test
 def velocity_analysis(params, data):
     html = ['<p>Search velocity: %.2f.</p><br>\n' % abs(params.velocity)]
 
@@ -304,6 +345,12 @@ def velocity_analysis(params, data):
     return result
 
 ##\brief Checks slope of test data (effort v. position)
+##
+## Some components have a "slope" to their position/effort curves. This checks 
+## that the slope is within range and the intercepts are OK.
+## Slope value is given by "slope" field of params. Tolerance from "sd_max"
+## Intercepts are "pos_effort" and "neg_effort" fields. Tolerance from "tolerance".
+##\return  HysteresisAnalysisResult : Result of test
 def regression_analysis(params, data):
     result = HysteresisAnalysisResult()    
 
@@ -362,6 +409,8 @@ def regression_analysis(params, data):
 
     return result
 
+## Plot effort
+##\return pr2_self_test_msgs/Plot :
 def plot_effort(params, data):
     # Plot the analyzed data
     fig = plt.figure(1)
@@ -405,6 +454,8 @@ def plot_effort(params, data):
 
     return p
 
+## Plot velocity
+##\return pr2_self_test_msgs/Plot :
 def plot_velocity(params, data):
     fig = plt.figure(2)
     plt.ylabel('Velocity')
@@ -433,6 +484,7 @@ def plot_velocity(params, data):
 # Wrist analysis starts here
 
 class WristRollHysteresisTestData(HysteresisTestData):
+    """Struct to hold wrist test data"""
     def __init__(self, msg):
         left_min = int(0.05 * len(msg.left_turn.roll_position))
         left_max = int(0.95 * len(msg.left_turn.roll_position))
@@ -446,6 +498,7 @@ class WristRollHysteresisTestData(HysteresisTestData):
         self.negative = HysteresisDirectionData(msg.right_turn.roll_position, msg.right_turn.roll_effort, msg.right_turn.roll_velocity)
 
 class WristRollHysteresisParams(HysteresisParameters):
+    """Wrist test parameters"""
     def __init__(self, msg):
         self.joint_name  = msg.roll_joint
         self.p_gain      = msg.roll_pid[0]
@@ -490,6 +543,16 @@ class WristRollHysteresisParams(HysteresisParameters):
         return test_params
 
 ##\brief Analyzes flex effort during wrist difference test
+## 
+## The nominal flex effort during a wrist roll is zero. This 
+## helps determine wrist symmetry.
+## Flex effort values must be within tolerance:
+##  * flex_max - Maximum allowable flex effort value
+##  * flex_sd  - Std. dev. of the flex effort
+##  * flex_avg - Average value of flex effort
+## All measured values must be less than their corresponding parameters.
+## All parameters given in units of effort (Nm)
+##\return  HysteresisAnalysisResult : Result of test
 def wrist_flex_analysis(params, data):
     flex_max = numpy.average(data.pos_flex_effort)
     flex_max_sd = numpy.std(data.pos_flex_effort)
@@ -561,6 +624,7 @@ def wrist_flex_analysis(params, data):
     return result
 
 ##\brief Plots effort of wrist flex during qual
+##\return pr2_self_test_msgs.Plot : 
 def plot_flex_effort(params, data):
     # Can move to separate plotting function
     # Plot the analyzed data
@@ -598,6 +662,7 @@ def plot_flex_effort(params, data):
     
     return p
 
+##\return str : Summary
 def make_wrist_test_summary(roll_stat, flex_stat):
     if flex_stat and roll_stat:
         return "Wrist Difference check OK. Motors are symmetric."
@@ -608,5 +673,6 @@ def make_wrist_test_summary(roll_stat, flex_stat):
     return "Wrist roll hystereis and flex effort failed."
 
 ##\brief Checks wrist data before analysis
+##\return bool : True if OK to proceed
 def wrist_hysteresis_data_present(data):
     return data.positive.position.size > 100 and data.negative.position.size > 100

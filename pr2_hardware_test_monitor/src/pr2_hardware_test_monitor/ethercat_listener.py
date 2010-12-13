@@ -51,6 +51,12 @@ import threading
 
 from pr2_hw_listener import PR2HWListenerBase
 
+from collections import deque
+
+DROPS_PER_HOUR = 10
+
+ENCODER_ERRORS_FIELD = 'Num encoder_errors'
+
 class EthercatListener(PR2HWListenerBase):
     def __init__(self):
         self._mutex = threading.Lock()
@@ -58,6 +64,20 @@ class EthercatListener(PR2HWListenerBase):
         self._cal = False
         self._ok = True
         self._update_time = -1
+        self._diag_update_time = -1
+
+        # Records dropped packets. New drops appended to deque
+        # Deque is kept =< max length of self._drops_per_hour
+        self._dropped_times = deque()
+
+        self._net_drops = 0
+
+        self._encoder_errors_detected = False
+        self._last_encoder_errors_update = rospy.get_time()
+        # Stores encoder errors by motor for each motor
+        self._encoder_errors_cnt = {}
+
+        self._drops_per_hour = DROPS_PER_HOUR
 
     def create(self, params):
        # Give it 10 seconds to start up
@@ -68,6 +88,9 @@ class EthercatListener(PR2HWListenerBase):
             self._srv_ok = False
             rospy.logerr('Unable to find halt motors service. Unable to initialize ethercat listener')
             return False
+
+        if params.has_key('drops_per_hour'):
+           self._drops_per_hour = params['drops_per_hour'] 
 
         self._reset_motors = rospy.ServiceProxy('pr2_etherCAT/reset_motors', Empty)
 
@@ -81,9 +104,6 @@ class EthercatListener(PR2HWListenerBase):
         self._cal_sub = rospy.Subscriber('calibrated', Bool, self._cal_cb)
 
         self._diag_sub = rospy.Subscriber('/diagnostics', DiagnosticArray, self._diag_cb)
-
-        self._dropped_cnt = 0
-        self._last_drop_time = 0 # Use rospy.get_time()
 
         return True
 
@@ -110,24 +130,87 @@ class EthercatListener(PR2HWListenerBase):
         except Exception, e:
             rospy.logerr('Unable to reset motors. pr2_etherCAT may have died')
 
+        with self._mutex:
+            self._dropped_times.clear()
+            self._encoder_errors_detected = False
+
+    def _update_drops(self, stat, now):
+        if stat.name != 'EtherCAT Master':
+            raise Exception('Diagnostic status with invalid name! Expected \"EtherCAT Master\", got: %s',
+                            stat.name)
+
+        drops = -1
+        lates = -1
+        for kv in stat.values:
+            if kv.key == 'Dropped Packets':
+                drops = int(kv.value)
+            elif kv.key == 'RX Late Packet':
+                lates = int(kv.value)
+
+        if (drops == -1 or lates == -1):
+            raise Exception("Diagnostics didn't contain data for dropped or late packets. Drops: %d. Lates: %d" %
+                            (drops, lates))
+
+        # For every new dropped packet, we add the current timestamp to our deque
+        new_net_drops = drops - lates
+        if new_net_drops > self._net_drops:
+            for i in range(min(new_net_drops - self._net_drops, self._drops_per_hour)):
+                self._dropped_times.append(now)
+
+        self._net_drops = new_net_drops
+        
+        # Clean up the buffer to the max_length
+        while len(self._dropped_times) > self._drops_per_hour:
+            self._dropped_times.popleft()
+
+        self._diag_update_time = rospy.get_time()
+
+    def _update_encoder_errors(self, stat):
+        """
+        Check for encoder errors for every motor. 
+        
+        Updates cache of encoder errors. Reports encoder error detected if
+        it can't find the number of encoder errors, or if encoder errors count
+        increases.
+        """
+        if not stat.name.startswith('EtherCAT Device ('):
+            raise Exception("Invalid diagnostic status name: %s" % stat.name)
+
+        # Ignore led_projector, no encoder errors
+        if stat.name.find('led_projector') > -1:
+            return
+
+        last_errors = self._encoder_errors_cnt.get(stat.name, 0)
+        
+        curr_errors = -1
+        for kv in stat.values:
+            if kv.key == ENCODER_ERRORS_FIELD:
+                curr_errors = int(kv.value)
+
+        if curr_errors < 0:
+            rospy.logerr('Unable to find encoder errors for motor %s', stat.name)
+            self._encoder_errors_detected = True
+            return 
+               
+        self._last_encoder_errors_update = rospy.get_time()
+
+        if curr_errors > last_errors:
+            self._encoder_errors_detected = True
+            
+        # Update cache with last value for encoder status
+        self._encoder_errors_cnt[stat.name] = curr_errors
+        
+        
+
     def _diag_cb(self, msg):
         with self._mutex:
+            now = msg.header.stamp.to_sec()
             for stat in msg.status:
                 if stat.name == 'EtherCAT Master':
-                    for kv in stat.values:
-                        if kv.key == 'Dropped Packets':
-                            if not unicode(kv.value).isnumeric():
-                                self._last_drop_time = rospy.get_time()
-                                rospy.logwarn('Unable to convert %s into integer. Unable to count dropped packets' % kv.value)
-                                break
-
-                            curr_drops = int(kv.value)
-                            if curr_drops > self._dropped_cnt:
-                                self._last_drop_time = rospy.get_time()
-                                
-                            self._dropped_cnt = curr_drops
-                            break
-
+                    self._update_drops(stat, now)
+                if stat.name.startswith('EtherCAT Device ('):
+                    self._update_encoder_errors(stat)
+            
 
     def _cal_cb(self, msg):
         with self._mutex:
@@ -138,24 +221,52 @@ class EthercatListener(PR2HWListenerBase):
             self._ok = not msg.data
             self._update_time = rospy.get_time()
     
+    def _is_dropping_pkts(self):
+        """
+        Check if we're dropping packets. 
+        A drop is true if we've had more than 10 dropped packets in last hour.
+         
+        @return bool : True if dropping packets
+        """
+        now = rospy.get_time()
+
+        if len(self._dropped_times) < self._drops_per_hour:
+            return False
+
+        return abs(now - self._dropped_times[0]) < 3600
+            
+
     def check_ok(self):
+        msg = ''
+        stat = 0
         with self._mutex:
-            msg = ''
-            stat = 0
             if not self._cal:
                 stat = 1
                 msg = 'Uncalibrated'
-
-            # Warn if we've had a dropped packets in the last three seconds
-            if rospy.get_time() - self._last_drop_time < 3:
-                stat = 1
-                msg = 'Dropping Packets'
 
             if not self._ok:
                 stat = 2
                 msg = 'Motors Halted'
 
-            if rospy.get_time() - self._update_time > 3:
+            # Error if we've had dropped packets
+            if self._is_dropping_pkts():
+                stat = 2
+                msg = 'Dropping Packets'
+
+            # Encoder errors check, #4814
+            if self._encoder_errors_detected:
+                stat = 2
+                msg = 'Encoder Errors'
+
+            if rospy.get_time() - self._last_encoder_errors_update > 3.0:
+                stat = 3
+                msg = 'No MCB Encoder Status'
+
+            if rospy.get_time() - self._diag_update_time > 3.0:
+                stat = 3
+                msg = 'No MCB Diagnostics'
+
+            if rospy.get_time() - self._update_time > 3.0:
                 stat = 3
                 msg = 'EtherCAT Stale'
                 if self._update_time == -1:

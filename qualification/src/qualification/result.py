@@ -460,7 +460,7 @@ class QualTestResult(object):
         self._shutdown_result = None
 
         self._start_time = start_time
-        self._start_time_filestr = self._start_time.strftime("%Y%m%d_%H%M")
+        self._start_time_filestr = self._start_time.strftime("%Y%m%d_%H%M%S")
         self._start_time_name = self._start_time.strftime("%Y/%m/%d %I:%M%p")
 
         self._item = qual_item
@@ -478,7 +478,7 @@ class QualTestResult(object):
         except Exception, e:
             self._config_only = False
 
-        self._tar_filename = None
+        self._tar_filename = ''
 
         self._results_name = '%s_%s' % (self._serial, self._start_time_filestr)
 
@@ -504,6 +504,9 @@ class QualTestResult(object):
 
     @property
     def results_dir(self): return self._results_dir
+
+    @property
+    def tar_name(self):  return self._tar_filename 
 
     def set_results_dir(self, path):
         if not path.endswith('/'):
@@ -957,12 +960,12 @@ em { font-style: normal; font-weight: bold; }\
     ##\todo Add timeout to invent
     def log_results(self, invent):
         # Write results to results dir, with local links
-        self.write_results_to_file(False, True)
+        self.write_results_to_file(temp = False, local_link = True)
 
         if invent == None:
             return False, "Attempted to log results to inventory, but no invent client found."
         if self.is_prestart_error():
-            return False, "Test recorded internal error, not submitting to inventory system."
+            return True, "Test recorded internal error, not submitting to inventory system."
         
         prefix = self._start_time_filestr + "_" # Put prefix first so images sorted by date
         
@@ -1033,7 +1036,9 @@ em { font-style: normal; font-weight: bold; }\
         # Add results as tar file
         if self._tar_filename is not None and self._tar_filename != '':
             part = MIMEBase('application', 'octet-stream')
-            part.set_payload( open(self._tar_filename, 'rb').read())
+            with open(self._tar_filename, 'rb') as f:
+                data = f.read()
+            part.set_payload( data )
             Encoders.encode_base64(part)
             part.add_header('Content-Disposition', 'attachment; filename="%s"' 
                             % os.path.basename(self._tar_filename))

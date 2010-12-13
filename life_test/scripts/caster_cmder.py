@@ -48,23 +48,15 @@ class CasterCmd:
         self.drive = SPEED
 
         self._count = 0
-
-        self._left = True # Makes it alternate between starting left, right
  
     ##\brief 8% duty cycle on turn, regular sequence
     def update(self):
         if self._count == 0:
-            if self._left:
-                self.steer = -0.9 * STEER_VEL
-            else:
-                self.steer = STEER_VEL
+            # Slower steering velocity to make caster process
+            self.steer = -0.8 * STEER_VEL
             self.drive = 0
         elif self._count == 1:
-            if self._left:
-                self.steer = STEER_VEL
-            else:
-                self.steer = -1 * STEER_VEL
-            self._left = not self._left
+            self.steer = STEER_VEL
             self.drive = 0
         else:
             self.steer = 0

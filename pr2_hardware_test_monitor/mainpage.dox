@@ -2,7 +2,11 @@
 \mainpage
 \htmlinclude manifest.html
 
-\b pr2_hardware_test_monitor is ... 
+\b pr2_hardware_test_monitor provides a monitor and listeners to check PR2 hardware tests.
+
+Monitor - The PR2 Hardware Test Monitor checks the status of the PR2 during testing.
+
+Listeners - Listeners are loaded according to private parameters in the monitor's namespace. 
 
 <!-- 
 Provide an overview of your package.

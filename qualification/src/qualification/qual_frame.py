@@ -59,6 +59,7 @@ from pr2_self_test_msgs.srv import TestResult, TestResultRequest, TestResultResp
 
 from qualification.test import *
 from qualification.result import *
+import cont_frame
 
 import traceback
 
@@ -80,6 +81,7 @@ class QualOptions(object):
   def __init__(self):
     self.debug = False
     self.always_show_results = False
+    self.continuous = False
 
 ##\brief Loads instructions for operator. Displays instructions in HTML window.
 class InstructionsPanel(wx.Panel):
@@ -240,7 +242,7 @@ class ResultsPanel(wx.Panel):
     self._results_window.Freeze()
     self._results_window.SetPage(results.make_summary_page())
     self._results_window.Thaw()
-    self._dir_picker.SetPath(results._results_dir)
+    self._dir_picker.SetPath(results.results_dir)
 
   def on_submit(self, event):
     self._manager.submit_results(self._notesbox.GetValue(), self._dir_picker.GetPath())
@@ -309,6 +311,7 @@ class QualificationFrame(wx.Frame):
     self._log = xrc.XRCCTRL(self._log_panel, 'log')
 
     self._results = None
+    self._cont_frame = None
     
     self._startup_launch = None
     self._shutdown_launch = None
@@ -374,6 +377,9 @@ class QualificationFrame(wx.Frame):
       self._plots_panel.close()
     self._plots_panel = None
 
+    self._current_test = None
+    self._subtest_index = 0
+
     self.reset_params()
   
   ##\brief Resets parameters of qualification node to starting state
@@ -404,7 +410,7 @@ class QualificationFrame(wx.Frame):
     rospy.set_param('/qual_item/serial', self._current_item.serial)
     rospy.set_param('/qual_item/name', self._current_item.name)
     
-    if (self._current_test.getInstructionsFile() != None):
+    if (self._current_test.getInstructionsFile()) and not self.options.continuous:
       self.set_top_panel(InstructionsPanel(self._top_panel, self._res, self, self._current_test.getInstructionsFile()))
     else:
       self.start_qualification()
@@ -602,7 +608,14 @@ class QualificationFrame(wx.Frame):
     
     sub_result = self._results.add_sub_result(self._subtest_index, msg)
 
-    if self.options.always_show_results:
+    if self.options.continuous: # Continue without human intervention
+      if (msg.result == TestResultRequest.RESULT_PASS):
+        self.subtest_result(True, '')
+      elif self._cont_frame.pause_on_fail: 
+        self.show_plots(sub_result)
+      else:
+        self.subtest_result(False, '')
+    elif self.options.always_show_results:
       self.show_plots(sub_result)
     else:
       if (msg.result == TestResultRequest.RESULT_PASS):
@@ -622,7 +635,7 @@ class QualificationFrame(wx.Frame):
   ##\brief Records final result of subtest. 
   ##@param pass_bool bool : Operator passed or failed subtest
   ##@param operator_notes str : Notes operator gave about subtest
-  def subtest_result(self, pass_bool, operator_notes):
+  def subtest_result(self, pass_bool, operator_notes = ''):
     self.log('Subtest "%s" result: %s'%(self._current_test.subtests[self._subtest_index].get_name(), pass_bool))
     
     sub_result = self._results.get_subresult(self._subtest_index)
@@ -679,10 +692,9 @@ class QualificationFrame(wx.Frame):
   ##\todo Move out of class, don't need class variables
   ##\brief Uses roslaunch_caller to launch file
   ##@param file str : Full path of launch script
-  def launch_file(self, file):
-    f = open(file, 'r')
-    launch_xml = f.read()
-    f.close()
+  def launch_file(self, filename):
+    with open(filename, 'r') as f:
+      launch_xml = f.read()
     
     return self.launch_script(launch_xml)
 
@@ -862,20 +874,50 @@ class QualificationFrame(wx.Frame):
   def test_cleanup(self):
     self.stop_launches()
     
-    # Should this be in self.reset?
-    self._current_test = None
-    self._subtest_index = 0
+
 
     self.show_results()
 
+  def start_continuous_testing(self):
+    """
+    Start continuous testing. Runs tests continuous until aborted.
+    """
+    if self._cont_frame:
+      self._cont_frame.Raise()
+      return
+    
+    self.options.continuous = True
+    self._cont_frame = cont_frame.ContinuousTestFrame(self)
+    self._cont_frame.Show()
+    
+  def stop_continuous_testing(self):
+    """
+    Stop continuous testing. 
+    """
+    self.options.continuous = False  
+
+    self._cont_frame.Close(True)
+    self._cont_frame = None
+
+  def _handle_continuous_results(self):
+    invent = self.get_inventory_object()
+    self._cont_frame.new_results(self._results, invent)
+    self.reset_params()
+    self.begin_test(self._current_test, self._current_item)
+
   ##\brief Shows final results of qualification test
   def show_results(self):
+    if self.options.continuous:
+      self._handle_continuous_results()
+
+      return
+
     panel = ResultsPanel(self._top_panel, self._res, self)
     self.set_top_panel(panel)
     
     self._waiting_for_submit = True
 
-    if self._results is not None:
+    if self._results:
       self._results.write_results_to_file() # Write to temp dir
       panel.set_results(self._results)
     else:
@@ -917,8 +959,20 @@ class QualificationFrame(wx.Frame):
     if self._invent_client and self._invent_client.login():
       return self._invent_client
 
-    username = rospy.get_param('/invent/username', None)
-    password = rospy.get_param('/invent/password', None)
+    default_user = os.getenv('INVENT_USERNAME')
+    default_pass = os.getenv('INVENT_PASSWORD')
+    
+    if default_user and default_pass:
+      iv = Invent(default_user, default_pass)
+      if iv.login():
+        self._invent_client = iv
+
+        rospy.set_param('/invent/username', default_user)
+        rospy.set_param('/invent/password', default_pass)
+        return self._invent_client
+        
+    username = rospy.get_param('/invent/username', '')
+    password = rospy.get_param('/invent/password', '')
 
     if (username and password):
       invent = Invent(username, password)

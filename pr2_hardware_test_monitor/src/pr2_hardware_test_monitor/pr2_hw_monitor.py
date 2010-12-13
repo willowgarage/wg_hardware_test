@@ -59,7 +59,7 @@ IGNORE_TIME = 30 # Allow errors for the first few seconds (grace period)
 
 def create_listener(params, listeners):
     """
-    @brief Loads listener from parameters
+    Loads listener from parameters
     
     @param params {} : Must have "type", "file". "pkg" is optional
     @param listeners [] : Newly created listener is appended 
@@ -71,10 +71,8 @@ def create_listener(params, listeners):
     
     file = params['file']
     type = params['type']
-    ##\todo Fix this
-    #pkg = params['pkg'] if params.has_key('pkg') else PKG
-    pkg = PKG
-
+    pkg = params['pkg'] if params.has_key('pkg') else PKG
+    
     try:    
         import_str = '%s.%s' % (pkg, file)
         __import__(import_str)
@@ -140,6 +138,7 @@ class TestMonitor:
         self.reset_srv = rospy.Service('reset_test', Empty, self._reset_test)
         self.halt_srv = rospy.Service('halt_test', Empty, self._halt_test)
 
+        self._heartbeat_halted = False
         self._heartbeat_time = rospy.get_time()
         self._heartbeat_sub = rospy.Subscriber('/heartbeat', std_msgs.msg.Empty, self._on_heartbeat)
 
@@ -156,7 +155,7 @@ class TestMonitor:
 
     def _reset_state(self):
         """
-        Reset state of monitor for startup or on reset
+        Reset state of monitor for startup or on reset. Needs mutex
         """
         self._heartbeat_halted = False
         self._was_ok = True
@@ -167,24 +166,38 @@ class TestMonitor:
         self._latched_lvl = TestStatus.RUNNING
 
     def _reset_test(self, srv):
+        """
+        Service callback for "reset_test"
+        """
         with self._mutex:
             self._reset_state()
-
-            for listener in self._listeners:
-                try:
-                    listener.reset()
-                except Exception, e:
-                    rospy.logerr('Listener failed to reset!')
+            self._reset_listeners()
 
         return EmptyResponse()
 
     def _halt_test(self, srv):
+        """
+        Service callback for "halt_test"
+        """
         with self._mutex:
             self._halt_listeners()
 
         return EmptyResponse()
 
+    def _reset_listeners(self):
+        """
+        Reset all listeners. Needs mutex.
+        """
+        for listener in self._listeners:
+            try:
+                listener.reset()
+            except Exception, e:
+                rospy.logerr('Listener failed to reset!')        
+
     def _halt_listeners(self):
+        """
+        Halt all listeners. Needs mutex.
+        """
         for listener in self._listeners:
             try:
                 listener.halt()
@@ -229,20 +242,31 @@ class TestMonitor:
         # Halt for any errors received
         if not grace_period and \
                 (self._was_ok and level > TestStatus.WARNING):
-            self._halt_listeners()
+            with self._mutex:
+                self._halt_listeners()
             rospy.logerr('Halted test after failure. Failure message: %s' % ', '.join(errors))
             self._was_ok = False
             
+        # Halt if we lose the heartbeat
         if not self._heartbeat_halted and rospy.get_time() - self._heartbeat_time > HEARTBEAT_TIMEOUT:
             rospy.logerr('No heartbeat from Test Manager received, halting test')
-            self._halt_listeners()
+            with self._mutex:
+                self._halt_listeners()
             self._heartbeat_halted = True
+
+        # Automatically reset if we reacquire the heartbeat, #4878
+        if self._heartbeat_halted and rospy.get_time() - self._heartbeat_time < 5.0:
+            with self._mutex:
+                self._reset_state()
+                self._reset_listeners()
+            self._heartbeat_halted = False
+            rospy.logwarn('Automatic reset after heartbeat topic reacquired.')
 
         if self._heartbeat_halted:
             level = TestStatus.STALE
             errors = [ 'No heartbeat' ]
 
-        # Latch all error levels
+        # Latch all error levels after the grace period for easier debugging
         if not grace_period and level > TestStatus.WARNING:
             self._latched_lvl = max(self._latched_lvl, level)
             

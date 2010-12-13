@@ -48,7 +48,7 @@ class LifeTest(object):
     Holds parameters, info for each life test
     """
     def __init__(self, short = '', testid = '', name = '', desc = '', serial = '',
-                 duration = 0, launch_script = '', test_type = '', power = False, params = []):
+                 duration = 0, launch_script = '', test_type = '', power = False, params = None):
         """
         Use **kwargs in constructor. Preferred option is to initialize from XML
         """
@@ -62,7 +62,7 @@ class LifeTest(object):
         self._test_type = test_type
         self._power = power
 
-        self._params = params
+        self._params = params if params else []
 
         self._debug_ok = False
         
@@ -77,6 +77,7 @@ class LifeTest(object):
         Required tags:
         serial - Short value only
         name - Full name of test
+        id - Test ID
         desc - Description
         script - Path to launch script
         type - Ex: 'Burn In'
@@ -87,6 +88,8 @@ class LifeTest(object):
         duration - Default: 0
 
         TestParam's are initialized using nested XML nodes
+        @raise Exception : If parameters are duplicated, or required attributes don't exist
+        @return bool : True if init OK
         """
         self._short_serial = xml.attributes['serial'].value # Short serial only
         self._name = xml.attributes['name'].value
@@ -107,6 +110,10 @@ class LifeTest(object):
         for param_xml in params_xml:
             my_param = TestParam()
             my_param.init_xml(param_xml)
+
+            names = [ p.name for p in self._params ]
+            if my_param.name in names:
+                raise Exception("Param %s already exists in param list! XML: %s" % (my_param.name, xml.toprettyxml()))
 
             self._params.append(my_param)
 
@@ -175,8 +182,8 @@ class LifeTest(object):
 
     def validate(self):
         """
-        ##\brief Called during unit testing only. Checks all files exist, are valid
-
+        Called during unit testing only. Checks all files exist, are valid
+        @return bool : True if OK
         """
         if not self._has_init:
             return False
@@ -197,6 +204,7 @@ class LifeTest(object):
     def make_param_table(self):
         """
         Writes parameters to HTML table form for logging
+        @return str : Table as a string
         """
         if len(self._params) == 0:
             return '<p>No test parameters defined.</p>\n'
@@ -234,12 +242,17 @@ class TestParam(object):
         desc - Description
         value - Value of param
         rate = "true" if parameters is cumulative, or a rate
+        
+        @raise Exception : If required attribs aren't present
+        @return bool : True if OK
         """
         self._name = param_xml.attributes['name'].value
         self._param_name = param_xml.attributes['param_name'].value
         self._desc = param_xml.attributes['desc'].value
         self._value = param_xml.attributes['val'].value
         self._cumulative = param_xml.attributes['rate'].value == 'true'
+
+        return True
  
     def set_namespace(self, ns):
         """
