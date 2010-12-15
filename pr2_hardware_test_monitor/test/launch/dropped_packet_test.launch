@@ -23,7 +23,7 @@
 
   <!-- Asserts we can filter out late packets -->
   <test test-name="late_packet_test"
-        time-limit="90"  
+        time-limit="120"  
         pkg="pr2_hardware_test_monitor"
         name="test_monitor"
         type="dropped_packet_test.py" >
@@ -33,7 +33,7 @@
 
   <!-- Asserts we fail for drops - lates > 10 -->
   <test test-name="late_packet_test_fail"
-        time-limit="90"  
+        time-limit="120"  
         pkg="pr2_hardware_test_monitor"
         name="test_monitor"
         type="dropped_packet_test.py" >
@@ -44,7 +44,7 @@
 
   <!-- Asserts we fail for lots of drops - lates > 10 -->
   <test test-name="late_packet_test_fail2"
-        time-limit="90"  
+        time-limit="120"  
         pkg="pr2_hardware_test_monitor"
         name="test_monitor"
         type="dropped_packet_test.py" >
