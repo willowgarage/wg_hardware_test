@@ -1,3 +1,3 @@
 <launch>
-  <node name="ping_willow" pkg="qualification" type="ping.py" args="--eula 157.22.19.25"/>
+  <node name="ping_willow" pkg="qualification" type="ping.py" args="--eula 10.0.0.2" />
 </launch>
