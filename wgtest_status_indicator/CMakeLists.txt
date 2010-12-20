@@ -22,7 +22,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_gensrv()
 
 # Link against lib-hid to build.
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -lhid)
+#set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -lhid)
 
 #common commands for building c++ executables and libraries
 rosbuild_add_library(${PROJECT_NAME} src/libdelcom_usb_light/delcom_usb_light.cpp)
@@ -30,8 +30,8 @@ rosbuild_add_library(${PROJECT_NAME} src/libdelcom_usb_light/delcom_usb_light.cp
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 rosbuild_add_executable(delcom_usb_light src/utilities/delcom_util.cpp)
-target_link_libraries(delcom_usb_light ${PROJECT_NAME})
+target_link_libraries(delcom_usb_light ${PROJECT_NAME} hid)
 
 rosbuild_add_executable(wgtest_indicator src/nodes/wgtest_status_indicator.cpp)
-target_link_libraries(wgtest_indicator ${PROJECT_NAME})
+target_link_libraries(wgtest_indicator ${PROJECT_NAME} hid)
 

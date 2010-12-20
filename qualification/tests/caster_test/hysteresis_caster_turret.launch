@@ -3,12 +3,12 @@
     <param name="type" type="string" value="joint_qualification_controllers/HysteresisController" />
     <param name="velocity" type="double" value="1.5" />
     <param name="max_effort" type="double" value="2.0" />
-    <param name="max_expected" type="double" value="0.35" />
-    <param name="min_expected" type="double" value="-0.35" />
+    <param name="max_expected" type="double" value="0.40" />
+    <param name="min_expected" type="double" value="-0.40" />
     <param name="max_position" type="double" value="0" />
     <param name="min_position" type="double" value="0" />
     <param name="timeout" type="double" value="60" />
-    <param name="tolerance" type="double" value="0.25" />
+    <param name="tolerance" type="double" value="0.40" />
     <param name="sd_max" type="double" value="0.18" />
 
     <group ns="velocity_controller" >
