@@ -8,7 +8,7 @@
         args="pub /heartbeat std_msgs/Empty -r 1" />
 
   <!-- Asserts we latch error state -->
-  <test test-name="camera_warn_test" time-limit="90"  
+  <test test-name="camera_warn_test" time-limit="150"  
         pkg="pr2_hardware_test_monitor"
         name="test_monitor"
         type="camera_warn_test.py" />
