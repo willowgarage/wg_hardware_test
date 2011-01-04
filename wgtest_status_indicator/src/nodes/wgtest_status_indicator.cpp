@@ -65,7 +65,7 @@ void callback(const pr2_self_test_msgs::TestInfoArray &msg)
   for (unsigned int i = 0; i < msg.data.size(); ++i)
   {
     // Ignore tests that aren't launched
-    if (msg.data[i].test_status > 3)
+    if (msg.data[i].test_status > 4)
       continue; 
 
     status = std::max(status, (int) msg.data[i].test_status);
