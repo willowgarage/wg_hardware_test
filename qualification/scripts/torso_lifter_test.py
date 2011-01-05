@@ -45,7 +45,7 @@ from pr2_self_test_msgs.srv import TestResult, TestResultRequest
 from sensor_msgs.msg import JointState
 
 HEIGHT = 0.28 # in meters
-TOLERANCE = 0.05
+TOLERANCE = 0.10
 TORSO_NAME = 'torso_lift_joint'
 
 class LastMessage():
