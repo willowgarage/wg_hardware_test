@@ -54,6 +54,7 @@ from wg_invent_client import Invent
 
 prog_path = os.path.join(roslib.packages.get_pkg_dir(PKG), "fwprog")
 ECAT_IFACE = "ecat0" # EtherCAT interface
+PR2_GRANT = 'pr2_grant'
 
 class MCBProgramConfig:
     def __init__(self, expected):
@@ -144,7 +145,7 @@ class MCBProgramConfig:
 
     ## Counts boards, returns true if passed
     def count_boards(self):
-        count_cmd = "pr2_grant " + os.path.join(prog_path, "eccount") + " -i " + ECAT_IFACE
+        count_cmd = PR2_GRANT + ' ' + os.path.join(prog_path, "eccount") + " -i " + ECAT_IFACE
 
         while not rospy.is_shutdown():
             p = subprocess.Popen(count_cmd, stdout =subprocess.PIPE,
@@ -185,7 +186,7 @@ class MCBProgramConfig:
                 return False
 
     def check_link(self):
-        emltest_cmd = "pr2_grant " + os.path.join(prog_path, "emltest") + " -q -j8 -i %s -T10000,2" % ECAT_IFACE
+        emltest_cmd = PR2_GRANT + ' ' + os.path.join(prog_path, "emltest") + " -q -j8 -i %s -T10000,2" % ECAT_IFACE
 
         p = subprocess.Popen(emltest_cmd, stdout = subprocess.PIPE, 
                              stderr = subprocess.PIPE, shell = True)
@@ -204,7 +205,7 @@ class MCBProgramConfig:
     ##@brief Get serial numbers for each MCB
     def get_serials(self):
         for board in range(0, self.expected):
-            check_cmd = "pr2_grant " + os.path.join(prog_path, 'device') + ' -i %s -K -p %d' % (ECAT_IFACE, board + 1)
+            check_cmd = PR2_GRANT + ' ' + os.path.join(prog_path, 'device') + ' -i %s -K -p %d' % (ECAT_IFACE, board + 1)
             try:
                 p = subprocess.Popen(check_cmd, stdout = subprocess.PIPE,
                                      stderr = subprocess.PIPE, shell = True)
@@ -240,7 +241,7 @@ class MCBProgramConfig:
     ##@brief Programs MCB's and calls result service when finished
     def program_boards(self):
         for board in range(0, self.expected):
-            program_cmd = "pr2_grant " + os.path.join(prog_path, "fwprog") + " -i %s -p %s %s/*.bit" % (ECAT_IFACE, (board + 1), prog_path)
+            program_cmd = PR2_GRANT + ' ' + os.path.join(prog_path, "fwprog") + " -i %s -p %s %s/*.bit" % (ECAT_IFACE, (board + 1), prog_path)
 
             while not rospy.is_shutdown():
                 p = subprocess.Popen(program_cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
@@ -274,7 +275,7 @@ class MCBProgramConfig:
         for mcb in mcbs:
             name, num = mcb.split(',')
 
-            cmd = "pr2_grant " + os.path.join(path, "motorconf") + " -i %s -p -n %s -d %s -a %s" % (ECAT_IFACE, name, num, actuator_path)
+            cmd = PR2_GRANT + " " + os.path.join(path, "motorconf") + " -i %s -p -n %s -d %s -a %s" % (ECAT_IFACE, name, num, actuator_path)
 
             while not rospy.is_shutdown():
                 p = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
