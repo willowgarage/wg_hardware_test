@@ -289,7 +289,7 @@ class TransmissionListener(PR2HWListenerBase):
             
             for joint_mon in self._joint_monitors:
                 ok = joint_mon.update(msg)
-                self._ok_jms = ok and self._ok_jms
+                self._jms_ok = ok and self._jms_ok
                 
 
         # Halt if broken
