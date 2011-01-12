@@ -664,8 +664,15 @@ class TestMonitorPanel(wx.Panel):
                 wx.MessageBox("Power disable command failed. Unable to command power board", "Power command failed", wx.OK|wx.ICON_ERROR, self)
         
         # Shutdown processes
-        if self._test_launcher:
-            self._test_launcher.shutdown()
+        # Use try/except to make sure we catch and log all exceptions here
+        try:
+            if self._test_launcher:
+                self._test_launcher.shutdown()
+        except Exception, e:
+            rospy.logerr('Unable to shutdown test')
+            rospy.logerr(traceback.format_exc())
+            self.update_test_record(traceback.format_exc())
+
         self._manager.test_stop(self._bay)
         self.update_test_record('Shutting down test processes.')
 
