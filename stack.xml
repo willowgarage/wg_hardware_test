@@ -31,6 +31,7 @@
   <depend stack="robot_model" /> <!-- robot_state_publisher, urdf -->
   <depend stack="ros" /> <!-- roslaunch, rxtools, std_srvs, roscpp, std_msgs, topic_tools, rospy, rostopic, rosrecord, rosbag -->
   <depend stack="rx" />
+  <depend stack="ros_comm" />
   <depend stack="trajectory_filters" /> <!-- trajectory_filter_server -->
   <depend stack="vision_opencv" /> <!-- opencv2, cv_bridge -->
   <depend stack="visualization" /> <!-- rviz -->
