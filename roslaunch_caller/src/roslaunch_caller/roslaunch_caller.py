@@ -99,7 +99,7 @@ def launch_core():
     # in the future this may need a rewrite as roslaunch gets the
     # ability to remotely launch cores, but for now this is fine
     config = roslaunch.ROSLaunchConfig()
-    config.master.auto = config.master.AUTO_START
+    #config.master.auto = config.master.AUTO_START
         
     run_id = roslaunch.core.generate_run_id()
     core_launcher = roslaunch.ROSLaunchRunner(run_id, config)

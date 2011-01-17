@@ -44,7 +44,7 @@ import subprocess
 class GetIDException(Exception): pass
 
 def print_usage():
-    print 'Loads mac address into Invent for a given robot'
+    print 'Loads mac address into Invent for a given basestation'
     print
     print 'load_basestation_mac_addr.py 10XX USERNAME'
     print 'Asks for password'

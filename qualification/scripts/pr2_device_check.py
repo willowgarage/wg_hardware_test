@@ -2,7 +2,7 @@
 #
 # Software License Agreement (BSD License)
 #
-# Copyright (c) 2009, Willow Garage, Inc.
+# Copyright (c) 2010, Willow Garage, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -51,6 +51,7 @@ class GetIDException(Exception): pass
 WGE100_PN = '68050' # Prefix for all wge100 camera PN's
 
 FWPROG_PATH = os.path.join(roslib.packages.get_pkg_dir(PKG), 'fwprog')
+PR2_GRANT = 'pr2_grant'
 
 def get_wge100_serials():
     cmd = '%s/bin/discover lan1' % roslib.packages.get_pkg_dir('wge100_camera')
@@ -130,14 +131,15 @@ def get_hk_refs():
 def get_mcb_serials():
     serials = []
 
-    count_cmd = 'pr2_grant ' + os.path.join(FWPROG_PATH, 'eccount') + ' -iecat0'
+    count_cmd = PR2_GRANT + ' ' + os.path.join(FWPROG_PATH, 'eccount') + ' -iecat0'
 
     count = subprocess.call(count_cmd, shell=True)
     if count != 37:
         raise Exception("Invalid MCB count. Should be 37. Count: %d" % count)
 
+    ##\todo Use motorconf to pull MCB SN's so it's not so slow
     for dev in range(1, 38):
-        cmd = 'pr2_grant ' + os.path.join(FWPROG_PATH, 'device') + ' -iecat0 -K -p %d' % dev
+        cmd = PR2_GRANT + ' ' + os.path.join(FWPROG_PATH, 'device') + ' -iecat0 -K -p %d' % dev
         p = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE,
                              shell = True)
         o, e = p.communicate()
