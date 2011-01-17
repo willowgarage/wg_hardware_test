@@ -44,6 +44,7 @@ from roslaunch_caller import roslaunch_caller
 import wx
 import sys, os
 import rospy
+import traceback
 
 ## Starts roscore, qualification app for components
 class QualificationApp(wx.App):
@@ -53,6 +54,7 @@ class QualificationApp(wx.App):
         except Exception, e:
             print >> sys.stderr, 'Failed to launch core. Another core may already be running.\n\n'
             wx.MessageBox('A ROS core is still running and preventing the qualification system from starting. Shut down ROS processes by using the "Kill ROS" icon.','ROS Already Running', wx.OK|wx.ICON_ERROR, None)
+            traceback.print_exc()
             sys.exit(1)
 
         # Check that we can write our results into temporary, permenant files

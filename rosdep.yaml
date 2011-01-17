@@ -5,4 +5,9 @@ python-clearsilver:
   debian: python-clearsilver
   centos: python-clearsilver
 libhid:
-  ubuntu: libhid0 libhid-dev
+  ubuntu: 
+    9.04: libhid0 libhid-dev
+    9.10: libhid0 libhid-dev
+    10.04: libhid0 libhid-dev
+    10.10: |
+      # libhid not in Maverick

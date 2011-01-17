@@ -81,7 +81,7 @@
 	file="upperarm_test/test_dummy_fa.xml" descrip="Upperarm Test (Dummy Forearm)" />
   <test serial="6801575" 
 	file="upperarm_test/test_elbow_motor.xml" descrip="Elbow Flex Motor Test" />
-  <test serial="6803757" 
+  <test serial="6804154" 
 	file="upperarm_test/test_forearm_roll.xml" descrip="UA Slip Ring Test" />
 
   <!-- Wrist test -->
