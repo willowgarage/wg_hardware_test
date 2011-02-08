@@ -44,6 +44,8 @@ import sys, os
 
 from roslaunch_caller import roslaunch_caller
 
+import traceback
+
 class TestManagerApp(wx.App):
     def OnInit(self, debug = False):
 
@@ -55,6 +57,7 @@ class TestManagerApp(wx.App):
         except Exception, e:
             print >> sys.stderr, 'Failed to launch core. Another core may already be running.\n\n'
             wx.MessageBox('A ROS core is still running and preventing the Test Manager system from starting. Shut down ROS processes by using the "Kill ROS" icon.','ROS Already Running', wx.OK|wx.ICON_ERROR, None)
+            traceback.print_exc()
             sys.exit(1)
             
         import life_test.result_dir 

@@ -7,6 +7,6 @@
   <pre_startup name="MCB Configuration" timeout="180">forearm_roll_conf.launch</pre_startup>
   <startup>forearm_roll.launch</startup>
   <subtest name="Hysteresis Motor Test" timeout="60">hysteresis_forearm_roll.launch</subtest>
-  <subtest name="Packet Drop Test" timeout="60">packet_drop_test.launch</subtest>
+<!--  <subtest name="Packet Drop Test" timeout="60">packet_drop_test.launch</subtest> -->
   <shutdown name="Power Off" timeout="30">../../scripts/power_board_disable.launch</shutdown>
 </test>
