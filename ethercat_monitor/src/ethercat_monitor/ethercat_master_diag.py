@@ -41,7 +41,7 @@ PKG = 'ethercat_monitor'
 import roslib
 roslib.load_manifest(PKG)
 
-from diagnostic_annotate.kv_convert import ConvertVar, KeyValueConvertList, VarStorage
+from ethercat_monitor.kv_convert import ConvertVar, KeyValueConvertList, VarStorage
 from ethercat_monitor.ethercat_master_status import EtherCATMasterStatus
 
 class EtherCATMasterDiag:
