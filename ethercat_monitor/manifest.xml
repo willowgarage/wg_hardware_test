@@ -1,0 +1,20 @@
+<package>
+  <description brief="ethercat_monitor">
+
+     ethercat_monitor
+
+  </description>
+  <author>Derek</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ethercat_monitor</url>
+
+  <depend package="rospy"/>
+  <depend package="rosbag"/>
+  <depend package="diagnostic_annotate"/>
+  <depend package="diagnostic_msgs"/>
+
+
+</package>
+
+
