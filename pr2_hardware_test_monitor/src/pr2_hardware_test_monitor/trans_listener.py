@@ -237,7 +237,7 @@ class TransmissionListener(PR2HWListenerBase):
         self._halt_motors = rospy.ServiceProxy('pr2_etherCAT/halt_motors', Empty)
 
         self._trans_sub = rospy.Subscriber('pr2_transmission_check/transmission_status', Bool, self._trans_cb)
-        self._reset_trans = rospy.ServiceProxy('pr2_transmission_check/reset_trans_check', Empty)
+        self._reset_trans = rospy.ServiceProxy('pr2_transmission_check/reset_transmission_check', Empty)
 
         self._mutex = threading.Lock()
         self._ok = True # Status callback OK
@@ -311,7 +311,8 @@ class TransmissionListener(PR2HWListenerBase):
             try:
                 self._reset_trans()
             except Exception, e:
-                rospy.logerr("Unable to reset tranmission checker")
+                import traceback
+                rospy.logerr("Unable to reset tranmission checker\n%s" % traceback.format_exc())
             
     def check_ok(self):
         with self._mutex:
