@@ -1,0 +1,7 @@
+<launch>
+  <!-- Turtlebot Driver -->
+  <node pkg="turtlebot_node" type="turtlebot_node.py" name="turtlebot_node" >
+    <param name="bonus" value="false" />
+  </node>
+
+</launch>

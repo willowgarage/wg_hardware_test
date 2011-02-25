@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="qualification" name="breaker_test" type="breaker_test.py" args= "$(find qualification)/tests/turtlebot_pcb_test"/>
+</launch>

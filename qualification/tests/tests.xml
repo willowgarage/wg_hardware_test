@@ -153,4 +153,8 @@
         file="wrt610n_test/test.xml" descrip="WRT610n Test" />
   <test serial="6802418"
         file="projector_test/test.xml" descrip="Projector (LED) Test" />
+
+  <!-- Turtlebot -->
+  <test serial="6812345" 
+	file="turtlebot_pcb_test/test.xml" descrip="Turtlebot PCB Test" />
 </tests>
