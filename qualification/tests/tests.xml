@@ -155,6 +155,6 @@
         file="projector_test/test.xml" descrip="Projector (LED) Test" />
 
   <!-- Turtlebot -->
-  <test serial="6812345" 
+  <test serial="680536" 
 	file="turtlebot_pcb_test/test.xml" descrip="Turtlebot PCB Test" />
 </tests>
