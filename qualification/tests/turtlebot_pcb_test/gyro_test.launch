@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="qualification" name="gyro_test" type="gyro_test.py" />
+</launch>

@@ -1,6 +1,7 @@
 <test name="turtlebot_pcb_test" id="pcb-test" >
   <instructions>instructions.html</instructions>
   <startup>startup.launch</startup>
-  <subtest name="Self Test" timeout="60">breaker_test.launch</subtest>
+  <subtest name="Breaker Test" timeout="60">breaker_test.launch</subtest>
+  <subtest name="Gryo Test" timeout="60">gyro_test.launch</subtest>
   <shutdown name="Power Off" timeout="30">shutdown.launch</shutdown>
 </test>
