@@ -10,6 +10,7 @@ diag_agg:
   file: diag_agg_listener
   ignore_diags: [
     'Other',
+    'Computers',
     'Joints',
     'Motors',
     'Realtime Controllers']
