@@ -1,8 +1,13 @@
 <launch>
   <node pkg="hokuyo_node" type="hokuyo_node" name="hokuyo" >
     <param name="calibrate_time" value="False" type="bool" />
-    <param name="min_ang_degrees" value="-130.0" type="double" />
-    <param name="max_ang_degrees" value="130.0" type="double" />
+    <param name="min_ang" value="-2.26" type="double" />
+    <param name="max_ang" value="2.26" type="double" />
     <param name="frameid" value="hokuyo_frame" type="string" />
+    <param name="intensity" value="true" type="bool" />
+    <!-- Need this to get the required range -->
+    <param name="allow_unsafe_settings" value="true" type="bool" />
    </node>
+
+
 </launch>
