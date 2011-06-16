@@ -147,6 +147,16 @@
 	   desc="Rate"
 	   val="1.0" rate="true" />
   </test>
+
+  <test serial="6804139" name="Upperarm Test (Experimental)" id="ua-test"
+	short="UA" duration="40"
+	desc="Upperarm test only" 
+	rate="3.0" script="upperarm_test/test_gui.launch"
+	type="Burn-in Test" power="true" >
+    <param name="Cycle Rate" param_name="cycle_rate"
+	   desc="Rate"
+	   val="3.0" rate="true" />
+  </test>
   <test serial="6804139" name="Shoulder/UA Left Test" id="shoulder-ua-left-burn"
 	short="Shoulder/UA Left" duration="15"
 	desc="Tests shoulder, upper arm and dummy FA, configured as left arm.  (Shoulder is used as test fixture)"

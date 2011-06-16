@@ -69,7 +69,7 @@ if __name__ == '__main__':
     cmd.position = [1.5,  -.7, 1.5]
     cmd.time_from_start = [0.0, 0.5, 1.0]
     cmd.time_from_start = [rospy.Time.from_sec(x) for x in cmd.time_from_start]
-    cmd.max_velocity =  5
+    cmd.max_velocity = 1
     cmd.max_acceleration =  5
 
     print 'Sending Command to %s: ' % controller
