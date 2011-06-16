@@ -363,7 +363,12 @@ class TestMonitorPanel(wx.Panel):
                 rospy.logerr('Stopping test on machine %s. Update is stale for %d seconds' % (self._bay.name, int(interval)))
                 self.update_test_record('Stopping test after no data received for %d seconds.' % int(interval))
                 # Tear down test if its stale to stop safely, #4443
-                self.stop_test()
+                try:
+                    self.stop_test()
+                except Exception, e:
+                    import traceback
+                    rospy.logerr(traceback.format_exc())
+                    self.update_test_record('Shutdown error: %s' % traceback.format_exc())
                 self.update_test_record('Test on %s was stopped after no updates, but is incomplete' % self._serial)
 
             self._update_controls(4)
