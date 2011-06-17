@@ -47,6 +47,35 @@
            rate="true" val="2.0" />
   </test>
 
+  <test serial="6804108" name="Caster Test : Mode 0" id="caster-burn"
+        short="Caster" duration="40"
+        desc="Caster jerks around under pressure. Put pressure on caster BEFORE turning this test on.  Test starts by disabling auto-crossover on port 0 of all EtherCAT devices"        
+        script="caster_test/test_gui_xover.launch" power="true"
+        type="Burn-in Test" >
+    <param name="Rate" param_name="cycle_rate"
+           desc="Frequency of test"
+           rate="true" val="2.0" />
+    <param name="Crossover Mode" param_name="crossover_mode"
+           desc="EtherCAT device auto-cross mode."
+           val="disable_port_0"
+           rate="false" />
+  </test>
+
+  <test serial="6804108" name="Caster Test : Mode 1" id="caster-burn"
+        short="Caster" duration="40"
+        desc="Caster jerks around under pressure. Put pressure on caster BEFORE turning this test on.  Test disabling auto-crossover on port 1 of all EtherCAT devices"        
+        script="caster_test/test_gui_xover.launch" power="true"
+        type="Burn-in Test" >
+    <param name="Rate" param_name="cycle_rate"
+           desc="Frequency of test"
+           rate="true" val="2.0" />
+    <param name="Crossover Mode" param_name="crossover_mode"
+           desc="EtherCAT device auto-cross mode."
+           val="disable_port_1"
+           rate="false" />
+  </test>
+
+
     <test serial="6804108" name="Caster Periodic Drive Test" id="caster-periodic-drive"
         short="Caster" duration="40"
         desc="Caster drives around"
@@ -65,6 +94,34 @@
     <param name="Rate" param_name="cycle_rate"
            desc="Frequency of test"
            rate="true" val="2.0" />
+  </test>
+
+  <test serial="6804108" name="Caster Test (No Air) : Mode 0" id="caster-burn-no-air"
+        short="Caster" duration="40"
+        desc="Caster jerks around without air"
+        script="caster_test/test_no_air_xover.launch" power="true"
+        type="Burn-in Test" >
+    <param name="Rate" param_name="cycle_rate"
+           desc="Frequency of test"
+           rate="true" val="2.0" />
+    <param name="Crossover Mode" param_name="crossover_mode"
+           desc="EtherCAT device auto-cross mode."
+           val="disable_port_0"
+           rate="false" />
+  </test>
+
+  <test serial="6804108" name="Caster Test (No Air) : Mode 1" id="caster-burn-no-air"
+        short="Caster" duration="40"
+        desc="Caster jerks around without air"
+        script="caster_test/test_no_air_xover.launch" power="true"
+        type="Burn-in Test" >
+    <param name="Rate" param_name="cycle_rate"
+           desc="Frequency of test"
+           rate="true" val="2.0" />
+    <param name="Crossover Mode" param_name="crossover_mode"
+           desc="EtherCAT device auto-cross mode."
+           val="disable_port_1"
+           rate="false" />
   </test>
 
   <test serial="6804108" name="Caster Test (Steer Only)" id="caster-burn-steer"
