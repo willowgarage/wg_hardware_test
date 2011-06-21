@@ -1,6 +1,11 @@
 ethercat:
   type: EthercatListener
   file: ethercat_listener
+  expected_devices:
+    - ecat_repeater
+    - fl_caster_r_wheel_motor
+    - fl_caster_l_wheel_motor
+    - fl_caster_rotation_motor
 trans:
   type: TransmissionListener
   file: trans_listener

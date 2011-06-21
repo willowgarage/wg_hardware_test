@@ -48,6 +48,8 @@ from diagnostic_msgs.msg import DiagnosticArray
 import rospy
 
 import threading
+import re
+import itertools
 
 from pr2_hw_listener import PR2HWListenerBase
 
@@ -79,6 +81,13 @@ class EthercatListener(PR2HWListenerBase):
 
         self._drops_per_hour = DROPS_PER_HOUR
 
+        # A list of expected device names, or None if we don't care
+        self._expected_devices = None
+        self._incorrect_devices = None
+        self._device_name_re = re.compile('EtherCAT Device \((.*)\).*')
+        
+        self._params = []
+
     def create(self, params):
        # Give it 10 seconds to start up
         try:
@@ -89,8 +98,13 @@ class EthercatListener(PR2HWListenerBase):
             rospy.logerr('Unable to find halt motors service. Unable to initialize ethercat listener')
             return False
 
-        if params.has_key('drops_per_hour'):
-           self._drops_per_hour = params['drops_per_hour'] 
+        if params.has_key('drops_per_hour'):            
+            self._drops_per_hour = params['drops_per_hour'] 
+
+        if params.has_key('expected_devices'):
+            self._expected_devices = params['expected_devices']
+            
+        self._params = params
 
         self._reset_motors = rospy.ServiceProxy('pr2_etherCAT/reset_motors', Empty)
 
@@ -203,14 +217,26 @@ class EthercatListener(PR2HWListenerBase):
         
 
     def _diag_cb(self, msg):
+        is_ethercat_diag_msg = False
+        devices = []
         with self._mutex:
             now = msg.header.stamp.to_sec()
             for stat in msg.status:
                 if stat.name == 'EtherCAT Master':
                     self._update_drops(stat, now)
-                if stat.name.startswith('EtherCAT Device ('):
+                    is_ethercat_diag_msg = True
+                elif stat.name.startswith('EtherCAT Device ('):
                     self._update_encoder_errors(stat)
-            
+                    m = self._device_name_re.match(stat.name)
+                    if m:
+                        device_name = m.group(1)
+                        devices.append(device_name)
+
+        if is_ethercat_diag_msg and (self._expected_devices is not None):
+            # check list of present devices against expected list of devices
+            if self._expected_devices != devices:
+                with self._mutex:
+                    self._incorrect_devices = devices
 
     def _cal_cb(self, msg):
         with self._mutex:
@@ -247,6 +273,15 @@ class EthercatListener(PR2HWListenerBase):
             if not self._ok:
                 stat = 2
                 msg = 'Motors Halted'
+
+            if self._incorrect_devices is not None:
+                stat = 2
+                msg = 'Wrong devices'
+                dev_list = itertools.izip_longest(self._expected_devices, self._incorrect_devices, fillvalue ='<NOTHING>')
+                for (expected_dev, incorrect_dev) in dev_list:
+                    if expected_dev != incorrect_dev:
+                        msg = 'Expected %s, found %s' % (expected_dev, incorrect_dev)
+                        break
 
             # Error if we've had dropped packets
             if self._is_dropping_pkts():
