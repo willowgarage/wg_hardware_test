@@ -54,7 +54,9 @@ barcode = getparam('qual_item/serial')
 camera_path = getparam('~camera_path')+"/board_config"
 
 app = wx.PySimpleApp()
-ret = wx.MessageBox("Does the window labeled 'Camera to be Programmed' show images from camera %s, and are you sure you want to permanently set its MAC and serial number?"%barcode, "Set MAC and Serial Number", wx.YES_NO)
+ret = wx.MessageBox("Are you sure you've plugged in camera \"%s\"? Check camera's power light is on." % barcode,
+                    "Set MAC and Serial Number", 
+                    wx.YES_NO)
 done = ScriptDoneRequest()
 if (ret == wx.NO):
     done.result = ScriptDoneRequest.RESULT_FAIL
