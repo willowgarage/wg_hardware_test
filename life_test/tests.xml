@@ -48,8 +48,8 @@
   </test>
 
   <test serial="6804108" name="Caster Test : Mode 0" id="caster-burn"
-        short="Caster" duration="40"
-        desc="Caster jerks around under pressure. Put pressure on caster BEFORE turning this test on.  Test starts by disabling auto-crossover on port 0 of all EtherCAT devices"        
+        short="Caster" duration="20"
+        desc="Caster jerks around under pressure. Put pressure on caster BEFORE turning this test on.  Test starts by disabling auto-crossover on port 0 of all EtherCAT devices. Mode 0"        
         script="caster_test/test_gui_xover.launch" power="true"
         type="Burn-in Test" >
     <param name="Rate" param_name="cycle_rate"
@@ -62,8 +62,8 @@
   </test>
 
   <test serial="6804108" name="Caster Test : Mode 1" id="caster-burn"
-        short="Caster" duration="40"
-        desc="Caster jerks around under pressure. Put pressure on caster BEFORE turning this test on.  Test disabling auto-crossover on port 1 of all EtherCAT devices"        
+        short="Caster" duration="20"
+        desc="Caster jerks around under pressure. Put pressure on caster BEFORE turning this test on.  Test starts disabling auto-crossover on port 1 of all EtherCAT devices.  Mode 1"        
         script="caster_test/test_gui_xover.launch" power="true"
         type="Burn-in Test" >
     <param name="Rate" param_name="cycle_rate"
@@ -97,8 +97,8 @@
   </test>
 
   <test serial="6804108" name="Caster Test (No Air) : Mode 0" id="caster-burn-no-air"
-        short="Caster" duration="40"
-        desc="Caster jerks around without air"
+        short="Caster" duration="20"
+        desc="Caster jerks around without air. Test starts disabling auto-crossover on port 0 of all EtherCAT devices.  Mode 0"
         script="caster_test/test_no_air_xover.launch" power="true"
         type="Burn-in Test" >
     <param name="Rate" param_name="cycle_rate"
@@ -111,8 +111,8 @@
   </test>
 
   <test serial="6804108" name="Caster Test (No Air) : Mode 1" id="caster-burn-no-air"
-        short="Caster" duration="40"
-        desc="Caster jerks around without air"
+        short="Caster" duration="20"
+        desc="Caster jerks around without air.  Test starts disabling auto-crossover on port 1 of all EtherCAT devices.  Mode 1"
         script="caster_test/test_no_air_xover.launch" power="true"
         type="Burn-in Test" >
     <param name="Rate" param_name="cycle_rate"
