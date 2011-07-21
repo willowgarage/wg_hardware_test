@@ -40,14 +40,14 @@ import rospy
 from std_srvs.srv import Empty
 from pr2_self_test_msgs.srv import TestResult, TestResultRequest
 from pr2_self_test_msgs.msg import Plot, TestParam, TestValue
-from turtlebot_node.srv import SetDigitalOutputsRequest, SetDigitalOutputs
+from turtlebot_node.srv import SetTurtlebotModeRequest, SetTurtlebotMode
 
 rospy.init_node("breaker_test")
 
 result_service = rospy.ServiceProxy('test_result', TestResult)
-breaker_service = rospy.ServiceProxy('turtlebot_node/set_digital_outputs', SetDigitalOutputs)
+breaker_service = rospy.ServiceProxy('turtlebot_node/set_operation_mode', SetTurtlebotMode)
 
-rospy.wait_for_service('turtlebot_node/set_digital_outputs')
+rospy.wait_for_service('turtlebot_node/set_operation_mode')
 
 my_arg = sys.argv[1]
 
@@ -59,7 +59,7 @@ r.html_result = "<p>Did the light on the kinect cable turn on?</p><br><img src=\
 rospy.logerr(r.html_result)
 try:
     rospy.loginfo("setting digital outs")
-    res = breaker_service.call(SetDigitalOutputsRequest(1,0,0))
+    res = breaker_service.call(SetTurtlebotModeRequest(3))
 except rospy.ServiceException, e:
     r.text_summary = "Service call failed: the turtlebot_node is not running startup failed"
     r.result = TestResultRequest.RESULT_FAIL

@@ -60,7 +60,8 @@ def diagnostics_callback(msg):
     for status in msg.status:
          if status.name == "Gyro Sensor":
              for value in status.values:
-                  gyro_status[value.key]=value.value
+                 print value
+                 gyro_status[value.key]=value.value
              for el in eval(gyro_status['Calibration Buffer']):
                  std = std + (el - float(gyro_status['Calibration Offset']))**2
              std = math.sqrt(std / (len(gyro_status['Calibration Buffer'])-1))

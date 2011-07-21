@@ -23,4 +23,5 @@
   <station gui="qual4.willowgarage.com" host="qual4" />
   
   <station gui="mfv" host="mfv" />
+  <station gui="bws" host="bws" />
 </map>
