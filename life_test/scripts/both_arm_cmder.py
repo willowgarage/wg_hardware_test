@@ -42,7 +42,7 @@ from time import sleep
 from pr2_controllers_msgs.msg import *
 from trajectory_msgs.msg import JointTrajectoryPoint
 from mapping_msgs.msg import CollisionObject, CollisionObjectOperation, AttachedCollisionObject
-from geometric_shapes_msgs.msg import Shape
+from arm_navigation_msgs.msg import Shape
 from geometry_msgs.msg import Pose
 from actionlib_msgs.msg import GoalStatus
 
