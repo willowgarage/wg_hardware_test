@@ -6,7 +6,7 @@ Robot descriptions in this package are used in PR2 hardware testing. This packag
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/pr2_component_descriptions</url>
-  <depend package="urdf"/>
+  <depend package="urdf_parser"/>
   <depend package="xacro"/>
   <depend package="pr2_description"/>
   <platform os="ubuntu" version="9.04"/>
