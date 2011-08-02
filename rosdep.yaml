@@ -11,3 +11,5 @@ libhid:
     10.04: libhid0 libhid-dev
     10.10: |
       # libhid not in Maverick
+    11.04: |
+      # assume libhid not in Natty
