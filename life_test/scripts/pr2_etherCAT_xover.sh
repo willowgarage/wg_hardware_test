@@ -23,15 +23,11 @@ function run() {
 case "$CROSSOVER_MODE" in 
     "disable_port_0")
         run $DISABLE_XOVER 0 $ECAT_IFACE
-        echo "Disable port 0"
-        ;;
-    "disable_port_0")
-        run $DISABLE_XOVER 0 $ECAT_IFACE
-        echo "Disable port 0"
+        echo "Disable auto-xover on port 0"
         ;;
     "disable_port_1")
         run $DISABLE_XOVER 1 $ECAT_IFACE
-        echo "Disable port 1"
+        echo "Disable auto-xover on port 1"
         ;;
     *)
         echo "ERROR : invalid crossover_mode : $CROSSOVER_MODE"
