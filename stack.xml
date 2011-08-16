@@ -4,7 +4,7 @@
   <license>BSD</license>  
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/wg_hardware_test</url>
-  <depend stack="arm_navigation" /> <!-- arm_navigation_msgs -->
+  <depend stack="arm_navigation" /> <!-- arm_navigation_msgs, planning_environment -->
   <depend stack="arm_navigation_experimental" /> <!-- collision_free_arm_trajectory_controller -->
   <depend stack="camera_drivers" /> <!-- prosilica_camera, wge100_camera -->
   <depend stack="common" /> <!-- actionlib, xacro -->
@@ -16,7 +16,6 @@
   <depend stack="imu_drivers" /> <!-- microstrain_3dmgx2_imu -->
   <depend stack="joystick_drivers" /> <!-- joy -->
   <depend stack="laser_drivers" /> <!-- hokuyo_node -->
-  <depend stack="motion_planning_common" /> <!-- planning_environment -->
   <depend stack="navigation" /> <!-- map_server, amcl -->
   <depend stack="pr2_apps" /> <!-- pr2_teleop -->
   <depend stack="pr2_arm_navigation" /> <!-- pr2_arm_navigation_actions -->
