@@ -4,7 +4,7 @@
   <license>BSD</license>  
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/wg_hardware_test</url>
-  <depend stack="arm_navigation" /> <!-- arm_navigation_msgs, planning_environment -->
+  <depend stack="arm_navigation" /> <!-- arm_navigation_msgs, planning_environment, trajectory_filter_server -->
   <depend stack="arm_navigation_experimental" /> <!-- collision_free_arm_trajectory_controller -->
   <depend stack="camera_drivers" /> <!-- prosilica_camera, wge100_camera -->
   <depend stack="common" /> <!-- actionlib, xacro -->
@@ -30,7 +30,6 @@
   <depend stack="ros" />
   <depend stack="ros_comm" /> <!-- pr2_mechanism_msgs, pr2_self_test_msgs, pr2_controller_manager, pr2_power_board, roscpp, microstrain_3dmgx2_imu, actionlib, wge100_camera, topic_tools, ethercat_trigger_controllers, rostopic, visualization_msgs, tf, pr2_msgs, ethercat_hardware, joy, sensor_msgs, rospy, std_msgs, diagnostic_msgs, roslaunch, std_srvs, fingertip_pressure, joint_qualification_controllers, robot_mechanism_controllers, pr2_mechanism_controllers, geometry_msgs, rosbag -->
   <depend stack="rx" /> <!-- rxtools -->
-  <depend stack="trajectory_filters" /> <!-- trajectory_filter_server -->
   <depend stack="vision_opencv" /> <!-- opencv2, cv_bridge -->
   <depend stack="visualization" /> <!-- rviz -->
 
