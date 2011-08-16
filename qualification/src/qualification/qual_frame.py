@@ -436,8 +436,8 @@ class QualificationFrame(wx.Frame):
   def record_tests(self):
     ##\todo Use file in qual package as recorder
     record = '<launch>\n'
-    record += '<node pkg="rosrecord" type="rosrecord" name="test_logger" \n'
-    record += 'args="-f /hwlog/%s_qual_test /diagnostics" />\n' % self._current_item.serial
+    record += '<node pkg="rosbag" type="rosbag" name="test_logger" \n'
+    record += 'args="record -o /hwlog/%s_qual_test /diagnostics" />\n' % self._current_item.serial
     record += '</launch>\n'
 
     self._record_launch = self.launch_script(record)
