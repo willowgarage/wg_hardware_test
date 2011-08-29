@@ -41,7 +41,8 @@ from time import sleep
 
 from pr2_controllers_msgs.msg import *
 from trajectory_msgs.msg import JointTrajectoryPoint
-from arm_navigation_msgs.msg import Shape, CollisionObject, CollisionObjectOperation, AttachedCollisionObject
+from arm_navigation_msgs.msg import Shape, CollisionObject, CollisionObjectOperation, AttachedCollisionObject, PlanningScene
+from arm_navigation_msgs.srv import SetPlanningSceneDiffRequest, SetPlanningSceneDiff
 from geometry_msgs.msg import Pose
 from actionlib_msgs.msg import GoalStatus
 
@@ -52,16 +53,16 @@ COLLISION_TOPIC = "collision_object"
 # Shoulder pan joints are limited in position to prevent contact
 ranges = {
     'r_shoulder_pan_joint': (-2.0, -0.4),
-    'r_shoulder_lift_joint': (-0.4, 1.25),
+    'r_shoulder_lift_joint': (-0.3, 1.25),
     'r_upper_arm_roll_joint': (-3.1, 0),
-    'r_elbow_flex_joint': (-2.0, -0.05),
+    'r_elbow_flex_joint': (-2.0, -0.2),
     'r_forearm_roll_joint': (-3.14, 3.14),
     'r_wrist_flex_joint': (-1.8, -0.2),
     'r_wrist_roll_joint': (-3.14, 3.14),
     'l_shoulder_pan_joint': (0.4, 2.0),
-    'l_shoulder_lift_joint': (-0.4, 1.25),
+    'l_shoulder_lift_joint': (-0.3, 1.25),
     'l_upper_arm_roll_joint': (0, 3.1),
-    'l_elbow_flex_joint': (-2.0, -0.05),
+    'l_elbow_flex_joint': (-2.0, -0.2),
     'l_forearm_roll_joint': (-3.14, 3.14),
     'l_wrist_flex_joint': (-1.8, -0.2),
     'l_wrist_roll_joint': (-3.14, 3.14)
@@ -71,16 +72,16 @@ recovery_positions = {
     'r_shoulder_pan_joint': - math.pi / 4,
     'r_shoulder_lift_joint': 0.0,
     'r_upper_arm_roll_joint': 0.0,
-    'r_elbow_flex_joint': 0.0,
+    'r_elbow_flex_joint': -.25,
     'r_forearm_roll_joint': 0.0,
-    'r_wrist_flex_joint': 0.0,
+    'r_wrist_flex_joint': -.25,
     'r_wrist_roll_joint': 0.0,
     'l_shoulder_pan_joint': math.pi / 4,
     'l_shoulder_lift_joint': 0.0,
     'l_upper_arm_roll_joint': 0.0,
-    'l_elbow_flex_joint': 0.0,
+    'l_elbow_flex_joint': -.25,
     'l_forearm_roll_joint': 0.0,
-    'l_wrist_flex_joint': 0.0,
+    'l_wrist_flex_joint': -.25,
     'l_wrist_roll_joint': 0.0
 }
 
@@ -102,11 +103,7 @@ def get_virtual_gloves():
     
     # Pose will be zero
 
-    r_glove.touch_links = ['r_gripper_palm_link',
-                           'r_gripper_l_finger_link',
-                           'r_gripper_l_finger_tip_link',
-                           'r_gripper_r_finger_link',
-                           'r_gripper_r_finger_tip_link',
+    r_glove.touch_links = ['r_end_effector',
                            'r_wrist_roll_link',
                            'r_wrist_flex_link',
                            'r_forearm_link']
@@ -118,7 +115,10 @@ def get_virtual_gloves():
     l_glove.object.id = 'l_gripper_glove'
     l_glove.object.header.frame_id = '/l_gripper_palm_link'
     l_glove.link_name = 'l_gripper_palm_link'
-    l_glove.touch_links = [ 'l' + name[1:] for name in r_glove.touch_links ]
+    l_glove.touch_links = ['l_end_effector',
+                           'l_wrist_roll_link',
+                           'l_wrist_flex_link',
+                           'l_forearm_link']
 
     return r_glove, l_glove
     
@@ -166,21 +166,27 @@ def get_virtual_table(height = 0.42):
 
 if __name__ == '__main__':
     rospy.init_node('arm_cmder_client')
-    client = actionlib.SimpleActionClient('collision_free_arm_trajectory_action_both_arms', 
+    client = actionlib.SimpleActionClient('collision_free_arm_trajectory_action_arms', 
                                           JointTrajectoryAction)
     rospy.loginfo('Waiting for server for right collision free arm commander')
     client.wait_for_server()
 
     rospy.loginfo('Right, left arm commanders ready')
 
-    table_pub = rospy.Publisher(COLLISION_TOPIC, CollisionObject, latch = True)
-    table_pub.publish(get_virtual_table())
+    rospy.loginfo('Waiting for environment server')
 
-    glove_pub = rospy.Publisher("attached_collision_object", AttachedCollisionObject, latch = True)
+    rospy.wait_for_service('environment_server/set_planning_scene_diff')
+
+    set_planning_scene_diff_client = rospy.ServiceProxy('environment_server/set_planning_scene_diff',
+                                                        SetPlanningSceneDiff)
+
+    planning_scene_diff_request = SetPlanningSceneDiffRequest()
+    planning_scene_diff_request.planning_scene_diff.collision_objects.append(get_virtual_table())
     r_glove, l_glove = get_virtual_gloves()
-    glove_pub.publish(r_glove)
-    sleep(1)
-    glove_pub.publish(l_glove)
+    #planning_scene_diff_request.planning_scene_diff.attached_collision_objects.append(r_glove)
+    #planning_scene_diff_request.planning_scene_diff.attached_collision_objects.append(l_glove)
+
+    set_planning_scene_diff_client.call(planning_scene_diff_request)
 
     # Recovery trajectory client
     recovery_client = actionlib.SimpleActionClient('both_arms_controller/joint_trajectory_action',
@@ -192,5 +198,5 @@ if __name__ == '__main__':
         rospy.logdebug('Sending goal to arms.')
         cmder.send_cmd()
 
-        sleep(2.0)
+        #sleep(2.0)
 

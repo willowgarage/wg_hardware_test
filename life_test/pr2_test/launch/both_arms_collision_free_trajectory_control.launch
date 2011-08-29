@@ -16,24 +16,26 @@
           pkg="joint_trajectory_action" type="joint_trajectory_action" />
   </group>
 
+  <include file="$(find pr2_arm_navigation_config)/launch/pr2_planning_environment.launch" />
+
+
   <!-- load planning_environment -->
-  <include file="$(find life_test)/pr2_test/launch/environment_server_right_arm.launch"/>
-   <param name="environment_server_right_arm/use_collision_map" type="bool" value="false" />
+  <node pkg="planning_environment" type="environment_server" output="screen" name="environment_server">      
+    <param name="use_monitor" type="bool" value="true"/>
+    <param name="use_collision_map" type="bool" value="false"/>
+  </node>
 
   <!-- load filter -->
-  <node pkg="trajectory_filter_server" name="trajectory_filter" type="trajectory_filter_server" output="screen">
-    <rosparam command="load" file="$(find life_test)/pr2_test/config/collision_free_control_filter_config.yaml"/>
+  <node pkg="trajectory_filter_server" name="trajectory_filter_server" type="trajectory_filter_server" output="screen">
+    <rosparam command="load" file="$(find pr2_arm_navigation_filtering)/config/filters.yaml"/>
     <rosparam command="load" file="$(find pr2_arm_navigation_config)/config/joint_limits.yaml"/>
   </node>
 
   <node pkg="collision_free_arm_trajectory_controller" name="collision_free_arm_trajectory_controller"
         type="collision_free_arm_trajectory_controller" output="screen">
-   <param name="traj_action_name" type="string" value="both_arms_controller/joint_trajectory_action" />
-   <param name="group_name" type="string" value="both_arms" />
-   <remap from="filter_trajectory" to="trajectory_filter/filter_trajectory" />	
-   <remap from="get_robot_state" to="environment_server_right_arm/get_robot_state" />
-   <remap from="get_execution_safety" to="environment_server_right_arm/get_execution_safety" />
-   <remap from="get_trajectory_validity" to="environment_server_right_arm/get_trajectory_validity" />
+   <param name="group_name" type="string" value="arms" />
+   <remap from="joint_trajectory_action" to="/both_arms_controller/joint_trajectory_action" />
+   <remap from="filter_trajectory" to="trajectory_filter_server/filter_trajectory_with_constraints" />	
   </node>
 
 </launch>
