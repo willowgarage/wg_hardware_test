@@ -1,0 +1,9 @@
+service_type: FilterJointTrajectoryWithConstraints
+filter_chain:
+  -
+    name: cubic_spline_velocity_scaler
+    type: CubicSplineVelocityScalerFilterJointTrajectory
+  -
+    name: cubic_spline_short_cutter_smoother
+    type: CubicSplineShortCutterFilterJointTrajectoryWithConstraints
+    params: {discretization: 0.1}
