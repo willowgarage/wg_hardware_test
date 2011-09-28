@@ -1,6 +1,6 @@
 <launch>
   <node pkg="qualification" type="projector_check_dmm.py" name="check_dmm" >
-    <param name="dmm_address" type="string" value="DMM1" />
+    <param name="dmm_address" type="string" value="DMM3" />
   </node>
 
 </launch>
