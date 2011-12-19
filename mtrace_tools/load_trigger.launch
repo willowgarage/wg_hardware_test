@@ -1,8 +1,0 @@
-<launch>
-  <node name="$(anon spawner-trigger)" pkg="pr2_controller_manager" type="spawner" output="screen" args="trigger"/>
-  <rosparam>
-    trigger:
-      type: DigitalTriggerController
-      digital_out_name: dk_motor_publish_motor_trace
-  </rosparam>
-</launch>
