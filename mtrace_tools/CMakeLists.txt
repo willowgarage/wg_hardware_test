@@ -21,7 +21,6 @@ rosbuild_genmsg()
 #uncomment if you have defined services
 #rosbuild_gensrv()
 
-rosbuild_add_library(mtrace_controllers src/digital_trigger_controller.cpp src/sine_controller.cpp src/square_controller.cpp src/calibrate_controller.cpp src/square_velocity_controller.cpp src/motor_resistance_recorder.cpp)
 
 #common commands for building c++ executables and libraries
 #rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
