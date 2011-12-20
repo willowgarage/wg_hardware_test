@@ -511,16 +511,16 @@ class MtracePlotFrame(wx.Frame):
         #wx.EVT_MENU(self, ID_TOPIC, self.OnChangeTopic)
         #wx.EVT_MENU(self, ID_EXIT, self.OnQuit)
 
-
+        self._filter_textctrl_label = wx.StaticText(self, label="Message Filter:")
         self._filter_textctrl = wx.TextCtrl(self, style = wx.TE_PROCESS_ENTER)
         self._filter_textctrl.SetToolTip(wx.ToolTip("Regex filter for messages"))
         self._filter_textctrl.Bind(wx.EVT_TEXT_ENTER, self.onFilterEnter)
 
-        self._msg_listbox_label = wx.StaticText(self, label="Message List")
-
+        self._msg_listbox_label = wx.StaticText(self, label="Message List:")
         self._msg_listbox = wx.ListBox(self, style=wx.LB_MULTIPLE)
         self._msg_listbox.SetToolTip(wx.ToolTip("Motor Msg to Analyze"))
 
+        self._plot_listbox_label = wx.StaticText(self, label="Plot List:")
         self._plot_listbox = wx.ListBox(self, style=wx.LB_MULTIPLE)
         self._plot_listbox.SetToolTip(wx.ToolTip("Graphs to plot"))        
         self._plot_listbox.SetItems(plot_names)
@@ -532,16 +532,21 @@ class MtracePlotFrame(wx.Frame):
 
         self.updateMsgListBox()
 
+        hsizer = wx.BoxSizer(wx.HORIZONTAL)
+        hsizer.Add(self._filter_textctrl_label, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL | wx.TOP, 5)
+        hsizer.Add(self._filter_textctrl, 1, wx.EXPAND)
+
         vsizer = wx.BoxSizer(wx.VERTICAL)
-        vsizer.Add(self._filter_textctrl, 0, wx.EXPAND)
+        vsizer.Add(hsizer, 0, wx.EXPAND)
         vsizer.Add(self._msg_listbox_label, 0, wx.EXPAND)
         vsizer.Add(self._msg_listbox, 1, wx.EXPAND)
+        vsizer.Add(self._plot_listbox_label, 0, wx.EXPAND)
         vsizer.Add(self._plot_listbox, 1, wx.EXPAND)
         vsizer.Add(self._plot_button, 0, wx.EXPAND)
 
         self.SetSizer(vsizer)
         self.SetAutoLayout(1)
-        vsizer.SetMinSize((800,800))
+        vsizer.SetMinSize((600,500))
         vsizer.Fit(self)
 
         # setup timer to check recorder for updates and update screen periodically 
