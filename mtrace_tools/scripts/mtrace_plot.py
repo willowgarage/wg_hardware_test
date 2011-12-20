@@ -40,6 +40,13 @@ from matplotlib.backends.backend_wxagg import \
 import pylab
 import numpy
 
+def displayErrorDialog(parent, message):
+    dlg = wx.MessageDialog(parent, message, caption="Error", style=(wx.OK | wx.CENTRE | wx.ICON_ERROR))
+    dlg.ShowModal()
+    dlg.Destroy()  
+
+_ros_started = False
+
 class MotorTracePlotException(Exception): pass    
 
 ##\brief Container class holds plot data, color, legend for one line on plot
@@ -487,6 +494,7 @@ class MtracePlotFrame(wx.Frame):
 
         # Setting up the menu.
         file_menu= wx.Menu()
+        self._file_menu = file_menu
 
         open_menu_item = wx.MenuItem(file_menu, -1, text="&Open Bag File",help="Load MotorTrace messages bag file")
         self.Bind(wx.EVT_MENU, self.onOpen, open_menu_item)
@@ -499,6 +507,13 @@ class MtracePlotFrame(wx.Frame):
         clear_menu_item = wx.MenuItem(file_menu, -1, text="&Clear Messages",help="Clear message list")
         self.Bind(wx.EVT_MENU, self.onClear, clear_menu_item)
         file_menu.AppendItem(clear_menu_item)
+
+        global _ros_started
+        self._start_ros_menu_item = None
+        if not _ros_started:
+            self._start_ros_menu_item = wx.MenuItem(file_menu, -1, text="&Start ROS Listener",help="Start ROS node and listen for MotorTrace messages")
+            self.Bind(wx.EVT_MENU, self.onStartROS, self._start_ros_menu_item)
+            file_menu.AppendItem(self._start_ros_menu_item)
 
 
         #file_menu.AppendSeparator()
@@ -555,6 +570,16 @@ class MtracePlotFrame(wx.Frame):
         self.timer.Start(1000)
 
         self.Show(True)
+
+    def onStartROS(self,event):
+        global _ros_started
+        if _ros_started:
+            displayErrorDialog(self, "ROS node already started")
+        else:
+            _ros_started = True
+            self._file_menu.DestroyItem(self._start_ros_menu_item)
+            rospy.init_node('mtrace_plotter', anonymous=True, disable_signals=True)
+            self._msg_recorder.startRosRecording()
 
 
     def onOpen(self, event):
@@ -697,17 +722,37 @@ class MtracePlotApp(wx.App):
         return True
 
     
+def usage():
+        print """ 
+Usage : mtrace_plot [--no-ros] [-N] [-f <bagfile>]
+  -f            : Load <bagfile> on startup
+  -N, --no-ros  : don't start ROS node at startup 
+"""
+
+
 def main():
+    global _ros_started
     try:
         msg_recorder = MtraceRecorder()
-        
-        useROS = False
-        optlist,argv = getopt.gnu_getopt(sys.argv[1:], "hrf:");
+
+        # first see if ros should be started
+        useROS = True
+        argv = sys.argv[1:]
+        optlist,argv = getopt.gnu_getopt(argv, "N", ['no-ros'])
+        for opt,arg in optlist:
+            if (opt == "-N") or (opt == '--no-ros'):
+                useROS = False
+
+        if useROS:
+            _ros_started = True
+            rospy.init_node('mtrace_plotter', anonymous=True, disable_signals=True)
+            argv = rospy.myargv(argv=sys.argv)
+            msg_recorder.startRosRecording()
+    
+        optlist,argv = getopt.gnu_getopt(argv, "hf:");
         for opt,arg in optlist:
             if (opt == "-f"):
                 msg_recorder.loadBagFileAsync(arg)
-            elif (opt == "-r"):
-                useROS = True
             elif (opt == "-h"):
                 usage()
                 return 0
@@ -715,12 +760,9 @@ def main():
                 print "Internal error : opt = ", opt
                 return 1
 
-        if useROS:
-            rospy.init_node('mtrace_plotter', anonymous = True, disable_signals=True)
-            msg_recorder.startRosRecording()
-
         app = MtracePlotApp(msg_recorder)
         app.MainLoop()
+
     except wx.PyDeadObjectError:
         pass
     except KeyboardInterrupt:
@@ -730,8 +772,7 @@ def main():
         import traceback
         traceback.print_exc()
 
-    if useROS:
-        print "Signalling normal shutdown"
+    if _ros_started:
         rospy.signal_shutdown("Shutdown");
 
 
