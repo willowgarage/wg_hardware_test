@@ -737,8 +737,10 @@ def main():
 
         # first see if ros should be started
         useROS = True
+        short_opts = 'hf:N'
+        long_opts = ['no-ros']
         argv = sys.argv[1:]
-        optlist,argv = getopt.gnu_getopt(argv, "N", ['no-ros'])
+        optlist,argv = getopt.gnu_getopt(argv, short_opts, long_opts)
         for opt,arg in optlist:
             if (opt == "-N") or (opt == '--no-ros'):
                 useROS = False
@@ -749,7 +751,7 @@ def main():
             argv = rospy.myargv(argv=sys.argv)
             msg_recorder.startRosRecording()
     
-        optlist,argv = getopt.gnu_getopt(argv, "hf:");
+        optlist,argv = getopt.gnu_getopt(argv, short_opts, long_opts);
         for opt,arg in optlist:
             if (opt == "-f"):
                 msg_recorder.loadBagFileAsync(arg)
