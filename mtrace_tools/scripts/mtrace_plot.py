@@ -740,7 +740,7 @@ def main():
         short_opts = 'hf:N'
         long_opts = ['no-ros']
         argv = sys.argv[1:]
-        optlist,argv = getopt.gnu_getopt(argv, short_opts, long_opts)
+        optlist,ignore = getopt.gnu_getopt(argv, short_opts, long_opts)
         for opt,arg in optlist:
             if (opt == "-N") or (opt == '--no-ros'):
                 useROS = False
@@ -748,7 +748,7 @@ def main():
         if useROS:
             _ros_started = True
             rospy.init_node('mtrace_plotter', anonymous=True, disable_signals=True)
-            argv = rospy.myargv(argv=sys.argv)
+            argv = rospy.myargv(argv=argv)
             msg_recorder.startRosRecording()
     
         optlist,argv = getopt.gnu_getopt(argv, short_opts, long_opts);
@@ -758,6 +758,8 @@ def main():
             elif (opt == "-h"):
                 usage()
                 return 0
+            elif (opt == '-N') or (opt == '--no-ros'):
+                pass
             else :
                 print "Internal error : opt = ", opt
                 return 1
