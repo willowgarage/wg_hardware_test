@@ -899,6 +899,8 @@ class TestMonitorPanel(wx.Panel):
 
         self.update_test_record('Launching test %s on bay %s, machine %s.' % (self._test._name, self._bay.name, self._bay.machine))
 
+        sleep(1) # FIXME: hack to prevent race condition when motor boards are slow to start
+
         self._last_message_time = rospy.get_time()
 
         # Local diagnostic topic
