@@ -4,6 +4,10 @@
     <bay name="testi" machine="testi" />
   </room>
 
+  <room hostname="qual3.willowgarage.com" >
+    <bay name="qual3" machine="qual3" board="1012" breaker="2" />
+  </room>
+
   <room hostname="wgburn1.willowgarage.com" >
     <!-- Right side -->
     <!-- Top rack -->
