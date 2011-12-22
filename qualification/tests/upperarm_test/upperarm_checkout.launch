@@ -1,10 +1,13 @@
 <launch>
+  <include file="$(find qualification)/tests/init.machine" />
+
   <group ns="test_controller" clear_params="true">
     <param name="type" type="string" value="joint_qualification_controllers/CheckoutController" />
     <param name="timeout" type="double" value="30.0" />
   </group>
   
   <node pkg="qualification" type="visual_verifier.py" name="visual_ok"
+        machine="localhost"
         args="$(find qualification)/tests/upperarm_test/view.vcg" />
   
   <node pkg="pr2_controller_manager" type="spawner"
