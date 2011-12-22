@@ -4,7 +4,7 @@
 
   <!-- Launch pr2_etherCAT on test host -->
   <node machine="test_host" pkg="pr2_etherCAT" type="pr2_etherCAT"
-        launch-prefix="pr2_grant"
+        launch-prefix="pr2-grant"
         args="-i ecat0 -x robot_description" name="pr2_etherCAT" />
 
   <include file="$(find pr2_controller_manager)/controller_manager.launch" />
