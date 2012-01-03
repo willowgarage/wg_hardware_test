@@ -19,7 +19,7 @@
   <depend package="pr2_etherCAT" />
   <depend package="ethercat_hardware" />
   <depend package="runtime_monitor" />
-  <depend package="rviz" />
+  <depend package="rviz_qt" />
   <depend package="pr2_power_board" />
   <depend package="wg_invent_client" />
   <depend package="roslaunch_caller" />

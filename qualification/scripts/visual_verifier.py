@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2008, Willow Garage, Inc.
+# Copyright (c) 2011, Willow Garage, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,20 +27,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-##\author Josh Faust
+##\author Josh Faust, Dave Hershberger
 
 import os
 import sys
 
-WXVER = '2.8'
-import wxversion
-if wxversion.checkInstalled(WXVER):
-  wxversion.select(WXVER)
-else:
-  print >> sys.stderr, "This application requires wxPython version %s"%(WXVER)
-  sys.exit(1)
-
-import wx
+from PySide.QtGui import *
+from PySide.QtCore import *
 
 PKG = 'qualification'
 import roslib
@@ -54,7 +47,6 @@ import traceback
 import rospy
 
 import rviz
-import ogre_tools
 
 from pr2_self_test_msgs.srv import ScriptDone, ScriptDoneRequest
 
@@ -75,144 +67,112 @@ def call_done_service(result, msg):
     print >> sys.stderr, "Unable to call %s service. Make sure the service is up" % SRV_NAME
     
 
-# Calls the "OK" service after a timeout
-class VisualRunner(threading.Thread):
-  def __init__(self, app, timeout = None):
-    threading.Thread.__init__(self)
-    self.app = app
-    
-  def run(self):
-    start = rospy.get_time()
-    if timeout is None or timeout < 0:
-      return
-    while not rospy.is_shutdown():
-      if rospy.get_time() - start > timeout:
-        wx.CallAfter(self.app.frame.Close)
-        call_done_service(ScriptDoneRequest.RESULT_OK, 'Visual check passed by automatic runner.')
-        break
-      sleep(1.0)
+# # Calls the "OK" service after a timeout
+# class VisualRunner(threading.Thread):
+#   def __init__(self, app, timeout = None):
+#     threading.Thread.__init__(self)
+#     self.app = app
+#     
+#   def run(self):
+#     start = rospy.get_time()
+#     if timeout is None or timeout < 0:
+#       return
+#     while not rospy.is_shutdown():
+#       if rospy.get_time() - start > timeout:
+#         wx.CallAfter(self.app.frame.Close)
+#         call_done_service(ScriptDoneRequest.RESULT_OK, 'Visual check passed by automatic runner.')
+#         break
+#       sleep(1.0)
 
 
-class VisualizerFrame(wx.Frame):
-  def __init__(self, parent, id=wx.ID_ANY, title='Qualification Visualizer', pos=wx.DefaultPosition, size=(800, 600), style=wx.DEFAULT_FRAME_STYLE):
-    wx.Frame.__init__(self, parent, id, title, pos, size, style)
+class VisualizerFrame( QWidget ):
+  def __init__( self, parent = None ):
+    super(VisualizerFrame, self).__init__( parent )
+    # title='Qualification Visualizer', size=(800, 600)
     
-    ogre_tools.initializeOgre()
+    self._visualizer_panel = rviz.VisualizationPanel()
+
+    self._instructions = QTextBrowser()
+    self._pass_button = QPushButton( "Pass" )
+    self._fail_button = QPushButton( "Fail" )
+
+    bottom_layout = QHBoxLayout()
+    bottom_layout.addWidget( self._instructions )
+    bottom_layout.addWidget( self._pass_button )
+    bottom_layout.addWidget( self._fail_button )
+
+    main_layout = QVBoxLayout()
+    main_layout.addWidget( self._visualizer_panel )
+    main_layout.addLayout( bottom_layout )
+
+    self.setLayout( main_layout )
     
-    visualizer_panel = rviz.VisualizationPanel(self)
+    self._pass_button.clicked.connect( self.on_pass )
+    self._fail_button.clicked.connect( self.on_fail )
+
+    self._shutdown_timer = QTimer( self )
+    self._shutdown_timer.timeout.connect( self._on_shutdown_timer )
+    self._shutdown_timer.start( 100 )
     
-    self._visualizer_panel = visualizer_panel
-    manager = visualizer_panel.getManager()
-    
-    self.Bind(wx.EVT_CLOSE, self.on_close)
-    
-    main_sizer = wx.BoxSizer(wx.VERTICAL)
-    
-    top_sizer = wx.BoxSizer(wx.VERTICAL)
-    main_sizer.Add(top_sizer, 1, wx.EXPAND, 5)
-    
-    bottom_sizer = wx.BoxSizer(wx.HORIZONTAL)
-    main_sizer.Add(bottom_sizer, 0, wx.ALIGN_RIGHT|wx.EXPAND, 5)
-    
-    top_sizer.Add(visualizer_panel, 1, wx.EXPAND, 5)
-    
-    self._instructions_ctrl = wx.TextCtrl(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE|wx.TE_READONLY );
-    self._pass_button = wx.Button(self, wx.ID_ANY, "Pass")
-    self._fail_button = wx.Button(self, wx.ID_ANY, "Fail")
-    bottom_sizer.Add(self._instructions_ctrl, 1, wx.ALL, 5)
-    bottom_sizer.Add(self._pass_button, 0, wx.ALL|wx.ALIGN_BOTTOM, 5)
-    bottom_sizer.Add(self._fail_button, 0, wx.ALL|wx.ALIGN_BOTTOM, 5)
-    
-    self.SetSizer(main_sizer)
-    self.Layout()
-    
-    self._pass_button.Bind(wx.EVT_BUTTON, self.on_pass)
-    self._fail_button.Bind(wx.EVT_BUTTON, self.on_fail)
-    
-    self._shutdown_timer = wx.Timer()
-    self._shutdown_timer.Bind(wx.EVT_TIMER, self._on_shutdown_timer)
-    self._shutdown_timer.Start(100)
-    
-  def _on_shutdown_timer(self, event):
+  def _on_shutdown_timer(self):
     if (rospy.is_shutdown()):
-      self.Close(True)
+      self.close()
       
-  def on_close(self, event):
-    self.Destroy()
-    
-  def on_pass(self, event):
+  def on_pass(self):
     call_done_service(ScriptDoneRequest.RESULT_OK, 'Visual check passed by operator.')
-    self.Destroy()
+    self.close()
 
-  def on_fail(self, event):
+  def on_fail(self):
     call_done_service(ScriptDoneRequest.RESULT_FAIL, 'Visual check failed by operator.')
-    self.Destroy()
+    self.close()
       
   def load_config_from_path(self, path):
-    manager = self._visualizer_panel.getManager()
-    manager.removeAllDisplays()
     self._visualizer_panel.loadGeneralConfig(path)
     self._visualizer_panel.loadDisplayConfig(path)
     
   def set_instructions(self, instructions):
-    self._instructions_ctrl.SetValue(instructions)
+    self._instructions.setPlainText( instructions )
       
-class VisualizerApp(wx.App):
-  def __init__(self, file):
-    self._filepath = file
-    self._instructions = 'Move joints and verify robot is OK.'
-    
-    wx.App.__init__(self, clearSigInt = False)
-  
-  def OnInit(self):
-    try:
-      self.frame = VisualizerFrame(None, wx.ID_ANY, "Visual Verifier", wx.DefaultPosition, wx.Size( 800, 600 ) )
-    
-      if (not os.path.exists(self._filepath)):
-        call_done_service(ScriptDoneRequest.RESULT_ERROR, 'Visual check recorded error, file does not exist!')
-        rospy.logerr('Visual check recorded error, file does not exist!')
-        return False
-    
-      self.frame.load_config_from_path(self._filepath)
-      self.frame.set_instructions(self._instructions)
-      self.frame.Show(True)
-      return True
-    except:
-      traceback.print_exc()
-      rospy.logerr('Error initializing rviz: %s' % traceback.format_exc())
-      call_done_service(ScriptDoneRequest.RESULT_ERROR, 'Visual check recorded error on initialization: %s' % traceback.format_exc())
-      return False
-
-  def OnExit(self):
-    ogre_tools.cleanupOgre()
-
 if __name__ == "__main__":
   if (len(sys.argv) < 2):
     call_done_service(ScriptDoneRequest.RESULT_ERROR, "Visual verifier not given path to config file.\nusage: visual_verifier.py 'path to config file'")
     print >> sys.stderr, 'Usage: visual_verifier.py \'path to config file\''
     sys.exit(1)
 
-  if not os.path.exists(sys.argv[1]):
-    call_done_service(ScriptDoneRequest.RESULT_ERROR, "Visual verifier not given path to actual config file.\nusage: visual_verifier.py 'path to config file'\nFile %s does not exist" % sys.argv[1])
+  filepath = sys.argv[1]
+
+  if not os.path.exists( filepath ):
+    call_done_service(ScriptDoneRequest.RESULT_ERROR, "Visual verifier not given path to actual config file.\nusage: visual_verifier.py 'path to config file'\nFile %s does not exist" % filepath )
     print >> sys.stderr, 'Usage: visual_verifier.py \'path to config file\'.\nGiven file does not exist'
     sys.exit(1)
 
   try:
-    app = VisualizerApp(sys.argv[1])
+    app = QApplication( sys.argv )
+  
+    frame = VisualizerFrame()
+    # "Visual Verifier", wx.Size( 800, 600 ) )
+
+    frame.load_config_from_path( filepath )
+    frame.set_instructions( 'Move joints and verify robot is OK.' )
+    frame.show()
+
+    # VisualizationPanel's constructor does its own ros::init() in
+    # C++, which sets the signal handler.  Here it is important to
+    # call rospy.init_node() after that so the rospy signal handler
+    # remains in effect instead.
     rospy.init_node('visual_verifier')
 
     # Uses this timeout to automatically pass visual verifier
     # Used in automated testing.
     timeout = rospy.get_param('visual_runner_timeout', -1)
-    if timeout > 0:
-      runner = VisualRunner(app, timeout)
-      runner.start()
+    # if timeout > 0:
+    #   runner = VisualRunner(app, timeout)
+    #   runner.start()
 
-    app.MainLoop()
+    app.exec_()
 
     rospy.spin()
-  except KeyboardInterrupt:
-    pass
+
   except Exception, e:
     call_done_service(ScriptDoneRequest.RESULT_ERROR, 'Visual check recorded error: %s' % traceback.format_exc())
     rospy.logerr(traceback.format_exc())
