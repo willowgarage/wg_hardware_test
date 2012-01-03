@@ -28,11 +28,14 @@ Property\ Grid\ State=selection=tf.Show Arrows;expanded=.Global Options,Grid,Rob
 Camera\ Type=Orbit
 Camera\ Config=0.016 0.000803471 0.7 -0.00526259 8.7585e-05 -0.262487
 [Display0]
-Type=Grid
+ClassName=rviz::GridDisplay
 Name=Grid
+Package=rviz
 [Display1]
-Type=Robot Model
+ClassName=rviz::RobotModelDisplay
 Name=Robot Model
+Package=rviz
 [Display2]
-Type=TF
+ClassName=rviz::TFDisplay
 Name=tf
+Package=rviz

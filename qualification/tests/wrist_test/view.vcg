@@ -25,8 +25,10 @@ Camera\ Type=Orbit
 Camera\ Config=1.086 5.36398 0.885914 -0.0878172 -0.089342 -0.0873552
 Property\ Grid\ State=selection=;expanded=.Global Options,Robot Model,Robot: Robot ModelLinks,r_wrist_roll_link Link r_wrist_roll_linkr_wrist_roll_link,Axes;scrollpos=0,0;splitterpos=151,288;ispageselected=1
 [Display0]
-Type=Robot Model
+ClassName=rviz::RobotModelDisplay
 Name=Robot Model
+Package=rviz
 [Display1]
-Type=Axes
+ClassName=rviz::AxesDisplay
 Name=Axes
+Package=rviz

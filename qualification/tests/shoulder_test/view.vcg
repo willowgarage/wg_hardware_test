@@ -48,17 +48,22 @@ Camera\ Type=Orbit
 Camera\ Config=0.83559 4.11391 1.00944 -0.358387 0.362924 -0.514188
 Property\ Grid\ State=selection=;expanded=.Global Options,Robot Model,Axes,Laser Scan,Camera,Camera2;scrollpos=0,0;splitterpos=151,303;ispageselected=1
 [Display0]
-Type=Robot Model
+ClassName=rviz::RobotModelDisplay
+Package=rviz
 Name=Robot Model
 [Display1]
-Type=Axes
+ClassName=rviz::AxesDisplay
+Package=rviz
 Name=Axes
 [Display2]
-Type=Laser Scan
+ClassName=rviz::LaserScanDisplay
+Package=rviz
 Name=Laser Scan
 [Display3]
-Type=Camera
+ClassName=rviz::CameraDisplay
+Package=rviz
 Name=Camera
 [Display4]
-Type=Camera
+ClassName=rviz::CameraDisplay
+Package=rviz
 Name=Camera2
