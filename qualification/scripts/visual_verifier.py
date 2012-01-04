@@ -66,29 +66,11 @@ def call_done_service(result, msg):
   except Exception, e:
     print >> sys.stderr, "Unable to call %s service. Make sure the service is up" % SRV_NAME
     
-
-# # Calls the "OK" service after a timeout
-# class VisualRunner(threading.Thread):
-#   def __init__(self, app, timeout = None):
-#     threading.Thread.__init__(self)
-#     self.app = app
-#     
-#   def run(self):
-#     start = rospy.get_time()
-#     if timeout is None or timeout < 0:
-#       return
-#     while not rospy.is_shutdown():
-#       if rospy.get_time() - start > timeout:
-#         wx.CallAfter(self.app.frame.Close)
-#         call_done_service(ScriptDoneRequest.RESULT_OK, 'Visual check passed by automatic runner.')
-#         break
-#       sleep(1.0)
-
-
 class VisualizerFrame( QWidget ):
   def __init__( self, parent = None ):
     super(VisualizerFrame, self).__init__( parent )
-    # title='Qualification Visualizer', size=(800, 600)
+    self.setWindowTitle( 'Visual Verifier' )
+    self.resize( 800, 600 )
     
     self._visualizer_panel = rviz.VisualizationPanel()
 
@@ -102,8 +84,8 @@ class VisualizerFrame( QWidget ):
     bottom_layout.addWidget( self._fail_button )
 
     main_layout = QVBoxLayout()
-    main_layout.addWidget( self._visualizer_panel )
-    main_layout.addLayout( bottom_layout )
+    main_layout.addWidget( self._visualizer_panel, 100 )
+    main_layout.addLayout( bottom_layout, 10 )
 
     self.setLayout( main_layout )
     
@@ -133,6 +115,17 @@ class VisualizerFrame( QWidget ):
   def set_instructions(self, instructions):
     self._instructions.setPlainText( instructions )
       
+  def succeed_after_timeout( self, timeout_seconds ):
+    timer = QTimer( self )
+    timer.timeout.connect( self._automatic_success )
+    timer.setSingleShot( True )
+    timer.start( timeout_seconds * 1000 )
+
+  def _automatic_success( self ):
+    if not rospy.is_shutdown():
+      call_done_service(ScriptDoneRequest.RESULT_OK, 'Visual check passed by automatic runner.')
+    self.close()
+
 if __name__ == "__main__":
   if (len(sys.argv) < 2):
     call_done_service(ScriptDoneRequest.RESULT_ERROR, "Visual verifier not given path to config file.\nusage: visual_verifier.py 'path to config file'")
@@ -150,7 +143,6 @@ if __name__ == "__main__":
     app = QApplication( sys.argv )
   
     frame = VisualizerFrame()
-    # "Visual Verifier", wx.Size( 800, 600 ) )
 
     frame.load_config_from_path( filepath )
     frame.set_instructions( 'Move joints and verify robot is OK.' )
@@ -165,9 +157,8 @@ if __name__ == "__main__":
     # Uses this timeout to automatically pass visual verifier
     # Used in automated testing.
     timeout = rospy.get_param('visual_runner_timeout', -1)
-    # if timeout > 0:
-    #   runner = VisualRunner(app, timeout)
-    #   runner.start()
+    if timeout > 0:
+      frame.succeed_after_timeout( timeout )
 
     app.exec_()
 
