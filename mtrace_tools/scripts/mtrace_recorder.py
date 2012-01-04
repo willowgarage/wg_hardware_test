@@ -42,7 +42,7 @@ class MotorTraceDesc:
     def __init__(self, topic, msg):
         self.topic = topic
         self.msg = msg
-        t = time.strftime("%a, %b %d, %I:%M %p", time.localtime(msg.header.stamp.to_sec()))
+        t = time.strftime("%a, %b %d, %I:%M.%S %p", time.localtime(msg.header.stamp.to_sec()))
         self.description = "%s : %s : %s" % (t, msg.actuator_info.name, msg.reason)    
 
 

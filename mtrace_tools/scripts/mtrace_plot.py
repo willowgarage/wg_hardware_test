@@ -82,6 +82,7 @@ class struct_of_arrays(object):
         # Convert lists into arrays        
         for name in struct_names:
             tmp = self.__getattribute__(name)
+            if type(tmp[0]).__name__ == 'bool' : tmp = [ int(v) for v in tmp ]                
             array_tmp = numpy.array(tmp)
             self.__setattr__(name,array_tmp)
 
@@ -109,7 +110,8 @@ class MotorTraceAnalyzed:
         self.velocity               = a.velocity
         self.encoder_position       = a.encoder_position
         self.encoder_errors         = a.encoder_error_count
-        
+        self.enabled                = a.enabled
+
         self.filtered_voltage_error     = a.filtered_motor_voltage_error
         self.filtered_abs_voltage_error = a.filtered_abs_motor_voltage_error
         self.filtered_current_error     = a.filtered_current_error
@@ -143,10 +145,11 @@ class MotorTraceAnalyzed:
 
         self.board_resistance_est = x[0][0]
         
+        
         self.board_output_voltage  = self.supply_voltage * self.programmed_pwm - self.board_resistance * self.measured_current
         self.backemf_voltage = self.velocity * self.actuator_info.encoder_reduction * self.backemf_constant 
         self.resistance_voltage = self.resistance * self.measured_current
-        self.motor_model_voltage = self.backemf_voltage + self.resistance_voltage    
+        self.motor_model_voltage = self.backemf_voltage + self.resistance_voltage 
         
         self.angular_position = numpy.mod(self.encoder_position, 2.0 * math.pi)
 
@@ -166,7 +169,7 @@ class MotorTraceAnalyzed:
 
 
 ##\brief Plots motor voltage, and error
-def plot_motor_voltage(data):
+def plotMotorVoltage(data):
     voltage_data = MtracePlotData()
     voltage_data.xdata = data.time
     voltage_data.ydata = data.measured_motor_voltage
@@ -244,6 +247,31 @@ def plotMotorCurrent(data):
     
     return name, [ [executed_current_data, measured_current_data ], 
                    [measured_current_error_data] ]
+
+
+##\brief Plots H-bridge / Motor enable signals
+def plotMotorEnabled(data):
+    enabled_data = MtracePlotData()
+    enabled_data.xdata = data.time
+    enabled_data.ydata = data.enabled
+    enabled_data.color = 'r.'
+    enabled_data.legend = 'Motor Enabled'
+
+    true_data = MtracePlotData()
+    true_data.xdata = [data.time[0], data.time[-1]]
+    true_data.ydata = [1.01, 1.01]
+    true_data.color = 'b-'
+    true_data.legend = 'True'
+
+    false_data = MtracePlotData()
+    false_data.xdata = [data.time[0], data.time[-1]]
+    false_data.ydata = [-0.01, -0.01]
+    false_data.color = 'g-'
+    false_data.legend = 'False'
+    
+    name = "Motor Enabled: %s" % data.actuator_info.name
+    
+    return name, [ [true_data, false_data, enabled_data] ]
 
 
 ##\brief Plots supply voltage
@@ -372,7 +400,7 @@ class MtraceStatsPanel(wx.Frame):
         self._write_line('Trace Info', ' ')
 
         stamp = self._data.stamp
-        time_str = time.strftime("%m/%d/%Y %H:%M:%S", time.localtime(stamp))
+        time_str = time.strftime("%m/%d/%Y %H:%M.%S %Z", time.localtime(stamp))
 
         self._write_line('Timestamp', str(stamp))
         self._write_line('Time', time_str)
@@ -477,13 +505,14 @@ class MtracePlotFrame(wx.Frame):
 
         self._msg_recorder = msg_recorder
 
-        self._plot_functions = { 'Motor Voltage and Error': plot_motor_voltage,
+        self._plot_functions = { 'Motor Voltage and Error': plotMotorVoltage,
                                  'Motor Current and Error' : plotMotorCurrent,
                                  'Motor Resistance Estimate' : plot_motor_resistance,
                                  'Motor Voltage Relative Error': plot_motor_voltage_rel_error,
                                  'Motor Error v. Position': plot_error_v_position,
                                  'Encoder Position and Velocity' : plotEncoderData,
-                                 'Supply Voltage' : plotSupplyVoltage
+                                 'Supply Voltage' : plotSupplyVoltage,
+                                 'Motor Enabled' : plotMotorEnabled
                                  }
                              
         plot_names = ['Statistics']
