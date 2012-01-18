@@ -296,6 +296,12 @@ def plotEncoderData(data):
     encoder_position_data.color = 'r-'
     encoder_position_data.legend = 'Encoder position'
 
+    encoder_position_data = MtracePlotData()
+    encoder_position_data.xdata = data.time
+    encoder_position_data.ydata = data.encoder_position
+    encoder_position_data.color = 'r-'
+    encoder_position_data.legend = 'Encoder position'
+
     encoder_velocity_data = MtracePlotData()
     encoder_velocity_data.xdata = data.time
     encoder_velocity_data.ydata = data.velocity
@@ -313,6 +319,35 @@ def plotEncoderData(data):
     return name, [ [encoder_position_data ],
                    [encoder_error_data ],
                    [encoder_velocity_data ] ]
+
+##\brief Plots encoder position, errors and velocity, in encoder ticks
+def plotEncoderTickData(data):
+    reduction =  data.actuator_info.pulses_per_revolution / (2. * math.pi)
+
+    encoder_position_data = MtracePlotData()
+    encoder_position_data.xdata = data.time
+    encoder_position_data.ydata = data.encoder_position * reduction
+    encoder_position_data.color = 'r-'
+    encoder_position_data.legend = 'Encoder position (ticks)'
+
+    encoder_rel_position_data = MtracePlotData()
+    encoder_rel_position_data.xdata = data.time
+    encoder_rel_position_data.ydata = (data.encoder_position - data.encoder_position[0]) * reduction
+    encoder_rel_position_data.color = 'b-'
+    encoder_rel_position_data.legend = 'Encoder relative position (ticks)'
+
+
+    encoder_error_data = MtracePlotData()
+    encoder_error_data.xdata = data.time
+    encoder_error_data.ydata = data.encoder_errors
+    encoder_error_data.color = 'g-'
+    encoder_error_data.legend = 'Encoder error count'
+    
+    name = "Encoder Position and Velocity (ticks) : %s" % data.actuator_info.name
+    
+    return name, [ [encoder_position_data ],
+                   [encoder_rel_position_data ],
+                   [encoder_error_data ] ]
 
 
 
@@ -511,6 +546,7 @@ class MtracePlotFrame(wx.Frame):
                                  'Motor Voltage Relative Error': plot_motor_voltage_rel_error,
                                  'Motor Error v. Position': plot_error_v_position,
                                  'Encoder Position and Velocity' : plotEncoderData,
+                                 'Encoder Position and Velocity (Ticks)' : plotEncoderTickData, 
                                  'Supply Voltage' : plotSupplyVoltage,
                                  'Motor Enabled' : plotMotorEnabled
                                  }
