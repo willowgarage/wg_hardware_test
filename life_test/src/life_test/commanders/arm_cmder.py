@@ -112,7 +112,7 @@ class ArmCmder(object):
     def _get_random_goal(self):
         goal = JointTrajectoryGoal()
         point = JointTrajectoryPoint()
-        point.time_from_start = rospy.Duration.from_sec(5)
+        point.time_from_start = rospy.Duration.from_sec(1)
 
         goal.trajectory.points.append(point)
 
