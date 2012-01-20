@@ -37,6 +37,7 @@ import actionlib
 from life_test.commanders.arm_cmder import ArmCmder
 
 from pr2_controllers_msgs.msg import JointTrajectoryAction
+from arm_navigation_msgs.srv import SetPlanningSceneDiffRequest, SetPlanningSceneDiff
 
 arm_ranges = {
     'r_shoulder_pan_joint': (-2.0, 0.4),
@@ -58,6 +59,18 @@ if __name__ == '__main__':
                                           JointTrajectoryAction)
     rospy.loginfo('Waiting for server for collision free arm commander')
     client.wait_for_server()
+
+    rospy.loginfo('Waiting for environment server')
+
+    rospy.wait_for_service('environment_server_right_arm/set_planning_scene_diff')
+
+    set_planning_scene_diff_client = rospy.ServiceProxy('environment_server_right_arm/set_planning_scene_diff',
+                                                        SetPlanningSceneDiff)
+
+    # set up empty planning scene?
+    planning_scene_diff_request = SetPlanningSceneDiffRequest()
+    set_planning_scene_diff_client.call(planning_scene_diff_request)
+  
     rospy.loginfo('Sending arm commands')
 
     my_rate = rospy.Rate(1.0)
