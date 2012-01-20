@@ -51,7 +51,7 @@ class GetIDException(Exception): pass
 WGE100_PN = '68050' # Prefix for all wge100 camera PN's
 
 FWPROG_PATH = os.path.join(roslib.packages.get_pkg_dir(PKG), 'fwprog')
-PR2_GRANT = 'pr2_grant'
+PR2_GRANT = 'pr2-grant'
 
 def get_wge100_serials():
     cmd = '%s/bin/discover lan1' % roslib.packages.get_pkg_dir('wge100_camera')

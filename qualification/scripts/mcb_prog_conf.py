@@ -54,7 +54,7 @@ from wg_invent_client import Invent
 
 prog_path = os.path.join(roslib.packages.get_pkg_dir(PKG), "fwprog")
 ECAT_IFACE = "ecat0" # EtherCAT interface
-PR2_GRANT = 'pr2_grant'
+PR2_GRANT = 'pr2-grant'
 
 class MCBProgramConfig:
     def __init__(self, expected):
