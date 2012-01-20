@@ -168,7 +168,7 @@ if __name__ == '__main__':
     rospy.init_node('arm_cmder_client')
     client = actionlib.SimpleActionClient('collision_free_arm_trajectory_action_arms', 
                                           JointTrajectoryAction)
-    rospy.loginfo('Waiting for server for right collision free arm commander')
+    rospy.loginfo('Waiting for server for collision free arm commander')
     client.wait_for_server()
 
     rospy.loginfo('Right, left arm commanders ready')
