@@ -1,0 +1,84 @@
+
+multi_dof_joints:
+  - name: world_joint
+    type: Floating
+    parent_frame_id: base_link
+    child_frame_id: base_link
+
+groups:
+  - name: right_arm
+    base_link: torso_lift_link
+    tip_link: r_elbow_flex_link
+
+default_robot_padding: .02
+
+default_object_padding: .03
+
+distance_collision_operations:
+
+  # disable for self, non-intra group collisions
+
+  - object1: r_shoulder_pan_link
+    object2: r_shoulder_pan_link
+    operation: disable
+
+  - object1: r_shoulder_lift_link
+    object2: r_shoulder_lift_link
+    operation: disable
+
+  - object1: r_upper_arm_roll_link
+    object2: r_upper_arm_roll_link
+    operation: disable
+
+
+  # settings for intra_group collisions
+  
+  - object1: right_arm
+    object2: right_arm
+    operation: disable
+
+  - object1: r_shoulder_pan_link
+    object2: r_forearm_link
+    operation: enable
+
+
+
+
+default_collision_operations:
+  - object1: torso_lift_link
+    object2: r_shoulder_pan_link
+    operation: disable  # Adjacent in collision
+  - object1: r_shoulder_pan_link
+    object2: r_shoulder_lift_link
+    operation: disable  # Adjacent in collision
+  - object1: r_shoulder_lift_link
+    object2: r_upper_arm_roll_link
+    operation: disable  # Adjacent in collision
+  - object1: r_upper_arm_roll_link
+    object2: r_upper_arm_link
+    operation: disable  # Adjacent in collision
+  - object1: r_upper_arm_link
+    object2: r_elbow_flex_link
+    operation: disable  # Adjacent in collision
+  - object1: r_shoulder_pan_link
+    object2: r_upper_arm_link
+    operation: disable  # Default in collision
+
+  - object1: r_upper_arm_link
+    object2: r_dummy_forearm_link
+    operation: disable  # Default in collision
+  - object1: r_elbow_flex_link
+    object2: r_forearm_roll_link
+    operation: disable  # Default in collision
+  - object1: r_elbow_flex_link
+    object2: r_dummy_forearm_link
+    operation: disable  # Default in collision
+  - object1: r_forearm_roll_link
+    object2: r_dummy_forearm_ext_link
+    operation: disable  # Default in collision
+  - object1: r_forearm_roll_link
+    object2: r_dummy_forearm_link
+    operation: disable  # Default in collision
+  - object1: r_dummy_forearm_ext_link
+    object2: r_dummy_forearm_link
+    operation: disable  # Default in collision
