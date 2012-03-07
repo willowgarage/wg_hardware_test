@@ -289,11 +289,12 @@ class SubTestResult(object):
             os.makedirs(dir_name)
 
         for plot in self._plots:
-            stream = StringIO(plot.image)
-            im  = Image.open(stream)
-            
             img_file = os.path.join(dir_name, plot.title + '.' + plot.image_format)
-            im.save(img_file)
+            open(img_file, 'w').write(plot.image)
+#            stream = StringIO(plot.image)
+#            im  = Image.open(stream)
+#            
+#            im.save(img_file)
 
     def html_image_result(self, img_path):
         html = '<H4 ALIGN=CENTER>Result Details</H4>'
