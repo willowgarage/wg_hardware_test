@@ -179,7 +179,28 @@ class AnalysisApp:
 
       effort_plot = plot_effort(params, hyst_data)
       vel_plot = plot_velocity(params, hyst_data)
-      r.plots = [effort_plot, vel_plot]
+
+      # render positive effort and velocity to a CSV "plot"
+      positive_csv = Plot()
+      positive_csv.image_format = "csv"
+      positive_csv.title = params.joint_name + "_hsyteresis_p"
+      csv = "Position,Effort,Position\n"
+      p = hyst_data.positive
+      for i in range(len(p.position)):
+         csv = csv + "%d,%d,%d\n"%(p.position[i], p.effort[i], p.velocity[i])
+      positive_csv.image = csv
+
+      # render positive effort and velocity to a CSV "plot"
+      negative_csv = Plot()
+      negative_csv.image_format = "csv"
+      negative_csv.title = params.joint_name + "_hsyteresis_n"
+      csv = "Position,Effort,Position\n"
+      p = hyst_data.negative
+      for i in range(len(p.position)):
+         csv = csv + "%d,%d,%d\n"%(p.position[i], p.effort[i], p.velocity[i])
+      negative_csv.image = csv
+
+      r.plots = [effort_plot, vel_plot, positive_csv, negative_csv]
 
       html = '<img src=\"IMG_PATH/%s.png\", width = 640, height = 480/>' % effort_plot.title
       html += '<p><b>Legend:</b> Red - Average Effort. Yellow - Error Bars. Green - Expected Effort.</p>\n'
