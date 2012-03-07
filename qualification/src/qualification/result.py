@@ -291,10 +291,6 @@ class SubTestResult(object):
         for plot in self._plots:
             img_file = os.path.join(dir_name, plot.title + '.' + plot.image_format)
             open(img_file, 'w').write(plot.image)
-#            stream = StringIO(plot.image)
-#            im  = Image.open(stream)
-#            
-#            im.save(img_file)
 
     def html_image_result(self, img_path):
         html = '<H4 ALIGN=CENTER>Result Details</H4>'
