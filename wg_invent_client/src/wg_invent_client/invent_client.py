@@ -664,6 +664,37 @@ class Invent(object):
 
     return (ref, docname, user, note, date)
 
+  ##\brief Get attachment
+  ##
+  ##\param aid str : Attachment ID
+  ##\return ( str, str, str, str ) : reference, docname, username, note, date
+  def get_attachment(self, aid):
+    self.login()
+
+    aid = aid.strip()
+
+    url = self.site + "invent/api.py?Action.getAttachmentInfo=1&aid=%s" % (aid,)
+    fp = self.opener.open(url)
+    body = fp.read()
+    fp.close()
+
+    hdf = neo_util.HDF()
+    try:
+      hdf.readString(body)
+    except Exception, e:
+      print >> sys.stderr, 'Unable to parse HDF output from inventory system. Output:\n%s' % body
+      return ('', '', '', '')
+
+    docname = hdf.getValue("CGI.cur.attachment.name", "")
+    docref = hdf.getValue("CGI.cur.attachment.docref", "")
+
+    url = self.site + "documents/show.py?reference=%s&name=%s" % (docref, docname)
+    fp = self.opener.open(url)
+    doc = fp.read()
+    fp.close()
+
+    return doc
+
   ##\brief Deletes attachment. Hard delete. 
   ##
   ## Returns true if attachment is deleted, or not found.
