@@ -168,6 +168,13 @@
 	script="laser_tilt_test/test_gui.launch"
 	type="Life Test" power="true" >
   </test>
+
+  <test serial="6804001" name="Laser Tilt Life Test 2" id="laser-burn"
+	short="Sled" duration="40"
+	desc="Tests laser tilt with Hokuyo wire connection.  Made to work with experimental laser tilt mechanism where 1200 count encoder is mounted on back of motor."
+	script="laser_tilt_test/test_gui_2.launch"
+	type="Life Test" power="true" >
+  </test>
   
   <test serial="6803757" name="Forearm/Slip Ring Test" id="slip-ring-burn"
 	short="Slip Ring" duration="40"

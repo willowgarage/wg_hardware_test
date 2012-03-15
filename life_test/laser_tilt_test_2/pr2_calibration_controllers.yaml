@@ -1,0 +1,11 @@
+cal_laser_tilt:
+  type: pr2_calibration_controllers/JointCalibrationController
+  actuator: laser_tilt_mount_motor
+  joint: laser_tilt_mount_joint
+  transmission: laser_tilt_mount_trans
+  velocity: 1.5
+  pid:
+    p: 0.1
+    i: 0.0
+    d: 0.0
+    i_clamp: 0.0
