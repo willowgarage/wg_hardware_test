@@ -67,7 +67,8 @@ if __name__ == '__main__':
     #cmd.time     = [0.0, 0.4,  1.0, 1.1, 1.1+d,  1.2+d, 1.8+d, 2.2+d, 2.2+2*d]
     
     cmd.position = [1.5,  -.7, 1.5]
-    cmd.time_from_start = [0.0, 0.5, 1.0]
+    #cmd.time_from_start = [0.0, 1.0, 2.0] #[0.0, 0.5, 1.0]
+    cmd.time_from_start = [0.0, 4.0, 8.0] #[0.0, 0.5, 1.0]
     cmd.time_from_start = [rospy.Time.from_sec(x) for x in cmd.time_from_start]
     cmd.max_velocity = 5
     cmd.max_acceleration =  5
