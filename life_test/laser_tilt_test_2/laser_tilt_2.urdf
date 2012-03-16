@@ -95,9 +95,9 @@
   </gazebo>
   <joint name="laser_tilt_mount_joint" type="revolute">
     <axis xyz="0 1 0"/>
-    <limit effort="0.65" lower="-0.7854" upper="1.48353" velocity="10.0"/>
+    <limit effort="10000" lower="-0.7" upper="1.6" velocity="1000000.0"/> -->
     <!-- alpha tested velocity and effort limits -->
-    <safety_controller k_position="100" k_velocity="0.05" soft_lower_limit="-0.7354" soft_upper_limit="1.43353"/>
+    <safety_controller k_position="100" k_velocity="0.1" soft_lower_limit="-0.7" soft_upper_limit="1.6"/>
     <calibration falling="0.0"/>
     <dynamics damping="0.008"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -178,7 +178,7 @@
   <transmission name="laser_tilt_mount_trans" type="pr2_mechanism_model/SimpleTransmission">
     <actuator name="laser_tilt_mount_motor"/>
     <joint name="laser_tilt_mount_joint"/>
-    <mechanicalReduction>6.05</mechanicalReduction>
+    <mechanicalReduction>175.45</mechanicalReduction>
   </transmission>
 </robot>
 
