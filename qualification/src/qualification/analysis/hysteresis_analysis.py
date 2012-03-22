@@ -151,6 +151,16 @@ class HysteresisTestData(object):
         self.range_max = max(self.positive.range_max, self.negative.range_max)
         self.range_min = min(self.positive.range_min, self.negative.range_min)
 
+class HysteresisTestData2(object):
+    """
+    Data for hysteresis test
+    """
+    def __init__(self, data):
+        self.data = data
+
+        self.range_max = max(d.range_max for d in self.data)
+        self.range_min = min(d.range_min for d in self.data) 
+
 
 class HysteresisAnalysisResult(object):
     """Struct to store result data"""
@@ -236,10 +246,31 @@ def range_analysis(params, data):
 def effort_analysis(params, data):
     result = HysteresisAnalysisResult()
     
-    max_avg = numpy.average(data.positive.effort)
-    min_avg = numpy.average(data.negative.effort)
-    max_sd = numpy.std(data.positive.effort)
-    min_sd = numpy.std(data.negative.effort)
+    if isinstance(data, HysteresisTestData):
+      max_avg = numpy.average(data.positive.effort)
+      min_avg = numpy.average(data.negative.effort)
+      max_sd = numpy.std(data.positive.effort)
+      min_sd = numpy.std(data.negative.effort)
+    elif isinstance(data, HysteresisTestData2):
+      pos = numpy.array([])
+      neg = numpy.array([])
+
+      for i in range(len(data.data)):
+        if i % 2 == 0:
+          pos = numpy.append(pos, data.data[i].effort)
+        else:
+          neg = numpy.append(neg, data.data[i].effort)
+
+      max_avg = numpy.average(pos)
+      min_avg = numpy.average(neg)
+      max_sd = numpy.std(pos)
+      min_sd = numpy.std(neg)
+    else:
+      result.summary = 'Wrong Data Type'
+      result.html = ["<p>Hysteresis Data has a bad data type: %s</p>\n"%data.__class__ ]
+      result.result = False
+      return
+
     
     effort_diff = abs(params.pos_effort - params.neg_effort)
     tolerance = params.tolerance * effort_diff
@@ -317,13 +348,36 @@ def effort_analysis(params, data):
 def velocity_analysis(params, data):
     html = ['<p>Search velocity: %.2f.</p><br>\n' % abs(params.velocity)]
 
-    pos_avg = numpy.average(data.positive.velocity)
-    pos_sd = numpy.std(data.positive.velocity)
-    pos_rms = math.sqrt(numpy.average( (data.positive.velocity - params.velocity) * (data.positive.velocity - params.velocity) ))
+    if isinstance(data, HysteresisTestData):
+      pos_avg = numpy.average(data.positive.velocity)
+      pos_sd = numpy.std(data.positive.velocity)
+      pos_rms = math.sqrt(numpy.average( (data.positive.velocity - params.velocity) * (data.positive.velocity - params.velocity) ))
+  
+      neg_avg = numpy.average(data.negative.velocity)
+      neg_sd = numpy.std(data.negative.velocity)
+      neg_rms = math.sqrt(numpy.average( (data.negative.velocity - params.velocity) * (data.negative.velocity - params.velocity) ))
+    elif isinstance(data, HysteresisTestData2):
+      pos = numpy.array([])
+      neg = numpy.array([])
 
-    neg_avg = numpy.average(data.negative.velocity)
-    neg_sd = numpy.std(data.negative.velocity)
-    neg_rms = math.sqrt(numpy.average( (data.negative.velocity - params.velocity) * (data.negative.velocity - params.velocity) ))
+      for i in range(len(data.data)):
+        if i % 2 == 0:
+          pos = numpy.append(pos, data.data[i].effort)
+        else:
+          neg = numpy.append(neg, data.data[i].effort)
+
+      pos_avg = numpy.average(pos)
+      pos_sd = numpy.std(pos)
+      pos_rms = math.sqrt(numpy.average( (pos - params.velocity) * (pos - params.velocity) ))
+
+      neg_avg = numpy.average(neg)
+      neg_sd = numpy.std(neg)
+      neg_rms = math.sqrt(numpy.average( (neg - params.velocity) * (neg - params.velocity) ))
+    else:
+      result.summary = 'Wrong Data Type'
+      result.html = ["<p>Hysteresis Data has a bad data type: %s</p>\n"%data.__class__ ]
+      result.result = False
+      return
  
     html.append('<table border="1" cellpadding="2" cellspacing="0">\n')
     html.append('<tr><td></td><td><b>Average</b></td><td><b>Std. Dev.</b></td><td><b>RMS</b></td></tr>\n')
@@ -454,6 +508,45 @@ def plot_effort(params, data):
 
     return p
 
+## Plot effort
+##\return pr2_self_test_msgs/Plot[] :
+def plot_efforts(params, data):
+    plots = []
+    for i, d in enumerate(data.data):
+      # Plot the analyzed data
+      fig = plt.figure(2)
+      plt.xlabel('Position (Radians or Meters)')
+      plt.ylabel('Effort (Nm or N)')
+      plt.plot(d.position, d.effort, 'b--', label='_nolegend_')
+  
+      avg = numpy.average(d.effort)
+      sd = numpy.std(d.effort)
+  
+      plt.axhline(y = avg, color = 'r', label='Average')
+      plt.axhline(y = avg + sd, color = 'y', label='Error bars')
+      plt.axhline(y = avg - sd, color = 'y', label='_nolegend_')
+      
+      # Add expected efforts to both plots
+      if i % 2 == 0:
+        plt.axhline(y = params.pos_effort, color = 'g', label='Expected')
+      else:
+        plt.axhline(y = params.neg_effort, color = 'g', label='Expected')
+      
+      fig.text(.3, .95, params.joint_name + ' Hysteresis Effort %d'%i)
+  
+      stream = StringIO()
+      plt.savefig(stream, format = "png")
+      image = stream.getvalue()
+      plt.close()
+      
+      p = Plot()
+      p.title = params.joint_name + "_hysteresis1_%d"%i
+      p.image = image
+      p.image_format = "png"
+      plots.append(p)
+
+    return plots
+
 ## Plot velocity
 ##\return pr2_self_test_msgs/Plot :
 def plot_velocity(params, data):
@@ -480,6 +573,35 @@ def plot_velocity(params, data):
     plt.close()
     
     return p
+
+## Plot velocities
+##\return pr2_self_test_msgs/Plot[] :
+def plot_velocities(params, data):
+    plots = []
+    for i, d in enumerate(data.data):
+      fig = plt.figure(2)
+      plt.ylabel('Velocity')
+      plt.xlabel('Position')
+      plt.plot(numpy.array(d.position), numpy.array(d.velocity), 'b--', label='Data')
+      plt.axhline(y = params.velocity, color = 'g', label = 'Command')
+      plt.axhline(y = -1 * params.velocity, color = 'g', label = '_nolegend_')
+      
+      fig.text(.3, .95, params.joint_name + ' Hysteresis Velocity')
+      plt.legend(shadow=True)
+      
+      stream = StringIO()
+      plt.savefig(stream, format = "png")
+      image = stream.getvalue()
+      
+      p = Plot()
+      p.title = params.joint_name + "_hysteresis2_%d"%i
+      p.image = image
+      p.image_format = "png"
+      
+      plt.close()
+      plots.append(p)
+    
+    return plots
 
 # Wrist analysis starts here
 
