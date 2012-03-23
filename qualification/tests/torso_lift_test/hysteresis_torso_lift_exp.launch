@@ -1,6 +1,6 @@
 <launch>
   <group ns="test_controller" clear_params="true">
-    <param name="type" type="string" value="joint_qualification_controllers/HysteresisController" />
+    <param name="type" type="string" value="joint_qualification_controllers/HysteresisController2" />
     <param name="velocity" type="double" value="-0.010" />  <!-- was 0.005 -->
     <param name="max_effort" type="double" value="10000.0" />
     <param name="max_expected" type="double" value="1500" />
@@ -10,6 +10,7 @@
     <param name="timeout" type="double" value="480" />
     <param name="tolerance" type="double" value="0.20" />
     <param name="sd_max" type="double" value="0.30" />
+    <param name="repeat_count" value="2" />
 
     <group ns="velocity_controller" >
       <param name="joint" type="string" value="torso_lift_joint" />
@@ -22,7 +23,7 @@
     
   <node pkg="pr2_controller_manager" type="spawner"
         args="test_controller" name="hyst_spawner" />
-  <node pkg="qualification" type="hysteresis_sinesweep_plot.py"
+  <node pkg="qualification" type="hysteresis_sinesweep_plot2.py"
         name="hyst_analysis" />
 
 </launch>
