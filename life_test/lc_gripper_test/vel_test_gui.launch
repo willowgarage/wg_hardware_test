@@ -1,0 +1,32 @@
+<launch>
+  <!-- Robot desc and etherCAT -->
+  <param name="robot_description"
+         textfile="$(find life_test)/lc_gripper_test/low_cost_gripper.xml" />
+
+  <include file="$(find life_test)/pr2_etherCAT.launch" />
+
+  <!-- Calibration -->
+  <rosparam command="load" file="$(find life_test)/lc_gripper_test/joint_position_controller.yaml" />
+  <node pkg="pr2_bringup" type="calibrate.py"
+        args="calibration_controller" name="cal_grip" output="screen" />
+
+  <!-- Controller -->
+  <group ns="cycle_controller" >
+    <param name="type" type="str" value="robot_mechanism_controllers/JointVelocityController" />
+    <param name="joint" type="str" value="gripper_joint" />
+  </group>
+  <node pkg="pr2_controller_manager" type="spawner"
+        args="--wait-for=calibrated cycle_controller" name="cycle_controller"
+        output="screen" />
+
+  <!-- Commander -->
+  <node pkg="life_test" type="lc_gripper_cmder.py"
+        args="cycle_controller" machine="test_host"
+        name="grip_cmder" />
+
+  <!-- Monitor -->
+  <node pkg="pr2_hardware_test_monitor" type="pr2_hw_test_monitor"
+        name="monitor" machine="test_host" >
+    <rosparam command="load" file="$(find life_test)/lc_gripper_test/lc_gripper_listeners.yaml" />
+  </node>
+</launch>

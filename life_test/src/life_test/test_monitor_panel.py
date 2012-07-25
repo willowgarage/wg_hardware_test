@@ -549,13 +549,21 @@ class TestMonitorPanel(wx.Panel):
         remain = self._calc_remaining()
         
         if remain < 0:
+            if self._bay and self._bay.name:
+                rospy.loginfo("zero time remaining on bay %s" % self._bay.name)
+            else:
+                rospy.loginfo("zero time remaining on unknown bay")
             self._stop_count += 1
         else:
             self._stop_count = 0
 
         # Make sure we've had five consecutive seconds of 
         # negative time before we shutdown
-        if self._stop_count > 5 and not self._record.test_complete:
+        if self._stop_count > 5:
+            if self._bay and self._bay.name:
+                rospy.loginfo("Test done on bay %s; stopping" % self._bay.name)
+            else:
+                rospy.loginfo("Test done on unknown bay")
             self._record.complete_test()
             self.stop_test()
             self._enable_controls()
@@ -573,6 +581,12 @@ class TestMonitorPanel(wx.Panel):
         """
         Updates state with new data from test_status
         """
+
+        if self._bay and self._bay.name:
+            rospy.loginfo("got status for bay %s" % self._bay.name)
+        else:
+            rospy.loginfo("got status for unknown bay")
+
         with self._mutex:
             test_level = self._status_msg.test_ok
             test_msg = self._status_msg.message

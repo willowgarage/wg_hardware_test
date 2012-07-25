@@ -1,0 +1,21 @@
+fake_controller:
+    type: pr2_calibration_controllers/FakeCalibrationController
+    joint: gripper_joint
+calibration_controller:
+    type: pr2_calibration_controllers/GripperCalibrationController
+    joint: gripper_joint
+    actuator: low_cost_gripper_motor
+    velocity: 0.004
+    pid:
+        p: 40000.0
+        d: 200.0
+        i_clamp: 0.0
+cycle_controller:
+    type: robot_mechanism_controllers/JointVelocityController
+    joint: gripper_joint
+    actuator: low_cost_gripper_motor
+    pid:
+      p: 90000.0
+      i: 350.0
+      i_clamp: 350.0
+      d: 0.0
