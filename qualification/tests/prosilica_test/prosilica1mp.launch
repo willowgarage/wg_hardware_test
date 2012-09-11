@@ -1,0 +1,16 @@
+<launch>
+  <group ns="prosilica" clear_params="true">
+    <param name="acquisition_mode" type="str" value="Continuous"/>
+    <param name="ip_address" type="str" value="10.68.0.20"/>
+    <param name="x_offset" type="int" value="690"/>
+    <param name="y_offset" type="int" value="505"/>
+    <param name="width" type="int" value="50"/>
+    <param name="height" type="int" value="50"/>
+ 
+    <node pkg="image_proc" type="image_proc" respawn="false" name="prosilica_image_proc" />
+  </group>
+
+  <node name="prosilica" pkg="prosilica_camera" type="prosilica_node" output="screen" respawn="false">
+    <remap from="camera" to="prosilica"/>
+  </node>
+</launch>
