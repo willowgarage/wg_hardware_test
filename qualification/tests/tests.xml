@@ -15,7 +15,7 @@
   <test serial="6802478" 
 	file="torso_lift_test/test.xml" descrip="Torso Lift Test" />  
   <test serial="6802478" 
-	file="torso_lift_test/test_exp.xml" descrip="Torso Lift Test (6x repeat)" />  
+	file="torso_lift_test/test_exp.xml" descrip="Torso Lift Test (3x repeat)" />  
   <test serial="6804080" 
 	file="torso_lift_test/test_drive.xml" descrip="Torso Drivetrain Test" />  
   <test serial="6804080" 
@@ -155,6 +155,8 @@
 	file="imu_test/test.xml" descrip="IMU Test" />
   <test serial="6802409"
         file="prosilica_test/test.xml" descrip="Prosilica Test" />
+  <test serial="6804703"
+        file="prosilica_test/test1mp.xml" descrip="1MP Prosilica Test" />
   <test serial="etherne" debug="true"
         file="ethernet_test/test.xml" descrip="Ethernet Test" />
   <test serial="6802354"
