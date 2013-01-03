@@ -3,21 +3,21 @@
     <param name="type" type="string" value="joint_qualification_controllers/HysteresisController2" />
     <param name="velocity" type="double" value="-0.010" />  <!-- was 0.005 -->
     <param name="max_effort" type="double" value="10000.0" />
-    <param name="max_expected" type="double" value="1500" />
+    <param name="max_expected" type="double" value="1950" />
     <param name="min_expected" type="double" value="-1450" />
     <param name="max_position" type="double" value="0.303" />
     <param name="min_position" type="double" value="0.012" />
-    <param name="timeout" type="double" value="480" />
+    <param name="timeout" type="double" value="1200" />
     <param name="tolerance" type="double" value="0.20" />
     <param name="sd_max" type="double" value="0.30" />
-    <param name="repeat_count" value="2" />
+    <param name="repeat_count" value="3" />
 
     <group ns="velocity_controller" >
       <param name="joint" type="string" value="torso_lift_joint" />
       <param name="pid/p" type="double" value="50000.0" />
       <param name="pid/i" type="double" value="1000000" />
       <param name="pid/d" type="double" value="0.0" />
-      <param name="pid/i_clamp" type="double" value="12000" />
+      <param name="pid/i_clamp" type="double" value="11999" />
     </group>
   </group>
     
