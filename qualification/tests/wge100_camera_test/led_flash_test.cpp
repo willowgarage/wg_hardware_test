@@ -32,9 +32,11 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-#include "ros/node_handle.h"
-#include "sensor_msgs/Image.h"
-#include "cv_bridge/CvBridge.h"
+#include <ros/node_handle.h>
+#include <sensor_msgs/Image.h>
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
+#include <opencv2/opencv.hpp>
 #include <stdio.h>
 #include <signal.h>
 #include <ethercat_trigger_controllers/SetWaveform.h>
@@ -46,7 +48,6 @@
 class LedFlashTest
 {
 private:
-  sensor_msgs::CvBridge img_bridge_;
   std::string window_name_;
   ros::NodeHandle &node_handle_;
   ros::NodeHandle private_node_handle_;
@@ -120,8 +121,19 @@ public:
     // Compute image intensity.
     
     boost::const_pointer_cast<sensor_msgs::Image>(img_msg)->encoding = "mono8";
-    img_bridge_.fromImage(*img_msg);
+    cv_bridge::CvImagePtr cv_ptr;
+    try {
+       cv_ptr = cv_bridge::toCvCopy(img_msg, sensor_msgs::image_encodings::MONO8);
+    } catch (cv_bridge::Exception & e) {
+       ROS_ERROR("cv_bridge exception: %s", e.what());
+       return;
+    }
+
+    /* old cv bridge API 
     CvScalar mean = cvAvg(img_bridge_.toIpl());
+    */
+    CvScalar mean = cvAvg(cv_ptr->image.data);
+
     double intensity = mean.val[0];
 
     // Control logic
