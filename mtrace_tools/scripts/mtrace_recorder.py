@@ -3,6 +3,7 @@ from __future__ import with_statement
 PKG = 'mtrace_tools'
 import roslib; roslib.load_manifest(PKG)
 import rospy
+import rosgraph
 from ethercat_hardware.msg import MotorTrace
 import rosbag
 import threading
@@ -11,20 +12,16 @@ import copy
 
 class MotorTraceTopicException(Exception): pass
 
-def _succeed(args):
-    code, msg, val = args
-    if code != 1:
-        raise MotorTraceTopicException("remote call failed: %s"%msg)
-    return val
-
-
 ##\brief Gets list of published motor trace topics
 def get_mtrace_topics(type = 'ethercat_hardware/MotorTrace'):
-    master = roslib.scriptutil.get_master()
+    master = rosgraph.masterapi.Master('/mtrace_plotter')
     # Need try/catch here
     try:
-        pub_topics = _succeed(master.getPublishedTopics('/mtrace_plotter', '/'))
-    except MotorTraceTopicException:
+        pub_topics = master.getPublishedTopics('/')
+    except rosgraph.masterapi.Error:
+        rospy.logerr('Unable to get list of motor trace topics')
+        return []
+    except rosgraph.masterapi.Failure:
         rospy.logerr('Unable to get list of motor trace topics')
         return []
 
