@@ -93,7 +93,7 @@ class VisualizerFrame:
     myWidget = QWidget(visualizer_frame)
     layout = QGridLayout(myWidget)
     self._instructions_ctrl = QTextEdit(myWidget)
-    selt._instructions_ctrl.setReadOnly(True)
+    self._instructions_ctrl.setReadOnly(True)
     self._pass_button = QPushButton("&Pass", myWidget)
     self._fail_button = QPushButton("&Fail", myWidget)
     layout.addWidget(self._instructions_ctrl, 0, 0, 1, 1)
