@@ -616,7 +616,7 @@ class TestMonitorPanel(wx.Panel):
         # Init machine
         # Set default to remote machine
         launch += '<machine name="test_host" address="%s" default="true" ' % bay.machine
-        launch += 'ros-root="$(env ROS_ROOT)" ros-package-path="$(env ROS_PACKAGE_PATH)" timeout="15"  />\n'
+        launch += 'env-loader="/etc/ros/env.sh" timeout="15"  />\n'
         
         # Local host
         launch += '<machine name="localhost" address="localhost" '

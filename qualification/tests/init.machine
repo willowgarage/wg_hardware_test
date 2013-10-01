@@ -1,8 +1,7 @@
 <launch>
   <machine name="test_host" address="$(env ROS_TEST_HOST)"
-           ros-root="$(env ROS_ROOT)" ros-package-path="$(env ROS_PACKAGE_PATH)"
-           default="never"/>
+           env-loader="/etc/ros/env.sh" default="never"/>
 
-  <machine name="localhost" address="localhost" ros-root="$(env ROS_ROOT)"
-           ros-package-path="$(env ROS_PACKAGE_PATH)" default="true"/> 
+  <machine name="localhost" address="localhost"
+           env-loader="/etc/ros/env.sh" default="true"/> 
 </launch>
