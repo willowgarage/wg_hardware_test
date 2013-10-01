@@ -103,7 +103,7 @@ class VisualizerFrame:
     visualizer_frame.addPane(title, myWidget, Qt.BottomDockWidgetArea)
     
     self._pass_button.clicked.connect(self.on_pass)
-    self._fail_button.clicket.connect(self.on_fail)
+    self._fail_button.clicked.connect(self.on_fail)
     
     #  timer fires every 100 ms
     self._shutdown_timer = QTimer()
