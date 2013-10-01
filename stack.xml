@@ -32,6 +32,5 @@
   <depend stack="rx" /> <!-- rxtools -->
   <depend stack="vision_opencv" /> <!-- opencv2, cv_bridge -->
   <depend stack="visualization" /> <!-- rviz -->
-  <depend stack="visualization_common" />
 
 </stack>
