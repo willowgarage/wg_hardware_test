@@ -168,7 +168,7 @@ if __name__ == "__main__":
     sys.exit(1)
 
   try:
-    app = QtGui.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     v_app = VisualizerApp(sys.argv[1])
     rospy.init_node('visual_verifier')
 
