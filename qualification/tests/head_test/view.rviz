@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Grid1
+        - /TF1
       Splitter Ratio: 0.5
     Tree Height: 1128
 Visualization Manager:
@@ -55,17 +56,17 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.31842
+      Distance: 1.93
       Focal Point:
         X: 0.0
         Y: 0.0
         Z: 0.0
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.851
+      Pitch: 0.94
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.21077
+      Yaw: 2.0
     Saved: ~
 Window Geometry:
   Displays:

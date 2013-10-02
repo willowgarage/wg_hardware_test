@@ -5,6 +5,8 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Grid1
+        - /TF1
+        - /Marker1
       Splitter Ratio: 0.5
     Tree Height: 1128
 Visualization Manager:
@@ -44,6 +46,14 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: visualization_marker
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
@@ -55,17 +65,17 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.31842
+      Distance: 2.12705
       Focal Point:
-        X: 0.0
-        Y: 0.0
-        Z: 0.0
+        X: 0.0565161
+        Y: 0.0131776
+        Z: -0.036197
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.851
+      Pitch: 1.111
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.21077
+      Yaw: 5.54393
     Saved: ~
 Window Geometry:
   Displays:

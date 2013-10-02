@@ -3,31 +3,11 @@ Panels:
     Help Height: 78
     Name: Displays
     Property Tree Widget:
-      Expanded:
-        - /Grid1
       Splitter Ratio: 0.5
     Tree Height: 1128
 Visualization Manager:
   Class: ""
   Displays:
-    - Alpha: 0.5
-      Cell Size: 1
-      Class: rviz/Grid
-      Color: 128; 128; 128
-      Enabled: true
-      Line Style:
-        Line Width: 0.03
-        Value: Lines
-      Name: Grid
-      Normal Cell Count: 0
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Plane: XY
-      Plane Cell Count: 10
-      Reference Frame: <Fixed Frame>
-      Value: true
     - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: false
@@ -55,17 +35,17 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.31842
+      Distance: 0.77
       Focal Point:
-        X: 0.0
-        Y: 0.0
-        Z: 0.0
+        X: 0.06
+        Y: 0.06
+        Z: 0.12
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.851
+      Pitch: 1.956
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.21077
+      Yaw: 4.58626
     Saved: ~
 Window Geometry:
   Displays:
