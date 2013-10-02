@@ -6,6 +6,7 @@
 
   <include file="$(find qualification)/tests/init.machine" />
   <include file="$(find qualification)/tests/pr2_etherCAT.launch" />
+  <param name="/pr2_etherCAT/l_gripper_motor/enable_pressure_sensor" value="False"/>
 
   <!-- Calibration -->
   <rosparam command="load" file="$(find pr2_controller_configuration)/pr2_calibration_controllers.yaml" />
