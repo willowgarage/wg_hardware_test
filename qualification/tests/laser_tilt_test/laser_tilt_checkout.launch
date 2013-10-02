@@ -7,7 +7,7 @@
   </group>
 
   <node pkg="qualification" type="visual_verifier.py" machine="localhost"
-        args="$(find qualification)/tests/laser_tilt_test/view.vcg" 
+        args="$(find qualification)/tests/laser_tilt_test/view.rviz" 
         name="visual_verify" />
   
   <node pkg="qualification" type="robot_checkout.py" name="checkout" >

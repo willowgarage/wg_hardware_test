@@ -7,7 +7,7 @@
   </group>
 
   <node pkg="qualification" type="visual_verifier.py" machine="localhost"
-        args="$(find qualification)/tests/head_test/view.vcg" 
+        args="$(find qualification)/tests/head_test/view.rviz" 
         name="visualizer" />
 
   <node pkg="pr2_controller_manager" type="spawner"
