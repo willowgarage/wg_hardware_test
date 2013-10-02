@@ -188,7 +188,7 @@ class AnalysisApp:
       p = hyst_data.positive
       for i in range(len(p.position)):
          csv = csv + "%f,%f,%f\n"%(p.position[i], p.effort[i], p.velocity[i])
-      positive_csv.image = csv
+      positive_csv.image = str_to_bytes(csv)
 
       # render positive effort and velocity to a CSV "plot"
       negative_csv = Plot()
@@ -198,7 +198,7 @@ class AnalysisApp:
       p = hyst_data.negative
       for i in range(len(p.position)):
          csv = csv + "%f,%f,%f\n"%(p.position[i], p.effort[i], p.velocity[i])
-      negative_csv.image = csv
+      negative_csv.image = str_to_bytes(csv)
 
       r.plots = [effort_plot, vel_plot, positive_csv, negative_csv]
 

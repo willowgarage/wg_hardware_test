@@ -49,6 +49,9 @@ from StringIO import StringIO
 
 from pr2_self_test_msgs.msg import Plot, TestParam, TestValue
 
+def str_to_bytes(s):
+    return map(lambda x: x if x < 128 else x-256, map(ord, s))
+
 class HysteresisParameters(object):
     """
     Stores Hysteresis test parameters. Can output them as TestParams
@@ -503,7 +506,7 @@ def plot_effort(params, data):
     
     p = Plot()
     p.title = params.joint_name + "_hysteresis1"
-    p.image = image
+    p.image = str_to_bytes(image)
     p.image_format = "png"
 
     return p
@@ -541,7 +544,7 @@ def plot_efforts(params, data):
       
       p = Plot()
       p.title = params.joint_name + "_hysteresis1_%d"%i
-      p.image = image
+      p.image = str_to_bytes(image)
       p.image_format = "png"
       plots.append(p)
 
@@ -567,7 +570,7 @@ def plot_velocity(params, data):
     
     p = Plot()
     p.title = params.joint_name + "_hysteresis2"
-    p.image = image
+    p.image = str_to_bytes(image)
     p.image_format = "png"
     
     plt.close()
@@ -595,7 +598,7 @@ def plot_velocities(params, data):
       
       p = Plot()
       p.title = params.joint_name + "_hysteresis2_%d"%i
-      p.image = image
+      p.image = str_to_bytes(image)
       p.image_format = "png"
       
       plt.close()
@@ -777,7 +780,7 @@ def plot_flex_effort(params, data):
     
     p = Plot()
     p.title = "wrist_diff_flex_effort"
-    p.image = image
+    p.image = str_to_bytes(image)
     p.image_format = "png"
     
     plt.close()
