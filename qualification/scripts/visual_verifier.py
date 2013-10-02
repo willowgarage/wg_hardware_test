@@ -110,7 +110,7 @@ class VisualizerFrame:
     self._shutdown_timer.timeout.connect(self._on_shutdown_timer)
     self._shutdown_timer.start(100)
     
-  def _on_shutdown_timer(self, event):
+  def _on_shutdown_timer(self):
     if (rospy.is_shutdown()):
       self._visualizer_frame.close()
       
@@ -123,8 +123,6 @@ class VisualizerFrame:
     self._visualizer_frame.close()
       
   def load_config_from_path(self, path):
-    manager = self._visualizer_frame.getManager()
-    manager.removeAllDisplays()
     self._visualizer_frame.loadDisplayConfig(path)
     
   def set_instructions(self, instructions):
@@ -144,19 +142,19 @@ class VisualizerApp():
       if (not os.path.exists(self._filepath)):
         call_done_service(ScriptDoneRequest.RESULT_ERROR, 'Visual check recorded error, file does not exist!')
         rospy.logerr('Visual check recorded error, file does not exist!')
-        return False
+        return
     
       self.frame.load_config_from_path(self._filepath)
       self.frame.set_instructions(self._instructions)
       self.frame.show()
-      return True
     except:
       traceback.print_exc()
       rospy.logerr('Error initializing rviz: %s' % traceback.format_exc())
       call_done_service(ScriptDoneRequest.RESULT_ERROR, 'Visual check recorded error on initialization: %s' % traceback.format_exc())
-      return False
 
 if __name__ == "__main__":
+  rospy.init_node('visual_verifier')
+
   if (len(sys.argv) < 2):
     call_done_service(ScriptDoneRequest.RESULT_ERROR, "Visual verifier not given path to config file.\nusage: visual_verifier.py 'path to config file'")
     print >> sys.stderr, 'Usage: visual_verifier.py \'path to config file\''
@@ -170,20 +168,16 @@ if __name__ == "__main__":
   try:
     app = QApplication(sys.argv)
     v_app = VisualizerApp(sys.argv[1])
-    rospy.init_node('visual_verifier')
 
     # Uses this timeout to automatically pass visual verifier
     # Used in automated testing.
-    #  TODO: fix for QT and restore
-    #timeout = rospy.get_param('visual_runner_timeout', -1)
-    #if timeout > 0:
-    #  runner = VisualRunner(app, timeout)
-    #  runner.start()
+    timeout = rospy.get_param('visual_runner_timeout', -1)
+    if timeout > 0:
+      runner = VisualRunner(app, timeout)
+      runner.start()
 
     exit_code = app.exec_()
 
-    # Give ROS a chance to clean up before we exit
-    rospy.spin()
     sys.exit(exit_code)
   except KeyboardInterrupt:
     pass
