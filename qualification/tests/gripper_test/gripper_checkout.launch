@@ -8,7 +8,7 @@
 
   <node pkg="qualification" type="visual_verifier.py" name="grip_view"
         machine="localhost"
-        args="$(find qualification)/tests/gripper_test/view.vcg" />
+        args="$(find qualification)/tests/gripper_test/view.rviz" />
 
   <node pkg="pr2_controller_manager" type="spawner"
         args="test_controller" name="grip_chk_ctrl" />
